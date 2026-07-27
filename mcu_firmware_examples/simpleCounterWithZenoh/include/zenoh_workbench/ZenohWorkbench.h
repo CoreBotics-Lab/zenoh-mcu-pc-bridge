@@ -15,6 +15,7 @@ struct ZenohConfig {
     const char* local_ip; // Optional: custom static IP for SoftAP (defaults to 192.168.4.1)
     const char* gateway;  // Optional: gateway IP for SoftAP (defaults to local_ip)
     const char* subnet;   // Optional: subnet mask for SoftAP (defaults to 255.255.255.0)
+    WiFiMode_t wifi_mode; // Optional: Wi-Fi mode (WIFI_STA or WIFI_AP, defaults to WIFI_AP)
 };
 
 // --- ROS2-style QoS settings ---
@@ -251,36 +252,58 @@ public:
     static bool init(const ZenohConfig& cfg = ZenohConfig()) {
         if (session_opened) return true;
         
-        // 1. Initialize Wi-Fi Access Point (SoftAP)
-        WiFi.mode(WIFI_AP);
-        if (cfg.local_ip && strlen(cfg.local_ip) > 0) {
-            IPAddress ip, gw, net;
-            if (ip.fromString(cfg.local_ip)) {
-                if (cfg.gateway && strlen(cfg.gateway) > 0) {
-                    gw.fromString(cfg.gateway);
-                } else {
-                    gw = ip; // Default gateway to the AP's local IP
-                }
-                if (cfg.subnet && strlen(cfg.subnet) > 0) {
-                    net.fromString(cfg.subnet);
-                } else {
-                    net = IPAddress(255, 255, 255, 0); // Default subnet
-                }
-                if (!WiFi.softAPConfig(ip, gw, net)) {
-                    Serial.println("[Wi-Fi] ERROR: SoftAP config failed!");
-                }
-            } else {
-                Serial.println("[Wi-Fi] ERROR: Invalid local_ip format!");
+        // 1. Initialize Wi-Fi
+        WiFiMode_t mode = cfg.wifi_mode;
+        if (mode == WIFI_OFF) {
+            mode = WIFI_AP; // Default to AP mode for backwards compatibility
+        }
+
+        if (mode == WIFI_STA) {
+            WiFi.mode(WIFI_STA);
+            WiFi.begin(cfg.ssid ? cfg.ssid : "", cfg.password ? cfg.password : "");
+            Serial.printf("[Wi-Fi] Connecting to SSID: %s ", cfg.ssid ? cfg.ssid : "");
+            unsigned long start_time = millis();
+            while (WiFi.status() != WL_CONNECTED && millis() - start_time < 10000) {
+                delay(500);
+                Serial.print(".");
             }
+            if (WiFi.status() != WL_CONNECTED) {
+                Serial.println("\n[Wi-Fi] ERROR: Connection failed/timed out!");
+                return false;
+            }
+            Serial.println("\n[Wi-Fi] Connected successfully!");
+            Serial.print("[Wi-Fi] IP Address        : "); Serial.println(WiFi.localIP());
+        } else {
+            WiFi.mode(WIFI_AP);
+            if (cfg.local_ip && strlen(cfg.local_ip) > 0) {
+                IPAddress ip, gw, net;
+                if (ip.fromString(cfg.local_ip)) {
+                    if (cfg.gateway && strlen(cfg.gateway) > 0) {
+                        gw.fromString(cfg.gateway);
+                    } else {
+                        gw = ip; // Default gateway to the AP's local IP
+                    }
+                    if (cfg.subnet && strlen(cfg.subnet) > 0) {
+                        net.fromString(cfg.subnet);
+                    } else {
+                        net = IPAddress(255, 255, 255, 0); // Default subnet
+                    }
+                    if (!WiFi.softAPConfig(ip, gw, net)) {
+                        Serial.println("[Wi-Fi] ERROR: SoftAP config failed!");
+                    }
+                } else {
+                    Serial.println("[Wi-Fi] ERROR: Invalid local_ip format!");
+                }
+            }
+            if (!WiFi.softAP(cfg.ssid ? cfg.ssid : "ESP32S3_Zenoh_AP", 
+                             cfg.password ? cfg.password : "zenoh1234")) {
+                Serial.println("[Wi-Fi] ERROR: SoftAP failed to start!");
+                return false;
+            }
+            Serial.println("[Wi-Fi] SoftAP launched successfully!");
+            Serial.printf("[Wi-Fi] Access Point SSID : %s\n", cfg.ssid ? cfg.ssid : "ESP32S3_Zenoh_AP");
+            Serial.print("[Wi-Fi] Gateway IP        : "); Serial.println(WiFi.softAPIP());
         }
-        if (!WiFi.softAP(cfg.ssid ? cfg.ssid : "ESP32S3_Zenoh_AP", 
-                         cfg.password ? cfg.password : "zenoh1234")) {
-            Serial.println("[Wi-Fi] ERROR: SoftAP failed to start!");
-            return false;
-        }
-        Serial.println("[Wi-Fi] SoftAP launched successfully!");
-        Serial.printf("[Wi-Fi] Access Point SSID : %s\n", cfg.ssid ? cfg.ssid : "ESP32S3_Zenoh_AP");
-        Serial.print("[Wi-Fi] Gateway IP        : "); Serial.println(WiFi.softAPIP());
 
         // 2. Initialize Zenoh session with peer listener endpoint
         Serial.println("[Zenoh] Initializing Zenoh Session...");
