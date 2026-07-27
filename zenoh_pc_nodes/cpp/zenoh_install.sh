@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
+
+echo "=== Setting up local 3rdparty dependencies (Modular Setup) ==="
+mkdir -p 3rdparty/nlohmann
+
+# 1. Download nlohmann/json.hpp
+if [ ! -f "3rdparty/nlohmann/json.hpp" ]; then
+    echo "Downloading nlohmann/json.hpp..."
+    curl -L -o "3rdparty/nlohmann/json.hpp" "https://github.com/nlohmann/json/releases/download/v3.11.3/json.hpp"
+else
+    echo "nlohmann/json.hpp already exists."
+fi
+
+# 2. Download and extract zenoh-c standalone library
+if [ ! -d "3rdparty/zenoh-c" ]; then
+    echo "Detecting system OS and architecture..."
+    OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
+    ARCH="$(uname -m)"
+
+    # Map architecture
+    if [ "$ARCH" = "x86_64" ]; then
+        RUST_ARCH="x86_64"
+    elif [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then
+        RUST_ARCH="aarch64"
+    else
+        echo "Error: Unsupported architecture $ARCH"
+        exit 1
+    fi
+
+    # Map OS
+    if [ "$OS" = "linux" ]; then
+        PACKAGE_OS="unknown-linux-gnu-standalone"
+    elif [ "$OS" = "darwin" ]; then
+        PACKAGE_OS="apple-darwin-standalone"
+    else
+        echo "Error: Unsupported OS $OS"
+        exit 1
+    fi
+
+    ZIP_NAME="zenoh-c-1.9.0-${RUST_ARCH}-${PACKAGE_OS}.zip"
+    URL="https://github.com/eclipse-zenoh/zenoh-c/releases/download/1.9.0/${ZIP_NAME}"
+
+    echo "Downloading zenoh-c standalone package from:"
+    echo "  $URL"
+
+    mkdir -p 3rdparty/zenoh-c
+    curl -L -o "3rdparty/zenoh_tmp.zip" "$URL"
+    
+    echo "Extracting zenoh-c package..."
+    unzip -q "3rdparty/zenoh_tmp.zip" -d "3rdparty/zenoh-c"
+    rm "3rdparty/zenoh_tmp.zip"
+else
+    echo "3rdparty/zenoh-c directory already exists."
+fi
+
+echo "=== Building C++ subscriber node ==="
+mkdir -p build
+cd build
+cmake ..
+make
+
+echo "=== Setup complete! ==="
+echo "You can now run the subscriber node with:"
+echo "  ./build/zenoh_test_sub"

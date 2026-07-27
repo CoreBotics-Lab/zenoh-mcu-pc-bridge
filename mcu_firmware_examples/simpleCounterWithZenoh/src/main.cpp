@@ -1,0 +1,75 @@
+#include <Arduino.h>
+#include "zenoh_workbench/ZenohWorkbench.h"
+
+// --- Configuration Struct ---
+ZenohConfig cfg = {
+    .ssid = "ESP32S3_Zenoh_AP",
+    .password = "zenoh1234",
+    .port = 7447
+};
+
+class Counter_publisher_node_class : public ZenohNode {
+public:
+    Counter_publisher_node_class() : ZenohNode("counter_publisher"), cnt_(0) {
+        Serial.printf("[Node] %s has been started\n", this->z_get_name());
+        
+        // 1. Create a typed publisher with custom queue depth (exactly like in ROS 2)
+        publisher_ = this->z_create_publisher<z_std_msgs::Int32>("robot/sim_counter", 10);
+
+        // 2. Create the timer (triggers callback_timer every 1000ms)
+        timer_ = this->z_create_timer(1000, [this]() -> void {
+            this->callback_timer();
+        });
+    }
+
+private:
+    int cnt_;
+    ZenohPublisher<z_std_msgs::Int32>* publisher_;
+    ZenohTimer* timer_;
+    
+    // Pre-allocated message structure (exactly like String::SharedPtr msg in ROS 2)
+    z_std_msgs::Int32 msg; 
+
+    void callback_timer() {
+        this->cnt_++;
+        if (this->publisher_) {
+            // Populate and publish the message structure
+            msg.data = this->cnt_;
+            this->publisher_->publish(msg);
+            
+            Serial.printf("[%s] Publishing: %d\n", this->z_get_name(), msg.data);
+        }
+    }
+};
+
+// Pointer to our node instance
+Counter_publisher_node_class* node_instance = nullptr;
+
+void setup() {
+    Serial.begin(115200);
+    delay(2000); // USB CDC Serial delay for ESP32-S3
+
+    Serial.println("\n==========================================");
+    Serial.println("  ESP32-S3 Zenoh SoftAP Counter Testbench");
+    Serial.println("==========================================");
+
+    // 1. Initialize the global Zenoh client context (analogous to rclcpp::init)
+    Serial.println("[System] Initializing the Zenoh Client...");
+    if (ZenohNode::init(cfg)) {
+        // 2. Spin up the Node instance (analogous to make_shared)
+        Serial.println("[System] Starting the Zenoh Node...");
+        node_instance = new Counter_publisher_node_class();
+    } else {
+        Serial.println("[System] CRITICAL Error: Zenoh Client initialization failed!");
+        while (1) { delay(1000); }
+    }
+
+    Serial.println("==========================================\n");
+}
+
+void loop() {
+    // Spin the node to keep it alive (analogous to rclcpp::spin)
+    if (node_instance) {
+        node_instance->z_spin();
+    }
+}
