@@ -23,3 +23,7 @@ __pycache__/
 *.swp
 *~
 .DS_Store
+
+# Credentials / Private files
+credential.h
+**/credential.h

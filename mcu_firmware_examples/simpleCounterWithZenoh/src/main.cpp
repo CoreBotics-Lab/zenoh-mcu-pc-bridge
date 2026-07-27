@@ -1,11 +1,23 @@
 #include <Arduino.h>
 #include "zenoh_workbench/ZenohWorkbench.h"
+#include "credential.h"
 
-// --- Configuration Struct ---
+// --- Configuration Struct (AP Mode) ---
+/*
 ZenohConfig cfg = {
     .ssid = "ESP32S3_Zenoh_AP",
     .password = "zenoh1234",
     .port = 7447
+};
+*/
+
+// --- Configuration Struct (STA Mode) ---
+ZenohConfig cfg = {
+    .ssid = WIFI_SSID,
+    .password = WIFI_PASSWORD,
+    .port = 7447,
+    .local_ip = "10.42.0.50",
+    .wifi_mode = WIFI_STA
 };
 
 class Counter_publisher_node_class : public ZenohNode {

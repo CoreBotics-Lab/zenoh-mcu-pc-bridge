@@ -26,6 +26,7 @@ class CounterSubscriberNode(ZenohNode):
 
 
 def main() -> None:
+    ZenohNode.init(config_endpoints=["tcp/10.42.0.50:7447"])
     node_instance = None
     try:
         node_instance = CounterSubscriberNode()
