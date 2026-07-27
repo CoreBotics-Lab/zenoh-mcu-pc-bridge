@@ -143,3 +143,35 @@ You can create a ROS 2 node on the PC (written in Python using `rclpy` or C++ us
 3. **Publishes the data natively to the local ROS 2 graph** (e.g. publishing to `/sim_counter` topic as a `std_msgs/msg/Int32` message).
 
 This approach isolates the heavy ROS 2 DDS layers on the PC and prevents Wi-Fi dropouts or out-of-memory errors on the microcontroller.
+
+---
+
+## 📦 Reusing the PC Client Libraries
+
+### 🐍 Python Client Wrapper (`ros2_zenoh`)
+To reuse the Python ROS 2-style node wrapper in other PC-side scripts or gateway bridges:
+1. **Copy the wrapper folder**: Copy the `ros2_zenoh/` directory (located under `zenoh_pc_nodes/python/`) into your new Python project.
+2. **Install Dependencies**: Ensure you install the required libraries:
+   ```bash
+   pip install eclipse-zenoh msgpack
+   ```
+3. **Import in Code**:
+   ```python
+   from ros2_zenoh import ZenohNode, z_std_msgs
+   ```
+
+### 💻 C++ Client Wrapper (`ZenohWorkbenchPC.h`)
+To reuse the C++ ROS 2-style wrapper in other PC C++ projects:
+1. **Copy wrapper headers**: Copy the headers inside `zenoh_pc_nodes/cpp/include/` to your project's include directory.
+2. **Provide Dependencies**: Ensure `zenoh-c` and `nlohmann_json` are accessible. 
+3. **Using the Modular 3rdparty Setup**: If you copy the entire `cpp/` directory, you can configure your new project's `CMakeLists.txt` to link against the modular local libraries directly:
+   ```cmake
+   include_directories(
+       cpp/include
+       cpp/3rdparty
+       cpp/3rdparty/zenoh-c/include
+   )
+   find_library(ZENOHC_LIB NAMES zenohc PATHS "cpp/3rdparty/zenoh-c/lib" NO_DEFAULT_PATH REQUIRED)
+   target_link_libraries(your_target PRIVATE ${ZENOHC_LIB})
+   ```
+
