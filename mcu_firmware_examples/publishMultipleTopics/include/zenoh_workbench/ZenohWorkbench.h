@@ -12,6 +12,9 @@ struct ZenohConfig {
     const char* ssid;
     const char* password;
     uint16_t port;
+    const char* local_ip; // Optional: custom static IP for SoftAP (defaults to 192.168.4.1)
+    const char* gateway;  // Optional: gateway IP for SoftAP (defaults to local_ip)
+    const char* subnet;   // Optional: subnet mask for SoftAP (defaults to 255.255.255.0)
 };
 
 // --- ROS2-style QoS settings ---
@@ -250,6 +253,26 @@ public:
         
         // 1. Initialize Wi-Fi Access Point (SoftAP)
         WiFi.mode(WIFI_AP);
+        if (cfg.local_ip && strlen(cfg.local_ip) > 0) {
+            IPAddress ip, gw, net;
+            if (ip.fromString(cfg.local_ip)) {
+                if (cfg.gateway && strlen(cfg.gateway) > 0) {
+                    gw.fromString(cfg.gateway);
+                } else {
+                    gw = ip; // Default gateway to the AP's local IP
+                }
+                if (cfg.subnet && strlen(cfg.subnet) > 0) {
+                    net.fromString(cfg.subnet);
+                } else {
+                    net = IPAddress(255, 255, 255, 0); // Default subnet
+                }
+                if (!WiFi.softAPConfig(ip, gw, net)) {
+                    Serial.println("[Wi-Fi] ERROR: SoftAP config failed!");
+                }
+            } else {
+                Serial.println("[Wi-Fi] ERROR: Invalid local_ip format!");
+            }
+        }
         if (!WiFi.softAP(cfg.ssid ? cfg.ssid : "ESP32S3_Zenoh_AP", 
                          cfg.password ? cfg.password : "zenoh1234")) {
             Serial.println("[Wi-Fi] ERROR: SoftAP failed to start!");
