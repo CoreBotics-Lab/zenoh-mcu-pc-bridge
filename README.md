@@ -67,7 +67,22 @@ The MCU uses the **`zenoh-pico`** client library (a pure-C, ultra-lightweight Ze
 3. **How it works:** 
    The ESP32-S3 spins up a SoftAP Wi-Fi access point (configured in `main.cpp` via `ZenohConfig`). It starts a publisher on the topic `robot/sim_counter` sending integer values every 1000ms.
 
+#### 📦 Reusing the MCU Client Library (`zenoh_workbench`)
+If you want to use this ROS 2-style C++ library in your own custom microcontroller projects, it is completely modular and self-contained:
+1. **Copy the library folder**: Copy the `zenoh_workbench/` directory (located under `mcu_firmware_examples/simpleCounterWithZenoh/include/`) into your new project's `include/` folder.
+2. **Add Dependencies**: Add the following library dependencies to your new project's `platformio.ini` file:
+   ```ini
+   lib_deps = 
+       https://github.com/eclipse-zenoh/zenoh-pico.git
+       bblanchon/ArduinoJson@^7.1.0
+   ```
+3. **Include in code**:
+   ```cpp
+   #include "zenoh_workbench/ZenohWorkbench.h"
+   ```
+
 ---
+
 
 ### 2. PC-Side Client: C++ Node Setup
 
