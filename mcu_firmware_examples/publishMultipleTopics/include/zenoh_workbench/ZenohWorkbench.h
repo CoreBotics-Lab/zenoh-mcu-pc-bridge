@@ -69,7 +69,7 @@ template <typename MsgType>
 using SubscriptionCallback = std::function<void(const MsgType& msg)>;
 
 // Modular Templated Zenoh Publisher Class
-template <typename MsgType>
+template <typename MsgType, size_t MaxBufferSize = 128>
 class ZenohPublisher {
 private:
     z_owned_publisher_t pub;
@@ -120,8 +120,14 @@ public:
      * Publishes a structured message (automatically serializes to MessagePack).
      */
     bool publish(const MsgType& msg) {
-        uint8_t buffer[128];
-        size_t len = serialize_msg<MsgType>(msg, buffer, sizeof(buffer));
+        uint8_t buffer[MaxBufferSize];
+        size_t len = serialize_msg<MsgType>(msg, buffer, MaxBufferSize);
+
+        if (len == 0) {
+            Serial.printf("[Zenoh] ERROR: Message serialization failed or exceeded buffer limit of %u bytes on topic '%s'!\n", 
+                          MaxBufferSize, topic);
+            return false;
+        }
 
         z_publisher_put_options_t options;
         z_publisher_put_options_default(&options);
@@ -361,9 +367,9 @@ public:
      * Creates a new publisher and registers it within the active Zenoh session.
      * Returns a dynamically allocated publisher pointer.
      */
-    template <typename MsgType>
-    ZenohPublisher<MsgType>* z_create_publisher(const char* topic_name, const QoS& qos = QoS()) {
-        ZenohPublisher<MsgType>* pub = new ZenohPublisher<MsgType>(topic_name, qos);
+    template <typename MsgType, size_t MaxBufferSize = 128>
+    ZenohPublisher<MsgType, MaxBufferSize>* z_create_publisher(const char* topic_name, const QoS& qos = QoS()) {
+        ZenohPublisher<MsgType, MaxBufferSize>* pub = new ZenohPublisher<MsgType, MaxBufferSize>(topic_name, qos);
         if (session_opened) {
             pub->declare(z_session_loan(&session));
         } else {
@@ -375,11 +381,11 @@ public:
     /**
      * Shorthand creator for a publisher with a custom queue depth (exactly like ROS 2).
      */
-    template <typename MsgType>
-    ZenohPublisher<MsgType>* z_create_publisher(const char* topic_name, uint32_t queue_size) {
+    template <typename MsgType, size_t MaxBufferSize = 128>
+    ZenohPublisher<MsgType, MaxBufferSize>* z_create_publisher(const char* topic_name, uint32_t queue_size) {
         QoS qos;
         qos.depth = queue_size;
-        return z_create_publisher<MsgType>(topic_name, qos);
+        return z_create_publisher<MsgType, MaxBufferSize>(topic_name, qos);
     }
 
     /**
