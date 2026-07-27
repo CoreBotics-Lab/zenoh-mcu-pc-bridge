@@ -1,16 +1,5 @@
 #include "../include/ZenohWorkbenchPC.h"
 #include <iostream>
-#include <csignal>
-
-// Global flag to handle clean shutdown via Ctrl+C
-volatile sig_atomic_t shutdown_requested = 0;
-
-void signal_handler(int signal) {
-    if (signal == SIGINT) {
-        std::cout << "\n[Signal] Shutdown requested via SIGINT.\n";
-        ZenohNode::shutdown();
-    }
-}
 
 class MultiTopicSubscriberNode : public ZenohNode {
 public:
@@ -37,12 +26,8 @@ public:
     }
 
     ~MultiTopicSubscriberNode() {
-        if (counter_sub_) {
-            delete counter_sub_;
-        }
-        if (string_sub_) {
-            delete string_sub_;
-        }
+        if (counter_sub_) delete counter_sub_;
+        if (string_sub_) delete string_sub_;
         std::cout << "Destroying the Zenoh Node...\n";
     }
 
@@ -63,24 +48,15 @@ int main(int argc, char** argv) {
     (void)argc;
     (void)argv;
 
-    // Register signal handler for Ctrl+C
-    std::signal(SIGINT, signal_handler);
-
-    // Initialize Zenoh session with ESP32 SoftAP gateway address
-    const char* connect_endpoint = "tcp/192.168.4.1:7447";
-    
-    std::cout << "Opening Zenoh session to ESP32-S3 (" << connect_endpoint << ")...\n";
-    if (!ZenohNode::init(connect_endpoint)) {
-        std::cerr << "CRITICAL Error: Zenoh Client initialization failed!\n";
+    // Initialize Zenoh session on explicit port 7447
+    if (!ZenohNode::init(7447)) {
         return -1;
     }
 
     {
         MultiTopicSubscriberNode node;
-        
-        // Spin the node to keep it alive (exactly like rclcpp::spin or the Python z_spin)
         node.z_spin();
-    } // node goes out of scope and is cleaned up here
+    } // Node goes out of scope and destroys subscriptions cleanly before session closes via atexit
 
     return 0;
 }

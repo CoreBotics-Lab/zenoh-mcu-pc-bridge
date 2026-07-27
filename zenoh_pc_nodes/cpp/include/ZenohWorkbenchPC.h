@@ -9,6 +9,19 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <csignal>
+#include <cstring>
+#include <cstdlib>
+
+// Global flag to handle clean shutdown via Ctrl+C
+inline volatile sig_atomic_t shutdown_requested = 0;
+
+inline void signal_handler(int signal) {
+    if (signal == SIGINT) {
+        std::cout << "\n[Signal] Shutdown requested via SIGINT.\n";
+        shutdown_requested = 1;
+    }
+}
 
 // QoS classes
 enum class Reliability : std::uint8_t {
@@ -217,18 +230,24 @@ private:
     static bool session_opened;
     const char* node_name;
 
-public:
-    ZenohNode(const char* name) : node_name(name) {}
-
-    static bool init(const char* connect_endpoint = nullptr) {
+    static bool init_session(const char* connect_endpoint) {
         if (session_opened) return true;
+
+        // Register signal handler for Ctrl+C
+        std::signal(SIGINT, signal_handler);
+
+        // Register automatic session shutdown upon exit
+        std::atexit(ZenohNode::shutdown);
 
         z_owned_config_t z_config;
         z_config_default(&z_config);
 
-        if (connect_endpoint) {
+        if (connect_endpoint && std::strlen(connect_endpoint) > 0) {
             std::string endpoint_json = "[\"" + std::string(connect_endpoint) + "\"]";
             zc_config_insert_json5(z_config_loan_mut(&z_config), Z_CONFIG_CONNECT_KEY, endpoint_json.c_str());
+            std::cout << "[Zenoh PC] Connecting to endpoint: " << connect_endpoint << "\n";
+        } else {
+            std::cout << "[Zenoh PC] Scouting for peers...\n";
         }
 
         if (z_open(&session, z_config_move(&z_config), NULL) < 0) {
@@ -239,6 +258,26 @@ public:
         std::cout << "[Zenoh PC] Session opened successfully!\n";
         session_opened = true;
         return true;
+    }
+
+public:
+    ZenohNode(const char* name) : node_name(name) {}
+
+    static bool init(uint16_t port = 7447) {
+        std::string endpoint = "tcp/192.168.4.1:" + std::to_string(port);
+        return init_session(endpoint.c_str());
+    }
+
+    static bool init(const char* host, uint16_t port) {
+        if (!host || std::strlen(host) == 0) {
+            return init_session(nullptr); // Scouting
+        }
+        std::string endpoint = "tcp/" + std::string(host) + ":" + std::to_string(port);
+        return init_session(endpoint.c_str());
+    }
+
+    static bool init(const char* connect_endpoint) {
+        return init_session(connect_endpoint);
     }
 
     static void shutdown() {
@@ -295,8 +334,8 @@ public:
     }
 
     void z_spin() {
-        while (session_opened) {
-            std::this_thread::sleep_for(std::chrono::seconds(1));
+        while (session_opened && !shutdown_requested) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(200));
         }
     }
 };
