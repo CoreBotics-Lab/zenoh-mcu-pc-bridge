@@ -223,6 +223,13 @@ public:
     }
 };
 
+// Configuration structure for the Zenoh node on PC
+struct ZenohConfig {
+    std::string host = "192.168.4.1";
+    uint16_t port = 7447;
+    std::string connect_endpoint = ""; // If specified, overrides host/port
+};
+
 // Main Zenoh Node Class for PC
 class ZenohNode {
 private:
@@ -263,21 +270,28 @@ private:
 public:
     ZenohNode(const char* name) : node_name(name) {}
 
-    static bool init(uint16_t port = 7447) {
-        std::string endpoint = "tcp/192.168.4.1:" + std::to_string(port);
+    static bool init(const ZenohConfig& config = ZenohConfig()) {
+        std::string endpoint;
+        if (!config.connect_endpoint.empty()) {
+            endpoint = config.connect_endpoint;
+        } else if (!config.host.empty()) {
+            endpoint = "tcp/" + config.host + ":" + std::to_string(config.port);
+        } else {
+            return init_session(nullptr); // Scouting
+        }
         return init_session(endpoint.c_str());
     }
 
-    static bool init(const char* host, uint16_t port) {
-        if (!host || std::strlen(host) == 0) {
-            return init_session(nullptr); // Scouting
-        }
-        std::string endpoint = "tcp/" + std::string(host) + ":" + std::to_string(port);
-        return init_session(endpoint.c_str());
+    static bool init(uint16_t port) {
+        ZenohConfig config;
+        config.port = port;
+        return init(config);
     }
 
     static bool init(const char* connect_endpoint) {
-        return init_session(connect_endpoint);
+        ZenohConfig config;
+        config.connect_endpoint = connect_endpoint ? connect_endpoint : "";
+        return init(config);
     }
 
     static void shutdown() {

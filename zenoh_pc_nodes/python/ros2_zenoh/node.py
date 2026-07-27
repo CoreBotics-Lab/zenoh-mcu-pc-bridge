@@ -96,6 +96,13 @@ class ZenohTimer:
         self.running = False
 
 
+class ZenohConfig:
+    def __init__(self, host: str = "192.168.4.1", port: int = 7447, connect_endpoint: str = "") -> None:
+        self.host = host
+        self.port = port
+        self.connect_endpoint = connect_endpoint
+
+
 class ZenohNode:
     _session: ClassVar[Optional[zenoh.Session]] = None
     _session_refcount = 0
@@ -108,22 +115,33 @@ class ZenohNode:
         self.timers = []
 
     @classmethod
-    def init(cls, config_endpoints: Optional[List[str]] = None) -> None:
+    def init(cls, config: Optional[ZenohConfig] = None) -> None:
         with cls._lock:
             if cls._session is not None:
                 cls._session_refcount += 1
                 return
 
-            conf = zenoh.Config()
-            if config_endpoints is None:
-                config_endpoints = ["tcp/192.168.4.1:7447"]
+            if config is None:
+                config = ZenohConfig()
 
-            if config_endpoints:
-                conf.insert_json5("connect/endpoints", str(config_endpoints).replace("'", '"'))
+            conf = zenoh.Config()
             
-            cls._session = zenoh.open(conf)
+            # Resolve connection endpoints from config
+            endpoints = []
+            if config.connect_endpoint:
+                endpoints = [config.connect_endpoint]
+            elif config.host:
+                endpoints = [f"tcp/{config.host}:{config.port}"]
+
+            if endpoints:
+                conf.insert_json5("connect/endpoints", str(endpoints).replace("'", '"'))
+                cls._session = zenoh.open(conf)
+                print(f"[Zenoh] Global session initialized (endpoints={endpoints})")
+            else:
+                cls._session = zenoh.open(conf)
+                print("[Zenoh] Global session initialized (scouting for peers)")
+            
             cls._session_refcount = 1
-            print(f"[Zenoh] Global session initialized (endpoints={config_endpoints})")
 
     @classmethod
     def shutdown(cls) -> None:

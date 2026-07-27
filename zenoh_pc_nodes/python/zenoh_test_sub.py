@@ -5,7 +5,7 @@ import os
 # Ensure the local ros2_zenoh package can be imported
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from ros2_zenoh import ZenohNode, z_std_msgs
+from ros2_zenoh import ZenohNode, ZenohConfig, z_std_msgs
 
 class CounterSubscriberNode(ZenohNode):
     def __init__(self) -> None:
@@ -26,7 +26,8 @@ class CounterSubscriberNode(ZenohNode):
 
 
 def main() -> None:
-    ZenohNode.init(config_endpoints=["tcp/10.42.0.50:7447"])
+    config = ZenohConfig(host="10.42.0.50", port=7447)
+    ZenohNode.init(config)
     node_instance = None
     try:
         node_instance = CounterSubscriberNode()

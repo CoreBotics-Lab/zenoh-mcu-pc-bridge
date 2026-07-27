@@ -48,8 +48,12 @@ int main(int argc, char** argv) {
     (void)argc;
     (void)argv;
 
-    // Initialize Zenoh session on explicit port 7447
-    if (!ZenohNode::init(7447)) {
+    // Initialize with default AP network settings (IP: 192.168.4.1, Port: 7447)
+    ZenohConfig config;
+    config.host = "192.168.4.1";
+    config.port = 7447;
+
+    if (!ZenohNode::init(config)) {
         return -1;
     }
 

@@ -1,5 +1,6 @@
 from .node import (
     ZenohNode,
+    ZenohConfig,
     QoS,
     SensorDataQoS,
     SystemDefaultsQoS,

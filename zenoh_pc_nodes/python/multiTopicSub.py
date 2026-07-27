@@ -5,7 +5,7 @@ import os
 # Ensure the local ros2_zenoh package can be imported
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from ros2_zenoh import ZenohNode, z_std_msgs
+from ros2_zenoh import ZenohNode, ZenohConfig, z_std_msgs
 
 class MultiTopicSubscriberNode(ZenohNode):
     def __init__(self) -> None:
@@ -36,6 +36,9 @@ class MultiTopicSubscriberNode(ZenohNode):
 
 
 def main() -> None:
+    # Initialize with default AP network settings (IP: 192.168.4.1, Port: 7447)
+    config = ZenohConfig(host="192.168.4.1", port=7447)
+    ZenohNode.init(config)
     node_instance = None
     try:
         node_instance = MultiTopicSubscriberNode()

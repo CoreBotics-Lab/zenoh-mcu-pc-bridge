@@ -35,8 +35,12 @@ int main(int argc, char** argv) {
     (void)argc;
     (void)argv;
 
-    // Initialize Zenoh session on explicit port 7447
-    if (!ZenohNode::init(7447)) {
+    // Initialize Zenoh session with config object
+    ZenohConfig config;
+    config.host = "10.42.0.50";
+    config.port = 7447;
+
+    if (!ZenohNode::init(config)) {
         return -1;
     }
 
