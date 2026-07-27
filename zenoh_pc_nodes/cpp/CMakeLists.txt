@@ -44,24 +44,30 @@ endif()
 
 # Executable targets
 add_executable(zenoh_test_sub src/zenoh_test_sub.cpp)
+add_executable(multi_topic_sub src/multi_topic_sub.cpp)
 
 # Include directories
 target_include_directories(zenoh_test_sub PRIVATE include)
+target_include_directories(multi_topic_sub PRIVATE include)
 
 # Link libraries
 target_link_libraries(zenoh_test_sub PRIVATE ${ZENOHC_LIB})
+target_link_libraries(multi_topic_sub PRIVATE ${ZENOHC_LIB})
 if(TARGET nlohmann_json::nlohmann_json)
     target_link_libraries(zenoh_test_sub PRIVATE nlohmann_json::nlohmann_json)
+    target_link_libraries(multi_topic_sub PRIVATE nlohmann_json::nlohmann_json)
 endif()
 
-# Add RPATH so the executable can locate the local libzenohc.so at runtime
+# Add RPATH so the executables can locate the local libzenohc.so at runtime
 if(EXISTS "${LOCAL_3RDPARTY_DIR}/zenoh-c")
     if(APPLE)
         set(CMAKE_INSTALL_RPATH "@loader_path/../3rdparty/zenoh-c/lib")
         set_target_properties(zenoh_test_sub PROPERTIES LINK_FLAGS "-Wl,-rpath,@loader_path/../3rdparty/zenoh-c/lib")
+        set_target_properties(multi_topic_sub PROPERTIES LINK_FLAGS "-Wl,-rpath,@loader_path/../3rdparty/zenoh-c/lib")
     else()
         set(CMAKE_INSTALL_RPATH "$ORIGIN/../3rdparty/zenoh-c/lib")
         set_target_properties(zenoh_test_sub PROPERTIES LINK_FLAGS "-Wl,-rpath,\$ORIGIN/../3rdparty/zenoh-c/lib")
+        set_target_properties(multi_topic_sub PROPERTIES LINK_FLAGS "-Wl,-rpath,\$ORIGIN/../3rdparty/zenoh-c/lib")
     endif()
     set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 endif()
