@@ -18,6 +18,8 @@ __pycache__/
 # System / IDE / Editor files
 .vscode/
 .idea/
+.gitconfig
+.git-credentials
 *.swp
 *~
 .DS_Store
