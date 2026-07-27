@@ -11,7 +11,7 @@ ZenohConfig cfg = {
 class Counter_publisher_node_class : public ZenohNode {
 public:
     Counter_publisher_node_class() 
-        : ZenohNode("counter_publisher"), cnt_(0), str_cnt_(0) {
+        : ZenohNode("counter_publisher"), cnt_(0) {
         Serial.printf("[Node] %s has been started\n", this->z_get_name());
         
         // 1. Create typed publishers (exactly like in ROS 2)
@@ -29,7 +29,6 @@ public:
 
 private:
     int cnt_;
-    int str_cnt_;
     ZenohPublisher<z_std_msgs::Int32>* publisher_;
     ZenohPublisher<z_std_msgs::String>* string_publisher_;
     ZenohTimer* timer_;
@@ -50,11 +49,10 @@ private:
     }
 
     void callback_string_timer() {
-        this->str_cnt_++;
         if (this->string_publisher_) {
             z_std_msgs::String str_msg;
             char str_buf[64];
-            snprintf(str_buf, sizeof(str_buf), "HelloWorld_%d", this->str_cnt_);
+            snprintf(str_buf, sizeof(str_buf), "HelloWorld_%d", this->cnt_);
             str_msg.data = str_buf;
             this->string_publisher_->publish(str_msg);
             
