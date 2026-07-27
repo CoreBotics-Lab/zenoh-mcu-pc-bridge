@@ -260,6 +260,28 @@ public:
 
         if (mode == WIFI_STA) {
             WiFi.mode(WIFI_STA);
+            if (cfg.local_ip && strlen(cfg.local_ip) > 0) {
+                IPAddress ip, gw, net;
+                if (ip.fromString(cfg.local_ip)) {
+                    if (cfg.gateway && strlen(cfg.gateway) > 0) {
+                        gw.fromString(cfg.gateway);
+                    } else {
+                        // Default gateway to .1 of the same subnet (e.g. 10.42.0.1)
+                        gw = ip;
+                        gw[3] = 1;
+                    }
+                    if (cfg.subnet && strlen(cfg.subnet) > 0) {
+                        net.fromString(cfg.subnet);
+                    } else {
+                        net = IPAddress(255, 255, 255, 0);
+                    }
+                    if (!WiFi.config(ip, gw, net)) {
+                        Serial.println("[Wi-Fi] ERROR: Static STA config failed!");
+                    }
+                } else {
+                    Serial.println("[Wi-Fi] ERROR: Invalid local_ip format!");
+                }
+            }
             WiFi.begin(cfg.ssid ? cfg.ssid : "", cfg.password ? cfg.password : "");
             Serial.printf("[Wi-Fi] Connecting to SSID: %s ", cfg.ssid ? cfg.ssid : "");
             unsigned long start_time = millis();
