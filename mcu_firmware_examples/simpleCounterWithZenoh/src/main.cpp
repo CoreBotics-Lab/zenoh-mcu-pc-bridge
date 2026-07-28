@@ -22,14 +22,15 @@ ZenohConfig cfg = {
 
 class Counter_publisher_node_class : public ZenohNode {
 public:
-    Counter_publisher_node_class() : ZenohNode("counter_publisher"), cnt_(0) {
-        Serial.printf("[Node] %s has been started\n", this->z_get_name());
+    Counter_publisher_node_class() 
+        : ZenohNode("counter_publisher"), cnt_(random(255, 1024)) {
+        Serial.printf("[Node] %s has been started (starting counter at: %d)\n", this->z_get_name(), cnt_);
         
         // 1. Create a typed publisher with custom queue depth (exactly like in ROS 2)
         publisher_ = this->z_create_publisher<z_std_msgs::Int32>("robot/sim_counter", 10);
 
         // 2. Create the timer (triggers callback_timer every 1000ms)
-        timer_ = this->z_create_timer(1000, [this]() -> void {
+        timer_ = this->z_create_timer(100, [this]() -> void {
             this->callback_timer();
         });
     }
@@ -44,6 +45,10 @@ private:
 
     void callback_timer() {
         this->cnt_++;
+        if (this->cnt_ % 7 == 0) {
+            int old_val = this->cnt_;
+            this->cnt_ = random(255, 1024);
+        }
         if (this->publisher_) {
             // Populate and publish the message structure
             msg.data = this->cnt_;
