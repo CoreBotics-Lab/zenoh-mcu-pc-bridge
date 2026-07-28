@@ -10,5 +10,5 @@ from .node import (
     ZenohSubscription,
     ZenohTimer
 )
-from . import z_std_msgs
-from . import z_geometry_msgs
+from .msg_interface.pre_defined_interface import z_std_msgs
+from .msg_interface.pre_defined_interface import z_geometry_msgs

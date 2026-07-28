@@ -4,19 +4,21 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
+THIRDPARTY_DIR="../../shared_libraries/cpp/3rdparty"
+
 echo "=== Setting up local 3rdparty dependencies (Modular Setup) ==="
-mkdir -p 3rdparty/nlohmann
+mkdir -p "${THIRDPARTY_DIR}/nlohmann"
 
 # 1. Download nlohmann/json.hpp
-if [ ! -f "3rdparty/nlohmann/json.hpp" ]; then
+if [ ! -f "${THIRDPARTY_DIR}/nlohmann/json.hpp" ]; then
     echo "Downloading nlohmann/json.hpp..."
-    curl -L -o "3rdparty/nlohmann/json.hpp" "https://github.com/nlohmann/json/releases/download/v3.11.3/json.hpp"
+    curl -L -o "${THIRDPARTY_DIR}/nlohmann/json.hpp" "https://github.com/nlohmann/json/releases/download/v3.11.3/json.hpp"
 else
     echo "nlohmann/json.hpp already exists."
 fi
 
 # 2. Download and extract zenoh-c standalone library
-if [ ! -d "3rdparty/zenoh-c" ]; then
+if [ ! -d "${THIRDPARTY_DIR}/zenoh-c" ]; then
     echo "Detecting system OS and architecture..."
     OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
     ARCH="$(uname -m)"
@@ -47,14 +49,14 @@ if [ ! -d "3rdparty/zenoh-c" ]; then
     echo "Downloading zenoh-c standalone package from:"
     echo "  $URL"
 
-    mkdir -p 3rdparty/zenoh-c
-    curl -L -o "3rdparty/zenoh_tmp.zip" "$URL"
+    mkdir -p "${THIRDPARTY_DIR}/zenoh-c"
+    curl -L -o "${THIRDPARTY_DIR}/zenoh_tmp.zip" "$URL"
     
     echo "Extracting zenoh-c package..."
-    unzip -q "3rdparty/zenoh_tmp.zip" -d "3rdparty/zenoh-c"
-    rm "3rdparty/zenoh_tmp.zip"
+    unzip -q "${THIRDPARTY_DIR}/zenoh_tmp.zip" -d "${THIRDPARTY_DIR}/zenoh-c"
+    rm "${THIRDPARTY_DIR}/zenoh_tmp.zip"
 else
-    echo "3rdparty/zenoh-c directory already exists."
+    echo "${THIRDPARTY_DIR}/zenoh-c directory already exists."
 fi
 
 echo "=== Building C++ subscriber node ==="

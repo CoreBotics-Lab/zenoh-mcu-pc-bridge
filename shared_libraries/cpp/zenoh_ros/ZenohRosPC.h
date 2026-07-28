@@ -1,5 +1,5 @@
-#ifndef ZENOH_WORKBENCH_PC_H
-#define ZENOH_WORKBENCH_PC_H
+#ifndef ZENOH_ROS_PC_H
+#define ZENOH_ROS_PC_H
 
 #include <zenoh.h>
 #include <cstdint>
@@ -56,8 +56,8 @@ struct SystemDefaultsQoS : public QoS {
     }
 };
 
-#include "z_std_msgs_pc.h"
-#include "z_geometry_msgs_pc.h"
+#include "msg_interface/pre_defined_interface/z_std_msgs_pc.h"
+#include "msg_interface/pre_defined_interface/z_geometry_msgs_pc.h"
 
 // Callback types
 typedef std::function<void()> TimerCallback;
@@ -358,4 +358,4 @@ public:
 z_owned_session_t ZenohNode::session;
 bool ZenohNode::session_opened = false;
 
-#endif // ZENOH_WORKBENCH_PC_H
+#endif // ZENOH_ROS_PC_H

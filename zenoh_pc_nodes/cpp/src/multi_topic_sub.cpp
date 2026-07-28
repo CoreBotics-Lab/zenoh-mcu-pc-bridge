@@ -1,4 +1,4 @@
-#include "../include/ZenohWorkbenchPC.h"
+#include <zenoh_ros/ZenohRosPC.h>
 #include <iostream>
 
 class MultiTopicSubscriberNode : public ZenohNode {

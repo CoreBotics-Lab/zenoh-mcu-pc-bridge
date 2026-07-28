@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include "zenoh_workbench/ZenohWorkbench.h"
+#include <ZenohRos.h>
 #include "credential.h"
 
 // --- Configuration Struct (AP Mode) ---

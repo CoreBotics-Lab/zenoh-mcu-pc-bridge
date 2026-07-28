@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Define locations for local dependencies
-set(LOCAL_3RDPARTY_DIR "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty")
+set(LOCAL_3RDPARTY_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../shared_libraries/cpp/3rdparty")
 
 # 1. Handle nlohmann_json
 # Check if local 3rdparty/nlohmann directory exists, include it.
@@ -47,8 +47,8 @@ add_executable(zenoh_test_sub src/zenoh_test_sub.cpp)
 add_executable(multi_topic_sub src/multi_topic_sub.cpp)
 
 # Include directories
-target_include_directories(zenoh_test_sub PRIVATE include)
-target_include_directories(multi_topic_sub PRIVATE include)
+target_include_directories(zenoh_test_sub PRIVATE ../../shared_libraries/cpp)
+target_include_directories(multi_topic_sub PRIVATE ../../shared_libraries/cpp)
 
 # Link libraries
 target_link_libraries(zenoh_test_sub PRIVATE ${ZENOHC_LIB})

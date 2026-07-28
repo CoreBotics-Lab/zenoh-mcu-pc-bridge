@@ -2,10 +2,10 @@
 import sys
 import os
 
-# Ensure the local ros2_zenoh package can be imported
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+# Ensure the shared zenoh_ros package can be imported
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../shared_libraries/python')))
 
-from ros2_zenoh import ZenohNode, ZenohConfig, z_std_msgs
+from zenoh_ros import ZenohNode, ZenohConfig, z_std_msgs
 
 class MultiTopicSubscriberNode(ZenohNode):
     def __init__(self) -> None:

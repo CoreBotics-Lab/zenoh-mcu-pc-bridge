@@ -1,5 +1,5 @@
-#ifndef ZENOH_WORKBENCH_H
-#define ZENOH_WORKBENCH_H
+#ifndef ZENOH_ROS_H
+#define ZENOH_ROS_H
 
 #include <Arduino.h>
 #include <WiFi.h>
@@ -59,8 +59,8 @@ template <typename T>
 void deserialize_msg(const uint8_t* buffer, size_t len, T& msg);
 
 // Include modular ROS2-style message libraries
-#include "z_std_msgs.h"
-#include "z_geometry_msgs.h"
+#include "msg_interface/pre_defined_interface/z_std_msgs.h"
+#include "msg_interface/pre_defined_interface/z_geometry_msgs.h"
 
 // Callback Types for Timer and Subscriptions
 typedef std::function<void()> TimerCallback;
@@ -434,4 +434,4 @@ public:
 z_owned_session_t ZenohNode::session;
 bool ZenohNode::session_opened = false;
 
-#endif // ZENOH_WORKBENCH_H
+#endif // ZENOH_ROS_H
