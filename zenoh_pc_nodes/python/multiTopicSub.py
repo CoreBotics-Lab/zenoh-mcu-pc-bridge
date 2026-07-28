@@ -14,7 +14,7 @@ class MultiTopicSubscriberNode(ZenohNode):
 
         # Create subscription with standard ROS 2 message type (Int32) and depth 10
         self.counter_sub = self.z_create_subscription(
-            msgs.Int32,
+            msgs.z_Int32,
             "robot/sim_counter",
             self.counter_listener_callback,
             10
@@ -22,16 +22,16 @@ class MultiTopicSubscriberNode(ZenohNode):
 
         # Create subscription with standard ROS 2 message type (String) and depth 10
         self.string_sub = self.z_create_subscription(
-            msgs.String,
+            msgs.z_String,
             "robot/hello_string",
             self.string_listener_callback,
             10
         )
 
-    def counter_listener_callback(self, msg: msgs.Int32) -> None:
+    def counter_listener_callback(self, msg: msgs.z_Int32) -> None:
         print(f"[RECV COUNTER] sim_counter: {msg.data}")
 
-    def string_listener_callback(self, msg: msgs.String) -> None:
+    def string_listener_callback(self, msg: msgs.z_String) -> None:
         print(f"[RECV STRING] hello_string: {msg.data}")
 
 

@@ -53,80 +53,80 @@
     }
 
 // Define Primitives
-DEFINE_Z_STD_MSG_PRIMITIVE(Bool, bool)
-DEFINE_Z_STD_MSG_PRIMITIVE(Byte, int8_t)
-DEFINE_Z_STD_MSG_PRIMITIVE(Char, uint8_t)
-DEFINE_Z_STD_MSG_PRIMITIVE(Int8, int8_t)
-DEFINE_Z_STD_MSG_PRIMITIVE(UInt8, uint8_t)
-DEFINE_Z_STD_MSG_PRIMITIVE(Int16, int16_t)
-DEFINE_Z_STD_MSG_PRIMITIVE(UInt16, uint16_t)
-DEFINE_Z_STD_MSG_PRIMITIVE(Int32, int32_t)
-DEFINE_Z_STD_MSG_PRIMITIVE(UInt32, uint32_t)
-DEFINE_Z_STD_MSG_PRIMITIVE(Int64, int64_t)
-DEFINE_Z_STD_MSG_PRIMITIVE(UInt64, uint64_t)
-DEFINE_Z_STD_MSG_PRIMITIVE(Float32, float)
-DEFINE_Z_STD_MSG_PRIMITIVE(Float64, double)
+DEFINE_Z_STD_MSG_PRIMITIVE(z_Bool, bool)
+DEFINE_Z_STD_MSG_PRIMITIVE(z_Byte, int8_t)
+DEFINE_Z_STD_MSG_PRIMITIVE(z_Char, uint8_t)
+DEFINE_Z_STD_MSG_PRIMITIVE(z_Int8, int8_t)
+DEFINE_Z_STD_MSG_PRIMITIVE(z_UInt8, uint8_t)
+DEFINE_Z_STD_MSG_PRIMITIVE(z_Int16, int16_t)
+DEFINE_Z_STD_MSG_PRIMITIVE(z_UInt16, uint16_t)
+DEFINE_Z_STD_MSG_PRIMITIVE(z_Int32, int32_t)
+DEFINE_Z_STD_MSG_PRIMITIVE(z_UInt32, uint32_t)
+DEFINE_Z_STD_MSG_PRIMITIVE(z_Int64, int64_t)
+DEFINE_Z_STD_MSG_PRIMITIVE(z_UInt64, uint64_t)
+DEFINE_Z_STD_MSG_PRIMITIVE(z_Float32, float)
+DEFINE_Z_STD_MSG_PRIMITIVE(z_Float64, double)
 
 // Define Arrays
-DEFINE_Z_STD_MSG_ARRAY(ByteMultiArray, int8_t)
-DEFINE_Z_STD_MSG_ARRAY(Int8MultiArray, int8_t)
-DEFINE_Z_STD_MSG_ARRAY(UInt8MultiArray, uint8_t)
-DEFINE_Z_STD_MSG_ARRAY(Int16MultiArray, int16_t)
-DEFINE_Z_STD_MSG_ARRAY(UInt16MultiArray, uint16_t)
-DEFINE_Z_STD_MSG_ARRAY(Int32MultiArray, int32_t)
-DEFINE_Z_STD_MSG_ARRAY(UInt32MultiArray, uint32_t)
-DEFINE_Z_STD_MSG_ARRAY(Int64MultiArray, int64_t)
-DEFINE_Z_STD_MSG_ARRAY(UInt64MultiArray, uint64_t)
-DEFINE_Z_STD_MSG_ARRAY(Float32MultiArray, float)
-DEFINE_Z_STD_MSG_ARRAY(Float64MultiArray, double)
+DEFINE_Z_STD_MSG_ARRAY(z_ByteMultiArray, int8_t)
+DEFINE_Z_STD_MSG_ARRAY(z_Int8MultiArray, int8_t)
+DEFINE_Z_STD_MSG_ARRAY(z_UInt8MultiArray, uint8_t)
+DEFINE_Z_STD_MSG_ARRAY(z_Int16MultiArray, int16_t)
+DEFINE_Z_STD_MSG_ARRAY(z_UInt16MultiArray, uint16_t)
+DEFINE_Z_STD_MSG_ARRAY(z_Int32MultiArray, int32_t)
+DEFINE_Z_STD_MSG_ARRAY(z_UInt32MultiArray, uint32_t)
+DEFINE_Z_STD_MSG_ARRAY(z_Int64MultiArray, int64_t)
+DEFINE_Z_STD_MSG_ARRAY(z_UInt64MultiArray, uint64_t)
+DEFINE_Z_STD_MSG_ARRAY(z_Float32MultiArray, float)
+DEFINE_Z_STD_MSG_ARRAY(z_Float64MultiArray, double)
 
-// --- Custom Specialization for z_std_msgs::String ---
+// --- Custom Specialization for z_std_msgs::z_String ---
 namespace z_std_msgs {
-    struct String {
+    struct z_String {
         std::string data;
     };
 }
 template <>
-inline size_t serialize_msg<z_std_msgs::String>(const z_std_msgs::String& msg, uint8_t* buffer, size_t max_len) {
+inline size_t serialize_msg<z_std_msgs::z_String>(const z_std_msgs::z_String& msg, uint8_t* buffer, size_t max_len) {
     JsonDocument doc;
     doc.add(msg.data);
     return serializeMsgPack(doc, buffer, max_len);
 }
 template <>
-inline void deserialize_msg<z_std_msgs::String>(const uint8_t* buffer, size_t len, z_std_msgs::String& msg) {
+inline void deserialize_msg<z_std_msgs::z_String>(const uint8_t* buffer, size_t len, z_std_msgs::z_String& msg) {
     JsonDocument doc;
     deserializeMsgPack(doc, buffer, len);
     msg.data = doc[0].as<std::string>();
 }
 
-// --- Custom Specialization for z_std_msgs::Empty ---
+// --- Custom Specialization for z_std_msgs::z_Empty ---
 namespace z_std_msgs {
-    struct Empty {};
+    struct z_Empty {};
 }
 template <>
-inline size_t serialize_msg<z_std_msgs::Empty>(const z_std_msgs::Empty& msg, uint8_t* buffer, size_t max_len) {
+inline size_t serialize_msg<z_std_msgs::z_Empty>(const z_std_msgs::z_Empty& msg, uint8_t* buffer, size_t max_len) {
     JsonDocument doc;
     return serializeMsgPack(doc, buffer, max_len);
 }
 template <>
-inline void deserialize_msg<z_std_msgs::Empty>(const uint8_t* buffer, size_t len, z_std_msgs::Empty& msg) {
+inline void deserialize_msg<z_std_msgs::z_Empty>(const uint8_t* buffer, size_t len, z_std_msgs::z_Empty& msg) {
     (void)buffer; (void)len; (void)msg;
 }
 
-// --- Passthrough Specialization for Raw messages ---
+// --- Passthrough Specialization for z_Raw messages ---
 namespace z_std_msgs {
-    struct Raw {
+    struct z_Raw {
         std::vector<uint8_t> data;
     };
 }
 template <>
-inline size_t serialize_msg<z_std_msgs::Raw>(const z_std_msgs::Raw& msg, uint8_t* buffer, size_t max_len) {
+inline size_t serialize_msg<z_std_msgs::z_Raw>(const z_std_msgs::z_Raw& msg, uint8_t* buffer, size_t max_len) {
     size_t copy_len = msg.data.size() < max_len ? msg.data.size() : max_len;
     memcpy(buffer, msg.data.data(), copy_len);
     return copy_len;
 }
 template <>
-inline void deserialize_msg<z_std_msgs::Raw>(const uint8_t* buffer, size_t len, z_std_msgs::Raw& msg) {
+inline void deserialize_msg<z_std_msgs::z_Raw>(const uint8_t* buffer, size_t len, z_std_msgs::z_Raw& msg) {
     msg.data.assign(buffer, buffer + len);
 }
 

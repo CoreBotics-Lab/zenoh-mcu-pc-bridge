@@ -39,25 +39,25 @@ TYPE_MAP_PYTHON = {
 
 # Standard nested types mapping
 NESTED_TYPES = {
-    'geometry_msgs/Vector3': 'z_geometry_msgs::Vector3',
-    'geometry_msgs/msg/Vector3': 'z_geometry_msgs::Vector3',
-    'geometry_msgs/Point': 'z_geometry_msgs::Point',
-    'geometry_msgs/msg/Point': 'z_geometry_msgs::Point',
-    'geometry_msgs/Quaternion': 'z_geometry_msgs::Quaternion',
-    'geometry_msgs/msg/Quaternion': 'z_geometry_msgs::Quaternion',
-    'geometry_msgs/Twist': 'z_geometry_msgs::Twist',
-    'geometry_msgs/msg/Twist': 'z_geometry_msgs::Twist'
+    'geometry_msgs/Vector3': 'z_geometry_msgs::z_Vector3',
+    'geometry_msgs/msg/Vector3': 'z_geometry_msgs::z_Vector3',
+    'geometry_msgs/Point': 'z_geometry_msgs::z_Point',
+    'geometry_msgs/msg/Point': 'z_geometry_msgs::z_Point',
+    'geometry_msgs/Quaternion': 'z_geometry_msgs::z_Quaternion',
+    'geometry_msgs/msg/Quaternion': 'z_geometry_msgs::z_Quaternion',
+    'geometry_msgs/Twist': 'z_geometry_msgs::z_Twist',
+    'geometry_msgs/msg/Twist': 'z_geometry_msgs::z_Twist'
 }
 
 NESTED_PYTHON_TYPES = {
-    'geometry_msgs/Vector3': 'z_geometry_msgs.Vector3',
-    'geometry_msgs/msg/Vector3': 'z_geometry_msgs.Vector3',
-    'geometry_msgs/Point': 'z_geometry_msgs.Point',
-    'geometry_msgs/msg/Point': 'z_geometry_msgs.Point',
-    'geometry_msgs/Quaternion': 'z_geometry_msgs.Quaternion',
-    'geometry_msgs/msg/Quaternion': 'z_geometry_msgs.Quaternion',
-    'geometry_msgs/Twist': 'z_geometry_msgs.Twist',
-    'geometry_msgs/msg/Twist': 'z_geometry_msgs.Twist'
+    'geometry_msgs/Vector3': 'z_geometry_msgs.z_Vector3',
+    'geometry_msgs/msg/Vector3': 'z_geometry_msgs.z_Vector3',
+    'geometry_msgs/Point': 'z_geometry_msgs.z_Point',
+    'geometry_msgs/msg/Point': 'z_geometry_msgs.z_Point',
+    'geometry_msgs/Quaternion': 'z_geometry_msgs.z_Quaternion',
+    'geometry_msgs/msg/Quaternion': 'z_geometry_msgs.z_Quaternion',
+    'geometry_msgs/Twist': 'z_geometry_msgs.z_Twist',
+    'geometry_msgs/msg/Twist': 'z_geometry_msgs.z_Twist'
 }
 
 def parse_fields(lines):
@@ -272,7 +272,8 @@ def generate_python_deserialize_field(f_type, f_name):
     return 'None'
 
 def generate_mcu_header(package, name, fields, is_srv=False, req_fields=None, res_fields=None):
-    guard = f"CUSTOM_INTERFACE_{package.upper()}_{name.upper()}_H"
+    z_name = f"z_{name}"
+    guard = f"CUSTOM_INTERFACE_{package.upper()}_{z_name.upper()}_H"
     
     # Process includes
     all_fields = fields if not is_srv else (req_fields + res_fields)
@@ -291,15 +292,15 @@ namespace {package} {{
     if not is_srv:
         # Generate topic message struct
         struct_fields = '\n'.join([f"    {get_cpp_type(ftype)} {fname};" for ftype, fname in fields])
-        content += f"""struct {name} {{
+        content += f"""struct {z_name} {{
 {struct_fields}
 }};
 }} // namespace {package}
 
 // --- Topic Serialization Override ---
 template <>
-inline size_t serialize_msg<{package}::{name}>(
-    const {package}::{name}& msg, uint8_t* buffer, size_t max_len) {{
+inline size_t serialize_msg<{package}::{z_name}>(
+    const {package}::{z_name}& msg, uint8_t* buffer, size_t max_len) {{
     JsonDocument doc;
 """
         for ftype, fname in fields:
@@ -309,8 +310,8 @@ inline size_t serialize_msg<{package}::{name}>(
 
 // --- Topic Deserialization Override ---
 template <>
-inline void deserialize_msg<{package}::{name}>(
-    const uint8_t* buffer, size_t len, {package}::{name}& msg) {{
+inline void deserialize_msg<{package}::{z_name}>(
+    const uint8_t* buffer, size_t len, {package}::{z_name}& msg) {{
     JsonDocument doc;
     deserializeMsgPack(doc, buffer, len);
 """
@@ -322,7 +323,7 @@ inline void deserialize_msg<{package}::{name}>(
         # Generate service message struct (nested classes)
         req_struct = '\n'.join([f"        {get_cpp_type(ftype)} {fname};" for ftype, fname in req_fields])
         res_struct = '\n'.join([f"        {get_cpp_type(ftype)} {fname};" for ftype, fname in res_fields])
-        content += f"""struct {name} {{
+        content += f"""struct {z_name} {{
     struct Request {{
 {req_struct}
     }};
@@ -335,8 +336,8 @@ inline void deserialize_msg<{package}::{name}>(
 
 // --- Service Request Serializer ---
 template <>
-inline size_t serialize_msg<{package}::{name}::Request>(
-    const {package}::{name}::Request& msg, uint8_t* buffer, size_t max_len) {{
+inline size_t serialize_msg<{package}::{z_name}::Request>(
+    const {package}::{z_name}::Request& msg, uint8_t* buffer, size_t max_len) {{
     JsonDocument doc;
 """
         for ftype, fname in req_fields:
@@ -346,8 +347,8 @@ inline size_t serialize_msg<{package}::{name}::Request>(
 
 // --- Service Request Deserializer ---
 template <>
-inline void deserialize_msg<{package}::{name}::Request>(
-    const uint8_t* buffer, size_t len, {package}::{name}::Request& msg) {{
+inline void deserialize_msg<{package}::{z_name}::Request>(
+    const uint8_t* buffer, size_t len, {package}::{z_name}::Request& msg) {{
     JsonDocument doc;
     deserializeMsgPack(doc, buffer, len);
 """
@@ -357,8 +358,8 @@ inline void deserialize_msg<{package}::{name}::Request>(
 
 // --- Service Response Serializer ---
 template <>
-inline size_t serialize_msg<{package}::{name}::Response>(
-    const {package}::{name}::Response& msg, uint8_t* buffer, size_t max_len) {{
+inline size_t serialize_msg<{package}::{z_name}::Response>(
+    const {package}::{z_name}::Response& msg, uint8_t* buffer, size_t max_len) {{
     JsonDocument doc;
 """
         for ftype, fname in res_fields:
@@ -368,8 +369,8 @@ inline size_t serialize_msg<{package}::{name}::Response>(
 
 // --- Service Response Deserializer ---
 template <>
-inline void deserialize_msg<{package}::{name}::Response>(
-    const uint8_t* buffer, size_t len, {package}::{name}::Response& msg) {{
+inline void deserialize_msg<{package}::{z_name}::Response>(
+    const uint8_t* buffer, size_t len, {package}::{z_name}::Response& msg) {{
     JsonDocument doc;
     deserializeMsgPack(doc, buffer, len);
 """
@@ -381,7 +382,8 @@ inline void deserialize_msg<{package}::{name}::Response>(
     return content
 
 def generate_pc_header(package, name, fields, is_srv=False, req_fields=None, res_fields=None):
-    guard = f"CUSTOM_INTERFACE_PC_{package.upper()}_{name.upper()}_H"
+    z_name = f"z_{name}"
+    guard = f"CUSTOM_INTERFACE_PC_{package.upper()}_{z_name.upper()}_H"
     
     # Process includes
     all_fields = fields if not is_srv else (req_fields + res_fields)
@@ -401,15 +403,15 @@ namespace {package} {{
 """
     if not is_srv:
         struct_fields = '\n'.join([f"    {get_cpp_type(ftype)} {fname};" for ftype, fname in fields])
-        content += f"""struct {name} {{
+        content += f"""struct {z_name} {{
 {struct_fields}
 }};
 }} // namespace {package}
 
 // --- Topic Serialization Override ---
 template <>
-inline std::vector<uint8_t> serialize_msg_pc<{package}::{name}>(
-    const {package}::{name}& msg) {{
+inline std::vector<uint8_t> serialize_msg_pc<{package}::{z_name}>(
+    const {package}::{z_name}& msg) {{
     nlohmann::json j;
 """
         for ftype, fname in fields:
@@ -419,8 +421,8 @@ inline std::vector<uint8_t> serialize_msg_pc<{package}::{name}>(
 
 // --- Topic Deserialization Override ---
 template <>
-inline void deserialize_msg_pc<{package}::{name}>(
-    const std::vector<uint8_t>& buffer, {package}::{name}& msg) {{
+inline void deserialize_msg_pc<{package}::{z_name}>(
+    const std::vector<uint8_t>& buffer, {package}::{z_name}& msg) {{
     nlohmann::json j = nlohmann::json::from_msgpack(buffer);
 """
         for ftype, fname in fields:
@@ -430,7 +432,7 @@ inline void deserialize_msg_pc<{package}::{name}>(
     else:
         req_struct = '\n'.join([f"        {get_cpp_type(ftype)} {fname};" for ftype, fname in req_fields])
         res_struct = '\n'.join([f"        {get_cpp_type(ftype)} {fname};" for ftype, fname in res_fields])
-        content += f"""struct {name} {{
+        content += f"""struct {z_name} {{
     struct Request {{
 {req_struct}
     }};
@@ -443,8 +445,8 @@ inline void deserialize_msg_pc<{package}::{name}>(
 
 // --- Service Request Serializer ---
 template <>
-inline std::vector<uint8_t> serialize_msg_pc<{package}::{name}::Request>(
-    const {package}::{name}::Request& msg) {{
+inline std::vector<uint8_t> serialize_msg_pc<{package}::{z_name}::Request>(
+    const {package}::{z_name}::Request& msg) {{
     nlohmann::json j;
 """
         for ftype, fname in req_fields:
@@ -454,8 +456,8 @@ inline std::vector<uint8_t> serialize_msg_pc<{package}::{name}::Request>(
 
 // --- Service Request Deserializer ---
 template <>
-inline void deserialize_msg_pc<{package}::{name}::Request>(
-    const std::vector<uint8_t>& buffer, {package}::{name}::Request& msg) {{
+inline void deserialize_msg_pc<{package}::{z_name}::Request>(
+    const std::vector<uint8_t>& buffer, {package}::{z_name}::Request& msg) {{
     nlohmann::json j = nlohmann::json::from_msgpack(buffer);
 """
         for ftype, fname in req_fields:
@@ -464,8 +466,8 @@ inline void deserialize_msg_pc<{package}::{name}::Request>(
 
 // --- Service Response Serializer ---
 template <>
-inline std::vector<uint8_t> serialize_msg_pc<{package}::{name}::Response>(
-    const {package}::{name}::Response& msg) {{
+inline std::vector<uint8_t> serialize_msg_pc<{package}::{z_name}::Response>(
+    const {package}::{z_name}::Response& msg) {{
     nlohmann::json j;
 """
         for ftype, fname in res_fields:
@@ -475,8 +477,8 @@ inline std::vector<uint8_t> serialize_msg_pc<{package}::{name}::Response>(
 
 // --- Service Response Deserializer ---
 template <>
-inline void deserialize_msg_pc<{package}::{name}::Response>(
-    const std::vector<uint8_t>& buffer, {package}::{name}::Response& msg) {{
+inline void deserialize_msg_pc<{package}::{z_name}::Response>(
+    const std::vector<uint8_t>& buffer, {package}::{z_name}::Response& msg) {{
     nlohmann::json j = nlohmann::json::from_msgpack(buffer);
 """
         for ftype, fname in res_fields:
@@ -487,6 +489,7 @@ inline void deserialize_msg_pc<{package}::{name}::Response>(
     return content
 
 def generate_python_module(package, name, fields, is_srv=False, req_fields=None, res_fields=None):
+    z_name = f"z_{name}"
     all_fields = fields if not is_srv else (req_fields + res_fields)
     has_geometry = False
     for f_type, _ in all_fields:
@@ -519,7 +522,7 @@ from typing import Any, List, Optional, cast
         serialize_fields = ', '.join([generate_python_serialize_field(ftype, fname) for ftype, fname in fields])
         deserialize_fields = ', '.join([generate_python_deserialize_field(ftype, fname) for ftype, fname in fields])
         
-        content += f"""class {name}:
+        content += f"""class {z_name}:
     def __init__(self, {param_str}) -> None:
 {init_str}
 
@@ -527,7 +530,7 @@ from typing import Any, List, Optional, cast
         return cast(bytes, msgpack.packb({{{serialize_fields}}}))
 
     @classmethod
-    def deserialize(cls, payload: bytes) -> '{name}':
+    def deserialize(cls, payload: bytes) -> '{z_name}':
         data = msgpack.unpackb(payload)
         # Handle empty/invalid payload
         if not isinstance(data, dict):
@@ -535,7 +538,7 @@ from typing import Any, List, Optional, cast
         return cls({deserialize_fields})
 
     def __repr__(self) -> str:
-        return f"{package}.{name}({repr_str})"
+        return f"{package}.{z_name}({repr_str})"
 """
     else:
         req_params, req_inits, req_reprs = [], [], []
@@ -560,7 +563,7 @@ from typing import Any, List, Optional, cast
         res_serialize = ', '.join([generate_python_serialize_field(ftype, fname) for ftype, fname in res_fields])
         res_deserialize = ', '.join([generate_python_deserialize_field(ftype, fname) for ftype, fname in res_fields])
 
-        content += f"""class {name}:
+        content += f"""class {z_name}:
     class Request:
         def __init__(self, {', '.join(req_params)}) -> None:
 {'\n'.join(req_inits)}
@@ -576,7 +579,7 @@ from typing import Any, List, Optional, cast
             return cls({req_deserialize})
 
         def __repr__(self) -> str:
-            return f"{package}.{name}.Request({', '.join(req_reprs)})"
+            return f"{package}.{z_name}.Request({', '.join(req_reprs)})"
 
     class Response:
         def __init__(self, {', '.join(res_params)}) -> None:
@@ -593,7 +596,7 @@ from typing import Any, List, Optional, cast
             return cls({res_deserialize})
 
         def __repr__(self) -> str:
-            return f"{package}.{name}.Response({', '.join(res_reprs)})"
+            return f"{package}.{z_name}.Response({', '.join(res_reprs)})"
 """
     return content
 

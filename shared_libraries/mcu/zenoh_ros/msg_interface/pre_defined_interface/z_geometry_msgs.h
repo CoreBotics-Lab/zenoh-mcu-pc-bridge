@@ -5,46 +5,46 @@
 
 namespace z_geometry_msgs {
 
-    struct Vector3 {
+    struct z_Vector3 {
         double x;
         double y;
         double z;
     };
 
-    struct Point {
+    struct z_Point {
         double x;
         double y;
         double z;
     };
 
-    struct Quaternion {
+    struct z_Quaternion {
         double x;
         double y;
         double z;
         double w;
     };
 
-    struct Pose {
-        Point position;
-        Quaternion orientation;
+    struct z_Pose {
+        z_Point position;
+        z_Quaternion orientation;
     };
 
-    struct Twist {
-        Vector3 linear;
-        Vector3 angular;
+    struct z_Twist {
+        z_Vector3 linear;
+        z_Vector3 angular;
     };
 
-    struct Wrench {
-        Vector3 force;
-        Vector3 torque;
+    struct z_Wrench {
+        z_Vector3 force;
+        z_Vector3 torque;
     };
 
-    struct Transform {
-        Vector3 translation;
-        Quaternion rotation;
+    struct z_Transform {
+        z_Vector3 translation;
+        z_Quaternion rotation;
     };
 
-    struct Pose2D {
+    struct z_Pose2D {
         double x;
         double y;
         double theta;
@@ -55,7 +55,7 @@ namespace z_geometry_msgs {
 // --- Serialization Specializations ---
 
 template <>
-inline size_t serialize_msg<z_geometry_msgs::Vector3>(const z_geometry_msgs::Vector3& msg, uint8_t* buffer, size_t max_len) {
+inline size_t serialize_msg<z_geometry_msgs::z_Vector3>(const z_geometry_msgs::z_Vector3& msg, uint8_t* buffer, size_t max_len) {
     JsonDocument doc;
     JsonArray array = doc.to<JsonArray>();
     array.add(msg.x);
@@ -65,7 +65,7 @@ inline size_t serialize_msg<z_geometry_msgs::Vector3>(const z_geometry_msgs::Vec
 }
 
 template <>
-inline size_t serialize_msg<z_geometry_msgs::Point>(const z_geometry_msgs::Point& msg, uint8_t* buffer, size_t max_len) {
+inline size_t serialize_msg<z_geometry_msgs::z_Point>(const z_geometry_msgs::z_Point& msg, uint8_t* buffer, size_t max_len) {
     JsonDocument doc;
     JsonArray array = doc.to<JsonArray>();
     array.add(msg.x);
@@ -75,7 +75,7 @@ inline size_t serialize_msg<z_geometry_msgs::Point>(const z_geometry_msgs::Point
 }
 
 template <>
-inline size_t serialize_msg<z_geometry_msgs::Quaternion>(const z_geometry_msgs::Quaternion& msg, uint8_t* buffer, size_t max_len) {
+inline size_t serialize_msg<z_geometry_msgs::z_Quaternion>(const z_geometry_msgs::z_Quaternion& msg, uint8_t* buffer, size_t max_len) {
     JsonDocument doc;
     JsonArray array = doc.to<JsonArray>();
     array.add(msg.x);
@@ -86,7 +86,7 @@ inline size_t serialize_msg<z_geometry_msgs::Quaternion>(const z_geometry_msgs::
 }
 
 template <>
-inline size_t serialize_msg<z_geometry_msgs::Pose>(const z_geometry_msgs::Pose& msg, uint8_t* buffer, size_t max_len) {
+inline size_t serialize_msg<z_geometry_msgs::z_Pose>(const z_geometry_msgs::z_Pose& msg, uint8_t* buffer, size_t max_len) {
     JsonDocument doc;
     JsonArray array = doc.to<JsonArray>();
     
@@ -105,7 +105,7 @@ inline size_t serialize_msg<z_geometry_msgs::Pose>(const z_geometry_msgs::Pose& 
 }
 
 template <>
-inline size_t serialize_msg<z_geometry_msgs::Twist>(const z_geometry_msgs::Twist& msg, uint8_t* buffer, size_t max_len) {
+inline size_t serialize_msg<z_geometry_msgs::z_Twist>(const z_geometry_msgs::z_Twist& msg, uint8_t* buffer, size_t max_len) {
     JsonDocument doc;
     JsonArray array = doc.to<JsonArray>();
     
@@ -123,7 +123,7 @@ inline size_t serialize_msg<z_geometry_msgs::Twist>(const z_geometry_msgs::Twist
 }
 
 template <>
-inline size_t serialize_msg<z_geometry_msgs::Wrench>(const z_geometry_msgs::Wrench& msg, uint8_t* buffer, size_t max_len) {
+inline size_t serialize_msg<z_geometry_msgs::z_Wrench>(const z_geometry_msgs::z_Wrench& msg, uint8_t* buffer, size_t max_len) {
     JsonDocument doc;
     JsonArray array = doc.to<JsonArray>();
     
@@ -141,7 +141,7 @@ inline size_t serialize_msg<z_geometry_msgs::Wrench>(const z_geometry_msgs::Wren
 }
 
 template <>
-inline size_t serialize_msg<z_geometry_msgs::Transform>(const z_geometry_msgs::Transform& msg, uint8_t* buffer, size_t max_len) {
+inline size_t serialize_msg<z_geometry_msgs::z_Transform>(const z_geometry_msgs::z_Transform& msg, uint8_t* buffer, size_t max_len) {
     JsonDocument doc;
     JsonArray array = doc.to<JsonArray>();
     
@@ -160,7 +160,7 @@ inline size_t serialize_msg<z_geometry_msgs::Transform>(const z_geometry_msgs::T
 }
 
 template <>
-inline size_t serialize_msg<z_geometry_msgs::Pose2D>(const z_geometry_msgs::Pose2D& msg, uint8_t* buffer, size_t max_len) {
+inline size_t serialize_msg<z_geometry_msgs::z_Pose2D>(const z_geometry_msgs::z_Pose2D& msg, uint8_t* buffer, size_t max_len) {
     JsonDocument doc;
     JsonArray array = doc.to<JsonArray>();
     array.add(msg.x);
@@ -172,7 +172,7 @@ inline size_t serialize_msg<z_geometry_msgs::Pose2D>(const z_geometry_msgs::Pose
 // --- Deserialization Specializations ---
 
 template <>
-inline void deserialize_msg<z_geometry_msgs::Vector3>(const uint8_t* buffer, size_t len, z_geometry_msgs::Vector3& msg) {
+inline void deserialize_msg<z_geometry_msgs::z_Vector3>(const uint8_t* buffer, size_t len, z_geometry_msgs::z_Vector3& msg) {
     JsonDocument doc;
     deserializeMsgPack(doc, buffer, len);
     msg.x = doc[0].as<double>();
@@ -181,7 +181,7 @@ inline void deserialize_msg<z_geometry_msgs::Vector3>(const uint8_t* buffer, siz
 }
 
 template <>
-inline void deserialize_msg<z_geometry_msgs::Point>(const uint8_t* buffer, size_t len, z_geometry_msgs::Point& msg) {
+inline void deserialize_msg<z_geometry_msgs::z_Point>(const uint8_t* buffer, size_t len, z_geometry_msgs::z_Point& msg) {
     JsonDocument doc;
     deserializeMsgPack(doc, buffer, len);
     msg.x = doc[0].as<double>();
@@ -190,7 +190,7 @@ inline void deserialize_msg<z_geometry_msgs::Point>(const uint8_t* buffer, size_
 }
 
 template <>
-inline void deserialize_msg<z_geometry_msgs::Quaternion>(const uint8_t* buffer, size_t len, z_geometry_msgs::Quaternion& msg) {
+inline void deserialize_msg<z_geometry_msgs::z_Quaternion>(const uint8_t* buffer, size_t len, z_geometry_msgs::z_Quaternion& msg) {
     JsonDocument doc;
     deserializeMsgPack(doc, buffer, len);
     msg.x = doc[0].as<double>();
@@ -200,7 +200,7 @@ inline void deserialize_msg<z_geometry_msgs::Quaternion>(const uint8_t* buffer, 
 }
 
 template <>
-inline void deserialize_msg<z_geometry_msgs::Pose>(const uint8_t* buffer, size_t len, z_geometry_msgs::Pose& msg) {
+inline void deserialize_msg<z_geometry_msgs::z_Pose>(const uint8_t* buffer, size_t len, z_geometry_msgs::z_Pose& msg) {
     JsonDocument doc;
     deserializeMsgPack(doc, buffer, len);
     
@@ -215,7 +215,7 @@ inline void deserialize_msg<z_geometry_msgs::Pose>(const uint8_t* buffer, size_t
 }
 
 template <>
-inline void deserialize_msg<z_geometry_msgs::Twist>(const uint8_t* buffer, size_t len, z_geometry_msgs::Twist& msg) {
+inline void deserialize_msg<z_geometry_msgs::z_Twist>(const uint8_t* buffer, size_t len, z_geometry_msgs::z_Twist& msg) {
     JsonDocument doc;
     deserializeMsgPack(doc, buffer, len);
     
@@ -229,7 +229,7 @@ inline void deserialize_msg<z_geometry_msgs::Twist>(const uint8_t* buffer, size_
 }
 
 template <>
-inline void deserialize_msg<z_geometry_msgs::Wrench>(const uint8_t* buffer, size_t len, z_geometry_msgs::Wrench& msg) {
+inline void deserialize_msg<z_geometry_msgs::z_Wrench>(const uint8_t* buffer, size_t len, z_geometry_msgs::z_Wrench& msg) {
     JsonDocument doc;
     deserializeMsgPack(doc, buffer, len);
     
@@ -243,7 +243,7 @@ inline void deserialize_msg<z_geometry_msgs::Wrench>(const uint8_t* buffer, size
 }
 
 template <>
-inline void deserialize_msg<z_geometry_msgs::Transform>(const uint8_t* buffer, size_t len, z_geometry_msgs::Transform& msg) {
+inline void deserialize_msg<z_geometry_msgs::z_Transform>(const uint8_t* buffer, size_t len, z_geometry_msgs::z_Transform& msg) {
     JsonDocument doc;
     deserializeMsgPack(doc, buffer, len);
     
@@ -258,7 +258,7 @@ inline void deserialize_msg<z_geometry_msgs::Transform>(const uint8_t* buffer, s
 }
 
 template <>
-inline void deserialize_msg<z_geometry_msgs::Pose2D>(const uint8_t* buffer, size_t len, z_geometry_msgs::Pose2D& msg) {
+inline void deserialize_msg<z_geometry_msgs::z_Pose2D>(const uint8_t* buffer, size_t len, z_geometry_msgs::z_Pose2D& msg) {
     JsonDocument doc;
     deserializeMsgPack(doc, buffer, len);
     msg.x = doc[0].as<double>();

@@ -1,7 +1,7 @@
 import msgpack
 from typing import Any, List, Optional, cast
 
-class Empty:
+class z_Empty:
     def __init__(self) -> None:
         pass
 
@@ -9,11 +9,11 @@ class Empty:
         return cast(bytes, msgpack.packb([]))
 
     @classmethod
-    def deserialize(cls, payload: bytes) -> 'Empty':
+    def deserialize(cls, payload: bytes) -> 'z_Empty':
         return cls()
 
 
-class Raw:
+class z_Raw:
     def __init__(self, data: bytes = b"") -> None:
         self.data: bytes = data
 
@@ -21,7 +21,7 @@ class Raw:
         return self.data
 
     @classmethod
-    def deserialize(cls, payload: bytes) -> 'Raw':
+    def deserialize(cls, payload: bytes) -> 'z_Raw':
         return cls(payload)
 
 
@@ -73,30 +73,30 @@ def _make_array_msg(cls_name: str):
 
 
 # Create all standard primitives
-Bool = _make_primitive_msg("Bool", False)
-Byte = _make_primitive_msg("Byte", 0)
-Char = _make_primitive_msg("Char", 0)
-Int8 = _make_primitive_msg("Int8", 0)
-UInt8 = _make_primitive_msg("UInt8", 0)
-Int16 = _make_primitive_msg("Int16", 0)
-UInt16 = _make_primitive_msg("UInt16", 0)
-Int32 = _make_primitive_msg("Int32", 0)
-UInt32 = _make_primitive_msg("UInt32", 0)
-Int64 = _make_primitive_msg("Int64", 0)
-UInt64 = _make_primitive_msg("UInt64", 0)
-Float32 = _make_primitive_msg("Float32", 0.0)
-Float64 = _make_primitive_msg("Float64", 0.0)
-String = _make_primitive_msg("String", "")
+z_Bool = _make_primitive_msg("z_Bool", False)
+z_Byte = _make_primitive_msg("z_Byte", 0)
+z_Char = _make_primitive_msg("z_Char", 0)
+z_Int8 = _make_primitive_msg("z_Int8", 0)
+z_UInt8 = _make_primitive_msg("z_UInt8", 0)
+z_Int16 = _make_primitive_msg("z_Int16", 0)
+z_UInt16 = _make_primitive_msg("z_UInt16", 0)
+z_Int32 = _make_primitive_msg("z_Int32", 0)
+z_UInt32 = _make_primitive_msg("z_UInt32", 0)
+z_Int64 = _make_primitive_msg("z_Int64", 0)
+z_UInt64 = _make_primitive_msg("z_UInt64", 0)
+z_Float32 = _make_primitive_msg("z_Float32", 0.0)
+z_Float64 = _make_primitive_msg("z_Float64", 0.0)
+z_String = _make_primitive_msg("z_String", "")
 
 # Create all standard arrays
-ByteMultiArray = _make_array_msg("ByteMultiArray")
-Int8MultiArray = _make_array_msg("Int8MultiArray")
-UInt8MultiArray = _make_array_msg("UInt8MultiArray")
-Int16MultiArray = _make_array_msg("Int16MultiArray")
-UInt16MultiArray = _make_array_msg("UInt16MultiArray")
-Int32MultiArray = _make_array_msg("Int32MultiArray")
-UInt32MultiArray = _make_array_msg("UInt32MultiArray")
-Int64MultiArray = _make_array_msg("Int64MultiArray")
-UInt64MultiArray = _make_array_msg("UInt64MultiArray")
-Float32MultiArray = _make_array_msg("Float32MultiArray")
-Float64MultiArray = _make_array_msg("Float64MultiArray")
+z_ByteMultiArray = _make_array_msg("z_ByteMultiArray")
+z_Int8MultiArray = _make_array_msg("z_Int8MultiArray")
+z_UInt8MultiArray = _make_array_msg("z_UInt8MultiArray")
+z_Int16MultiArray = _make_array_msg("z_Int16MultiArray")
+z_UInt16MultiArray = _make_array_msg("z_UInt16MultiArray")
+z_Int32MultiArray = _make_array_msg("z_Int32MultiArray")
+z_UInt32MultiArray = _make_array_msg("z_UInt32MultiArray")
+z_Int64MultiArray = _make_array_msg("z_Int64MultiArray")
+z_UInt64MultiArray = _make_array_msg("z_UInt64MultiArray")
+z_Float32MultiArray = _make_array_msg("z_Float32MultiArray")
+z_Float64MultiArray = _make_array_msg("z_Float64MultiArray")

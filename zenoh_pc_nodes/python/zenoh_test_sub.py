@@ -14,14 +14,14 @@ class CounterSubscriberNode(ZenohNode):
 
         # Create subscription with standard ROS 2 message type (Int32) and depth 10
         self.sub = self.z_create_subscription(
-            msgs.Int32,
+            msgs.z_Int32,
             "robot/sim_counter",
             self.listener_callback,
             10
         )
 
-    def listener_callback(self, msg: msgs.Int32) -> None:
-        # Message is already deserialized into standard msgs.Int32 class!
+    def listener_callback(self, msg: msgs.z_Int32) -> None:
+        # Message is already deserialized into standard msgs.z_Int32 class!
         print(f"[RECV FROM ESP32-S3] sim_counter: {msg.data}")
 
 

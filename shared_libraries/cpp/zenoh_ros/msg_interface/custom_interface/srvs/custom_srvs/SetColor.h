@@ -1,12 +1,12 @@
-#ifndef CUSTOM_INTERFACE_PC_CUSTOM_SRVS_SETCOLOR_H
-#define CUSTOM_INTERFACE_PC_CUSTOM_SRVS_SETCOLOR_H
+#ifndef CUSTOM_INTERFACE_PC_CUSTOM_SRVS_Z_SETCOLOR_H
+#define CUSTOM_INTERFACE_PC_CUSTOM_SRVS_Z_SETCOLOR_H
 
 #include <nlohmann/json.hpp>
 #include <vector>
 #include <string>
 
 namespace custom_srvs {
-struct SetColor {
+struct z_SetColor {
     struct Request {
         int32_t r;
         int32_t g;
@@ -22,8 +22,8 @@ struct SetColor {
 
 // --- Service Request Serializer ---
 template <>
-inline std::vector<uint8_t> serialize_msg_pc<custom_srvs::SetColor::Request>(
-    const custom_srvs::SetColor::Request& msg) {
+inline std::vector<uint8_t> serialize_msg_pc<custom_srvs::z_SetColor::Request>(
+    const custom_srvs::z_SetColor::Request& msg) {
     nlohmann::json j;
     j["r"] = msg.r;
     j["g"] = msg.g;
@@ -33,8 +33,8 @@ inline std::vector<uint8_t> serialize_msg_pc<custom_srvs::SetColor::Request>(
 
 // --- Service Request Deserializer ---
 template <>
-inline void deserialize_msg_pc<custom_srvs::SetColor::Request>(
-    const std::vector<uint8_t>& buffer, custom_srvs::SetColor::Request& msg) {
+inline void deserialize_msg_pc<custom_srvs::z_SetColor::Request>(
+    const std::vector<uint8_t>& buffer, custom_srvs::z_SetColor::Request& msg) {
     nlohmann::json j = nlohmann::json::from_msgpack(buffer);
     msg.r = j["r"].get<int32_t>();
     msg.g = j["g"].get<int32_t>();
@@ -43,8 +43,8 @@ inline void deserialize_msg_pc<custom_srvs::SetColor::Request>(
 
 // --- Service Response Serializer ---
 template <>
-inline std::vector<uint8_t> serialize_msg_pc<custom_srvs::SetColor::Response>(
-    const custom_srvs::SetColor::Response& msg) {
+inline std::vector<uint8_t> serialize_msg_pc<custom_srvs::z_SetColor::Response>(
+    const custom_srvs::z_SetColor::Response& msg) {
     nlohmann::json j;
     j["success"] = msg.success;
     j["message"] = msg.message;
@@ -53,11 +53,11 @@ inline std::vector<uint8_t> serialize_msg_pc<custom_srvs::SetColor::Response>(
 
 // --- Service Response Deserializer ---
 template <>
-inline void deserialize_msg_pc<custom_srvs::SetColor::Response>(
-    const std::vector<uint8_t>& buffer, custom_srvs::SetColor::Response& msg) {
+inline void deserialize_msg_pc<custom_srvs::z_SetColor::Response>(
+    const std::vector<uint8_t>& buffer, custom_srvs::z_SetColor::Response& msg) {
     nlohmann::json j = nlohmann::json::from_msgpack(buffer);
     msg.success = j["success"].get<bool>();
     msg.message = j["message"].get<std::string>();
 }
 
-#endif // CUSTOM_INTERFACE_PC_CUSTOM_SRVS_SETCOLOR_H
+#endif // CUSTOM_INTERFACE_PC_CUSTOM_SRVS_Z_SETCOLOR_H

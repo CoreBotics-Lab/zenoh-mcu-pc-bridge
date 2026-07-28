@@ -50,77 +50,77 @@ void deserialize_msg_pc(const std::vector<uint8_t>& buffer, T& msg);
     }
 
 // Define Primitives
-DEFINE_Z_STD_MSG_PRIMITIVE_PC(Bool, bool)
-DEFINE_Z_STD_MSG_PRIMITIVE_PC(Byte, int8_t)
-DEFINE_Z_STD_MSG_PRIMITIVE_PC(Char, uint8_t)
-DEFINE_Z_STD_MSG_PRIMITIVE_PC(Int8, int8_t)
-DEFINE_Z_STD_MSG_PRIMITIVE_PC(UInt8, uint8_t)
-DEFINE_Z_STD_MSG_PRIMITIVE_PC(Int16, int16_t)
-DEFINE_Z_STD_MSG_PRIMITIVE_PC(UInt16, uint16_t)
-DEFINE_Z_STD_MSG_PRIMITIVE_PC(Int32, int32_t)
-DEFINE_Z_STD_MSG_PRIMITIVE_PC(UInt32, uint32_t)
-DEFINE_Z_STD_MSG_PRIMITIVE_PC(Int64, int64_t)
-DEFINE_Z_STD_MSG_PRIMITIVE_PC(UInt64, uint64_t)
-DEFINE_Z_STD_MSG_PRIMITIVE_PC(Float32, float)
-DEFINE_Z_STD_MSG_PRIMITIVE_PC(Float64, double)
+DEFINE_Z_STD_MSG_PRIMITIVE_PC(z_Bool, bool)
+DEFINE_Z_STD_MSG_PRIMITIVE_PC(z_Byte, int8_t)
+DEFINE_Z_STD_MSG_PRIMITIVE_PC(z_Char, uint8_t)
+DEFINE_Z_STD_MSG_PRIMITIVE_PC(z_Int8, int8_t)
+DEFINE_Z_STD_MSG_PRIMITIVE_PC(z_UInt8, uint8_t)
+DEFINE_Z_STD_MSG_PRIMITIVE_PC(z_Int16, int16_t)
+DEFINE_Z_STD_MSG_PRIMITIVE_PC(z_UInt16, uint16_t)
+DEFINE_Z_STD_MSG_PRIMITIVE_PC(z_Int32, int32_t)
+DEFINE_Z_STD_MSG_PRIMITIVE_PC(z_UInt32, uint32_t)
+DEFINE_Z_STD_MSG_PRIMITIVE_PC(z_Int64, int64_t)
+DEFINE_Z_STD_MSG_PRIMITIVE_PC(z_UInt64, uint64_t)
+DEFINE_Z_STD_MSG_PRIMITIVE_PC(z_Float32, float)
+DEFINE_Z_STD_MSG_PRIMITIVE_PC(z_Float64, double)
 
 // Define Arrays
-DEFINE_Z_STD_MSG_ARRAY_PC(ByteMultiArray, int8_t)
-DEFINE_Z_STD_MSG_ARRAY_PC(Int8MultiArray, int8_t)
-DEFINE_Z_STD_MSG_ARRAY_PC(UInt8MultiArray, uint8_t)
-DEFINE_Z_STD_MSG_ARRAY_PC(Int16MultiArray, int16_t)
-DEFINE_Z_STD_MSG_ARRAY_PC(UInt16MultiArray, uint16_t)
-DEFINE_Z_STD_MSG_ARRAY_PC(Int32MultiArray, int32_t)
-DEFINE_Z_STD_MSG_ARRAY_PC(UInt32MultiArray, uint32_t)
-DEFINE_Z_STD_MSG_ARRAY_PC(Int64MultiArray, int64_t)
-DEFINE_Z_STD_MSG_ARRAY_PC(UInt64MultiArray, uint64_t)
-DEFINE_Z_STD_MSG_ARRAY_PC(Float32MultiArray, float)
-DEFINE_Z_STD_MSG_ARRAY_PC(Float64MultiArray, double)
+DEFINE_Z_STD_MSG_ARRAY_PC(z_ByteMultiArray, int8_t)
+DEFINE_Z_STD_MSG_ARRAY_PC(z_Int8MultiArray, int8_t)
+DEFINE_Z_STD_MSG_ARRAY_PC(z_UInt8MultiArray, uint8_t)
+DEFINE_Z_STD_MSG_ARRAY_PC(z_Int16MultiArray, int16_t)
+DEFINE_Z_STD_MSG_ARRAY_PC(z_UInt16MultiArray, uint16_t)
+DEFINE_Z_STD_MSG_ARRAY_PC(z_Int32MultiArray, int32_t)
+DEFINE_Z_STD_MSG_ARRAY_PC(z_UInt32MultiArray, uint32_t)
+DEFINE_Z_STD_MSG_ARRAY_PC(z_Int64MultiArray, int64_t)
+DEFINE_Z_STD_MSG_ARRAY_PC(z_UInt64MultiArray, uint64_t)
+DEFINE_Z_STD_MSG_ARRAY_PC(z_Float32MultiArray, float)
+DEFINE_Z_STD_MSG_ARRAY_PC(z_Float64MultiArray, double)
 
-// --- Custom Specialization for z_std_msgs::String ---
+// --- Custom Specialization for z_std_msgs::z_String ---
 namespace z_std_msgs {
-    struct String {
+    struct z_String {
         std::string data;
     };
 }
 template <>
-inline std::vector<uint8_t> serialize_msg_pc<z_std_msgs::String>(const z_std_msgs::String& msg) {
+inline std::vector<uint8_t> serialize_msg_pc<z_std_msgs::z_String>(const z_std_msgs::z_String& msg) {
     nlohmann::json j = nlohmann::json::array();
     j.push_back(msg.data);
     return nlohmann::json::to_msgpack(j);
 }
 template <>
-inline void deserialize_msg_pc<z_std_msgs::String>(const std::vector<uint8_t>& buffer, z_std_msgs::String& msg) {
+inline void deserialize_msg_pc<z_std_msgs::z_String>(const std::vector<uint8_t>& buffer, z_std_msgs::z_String& msg) {
     nlohmann::json j = nlohmann::json::from_msgpack(buffer);
     msg.data = j[0].get<std::string>();
 }
 
-// --- Custom Specialization for z_std_msgs::Empty ---
+// --- Custom Specialization for z_std_msgs::z_Empty ---
 namespace z_std_msgs {
-    struct Empty {};
+    struct z_Empty {};
 }
 template <>
-inline std::vector<uint8_t> serialize_msg_pc<z_std_msgs::Empty>(const z_std_msgs::Empty& msg) {
+inline std::vector<uint8_t> serialize_msg_pc<z_std_msgs::z_Empty>(const z_std_msgs::z_Empty& msg) {
     nlohmann::json j = nlohmann::json::array();
     return nlohmann::json::to_msgpack(j);
 }
 template <>
-inline void deserialize_msg_pc<z_std_msgs::Empty>(const std::vector<uint8_t>& buffer, z_std_msgs::Empty& msg) {
+inline void deserialize_msg_pc<z_std_msgs::z_Empty>(const std::vector<uint8_t>& buffer, z_std_msgs::z_Empty& msg) {
     (void)buffer; (void)msg;
 }
 
-// --- Passthrough Specialization for Raw messages ---
+// --- Passthrough Specialization for z_Raw messages ---
 namespace z_std_msgs {
-    struct Raw {
+    struct z_Raw {
         std::vector<uint8_t> data;
     };
 }
 template <>
-inline std::vector<uint8_t> serialize_msg_pc<z_std_msgs::Raw>(const z_std_msgs::Raw& msg) {
+inline std::vector<uint8_t> serialize_msg_pc<z_std_msgs::z_Raw>(const z_std_msgs::z_Raw& msg) {
     return msg.data;
 }
 template <>
-inline void deserialize_msg_pc<z_std_msgs::Raw>(const std::vector<uint8_t>& buffer, z_std_msgs::Raw& msg) {
+inline void deserialize_msg_pc<z_std_msgs::z_Raw>(const std::vector<uint8_t>& buffer, z_std_msgs::z_Raw& msg) {
     msg.data = buffer;
 }
 

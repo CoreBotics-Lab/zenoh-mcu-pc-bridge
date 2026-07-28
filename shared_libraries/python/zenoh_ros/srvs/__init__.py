@@ -17,7 +17,8 @@ if os.path.exists(custom_srvs_path):
                     try:
                         module = importlib.import_module(module_path)
                         # Expose module classes to this package namespace
-                        if hasattr(module, mod_name):
-                            globals()[mod_name] = getattr(module, mod_name)
+                        target_class = f"z_{mod_name}"
+                        if hasattr(module, target_class):
+                            globals()[target_class] = getattr(module, target_class)
                     except Exception:
                         pass

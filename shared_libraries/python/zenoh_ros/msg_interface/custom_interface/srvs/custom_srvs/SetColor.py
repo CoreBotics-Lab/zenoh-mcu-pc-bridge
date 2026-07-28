@@ -1,7 +1,7 @@
 import msgpack
 from typing import Any, List, Optional, cast
 
-class SetColor:
+class z_SetColor:
     class Request:
         def __init__(self, r: int = 0, g: int = 0, b: int = 0) -> None:
             self.r = r
@@ -19,7 +19,7 @@ class SetColor:
             return cls(int(data.get(b"r", data.get("r", 0))), int(data.get(b"g", data.get("g", 0))), int(data.get(b"b", data.get("b", 0))))
 
         def __repr__(self) -> str:
-            return f"custom_srvs.SetColor.Request(r={self.r}, g={self.g}, b={self.b})"
+            return f"custom_srvs.z_SetColor.Request(r={self.r}, g={self.g}, b={self.b})"
 
     class Response:
         def __init__(self, success: bool = False, message: str = "") -> None:
@@ -37,4 +37,4 @@ class SetColor:
             return cls(bool(data.get(b"success", data.get("success", False))), str(data.get(b"message", data.get("message", ""))))
 
         def __repr__(self) -> str:
-            return f"custom_srvs.SetColor.Response(success={self.success}, message={self.message})"
+            return f"custom_srvs.z_SetColor.Response(success={self.success}, message={self.message})"
