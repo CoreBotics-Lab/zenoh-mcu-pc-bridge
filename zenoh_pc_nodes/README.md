@@ -1,6 +1,6 @@
 # Zenoh PC Nodes (Zenoh-MCU Workbench)
 
-This directory contains the PC-side integration tools for the **MCU-ROS 2 Integration Workbench**, utilizing **Zenoh** for low-latency, real-time communication between an ESP32-S3 microcontroller and a PC (running ROS 2).
+This directory contains the PC-side integration tools and runners for testing the **`zenoh_ros`** framework. These nodes receive and process the data sent from the ESP32 microcontroller.
 
 ---
 
@@ -8,30 +8,34 @@ This directory contains the PC-side integration tools for the **MCU-ROS 2 Integr
 
 ```text
 zenoh_pc_nodes/
-├── cpp/                   # C++ Zenoh implementation
-│   ├── CMakeLists.txt     # CMake build configuration
-│   ├── include/           # Header files (ZenohNode wrappers, QoS settings)
-│   └── src/               # Source files (subscriber implementations)
-├── python/                # Python Zenoh implementation
-│   ├── ros2_zenoh/        # Python module wrappers for Zenoh
-│   ├── requirements.txt   # Pip dependencies
-│   ├── zenoh_ros2_bridge.py # ROS 2 <-> Zenoh bridge node
-│   └── zenoh_test_sub.py  # Standalone Python subscriber
-└── .gitignore             # Git ignore file for build & Python cache
+├── cpp/                   # C++ PC Node implementation
+│   ├── build/             # Compilation target output
+│   ├── src/               # PC subscriber sources
+│   │   ├── zenoh_test_sub.cpp # Standard single-topic subscriber
+│   │   └── multi_topic_sub.cpp # AP-mode multi-topic subscriber
+│   ├── CMakeLists.txt     # CMake configuration linking to shared C++ folder
+│   └── zenoh_install.sh   # Automatically configures and builds C++ targets
+│
+└── python/                # Python PC Node implementation
+    ├── requirements.txt   # Pip dependencies
+    ├── zenoh_test_sub.py  # Standard single-topic Python subscriber
+    └── multiTopicSub.py   # AP-mode multi-topic Python subscriber
 ```
 
 ---
 
-## 🛠️ C++ Subscriber Project
+## 🛠️ C++ Subscriber Projects
 
-The C++ project uses a wrapper pattern around `zenoh-c` (`libzenohc`) to simplify subscriber declarations and callbacks.
+The C++ project uses a ROS 2-like wrapper pattern around `zenoh-c` defined in `shared_libraries/cpp/zenoh_ros/ZenohRosPC.h`.
 
-### 📋 Prerequisites
-Ensure you have the Zenoh-C library installed on your system:
-*   [zenoh-c](https://github.com/eclipse-zenoh/zenoh-c)
+### 🔨 Quick Build (Recommended)
+Run the setup script which will automatically download `zenoh-c` and `nlohmann_json` to `shared_libraries/cpp/3rdparty/` (if not already downloaded) and build the executable targets:
+```bash
+./zenoh_install.sh
+```
 
-### 🔨 Building with CMake
-To build the C++ subscriber node:
+### 🔨 Manual Rebuild
+If dependencies are already set up:
 ```bash
 cd cpp
 mkdir -p build && cd build
@@ -39,34 +43,29 @@ cmake ..
 make
 ```
 
-### 🚀 Running
-After building, run the compiled binary:
+### 🚀 Running the executable
 ```bash
-./zenoh_test_sub
+./build/zenoh_test_sub
+# OR
+./build/multi_topic_sub
 ```
 
 ---
 
-## 🐍 Python Nodes
+## 🐍 Python Subscribers
 
-The Python implementations use a helper wrapper module (`ros2_zenoh`) for rapid prototyping of Zenoh nodes.
+The Python implementations use the shared package wrapper `shared_libraries/python/zenoh_ros` for rapid prototyping.
 
 ### 📋 Prerequisites
-Install python requirements using pip:
+Install dependencies using pip:
 ```bash
 cd python
 pip install -r requirements.txt
 ```
 
-### 🚀 Running the Standalone Python Subscriber
+### 🚀 Running
 ```bash
-python3 python/zenoh_test_sub.py
-```
-
-### 🚀 Running the ROS 2 Bridge Node
-To bridge incoming Zenoh data (e.g., from the ESP32) into a native ROS 2 topic:
-```bash
-# Source your ROS 2 workspace first (Jazzy)
-source /opt/ros/jazzy/setup.bash
-python3 python/zenoh_ros2_bridge.py
+python3 zenoh_test_sub.py
+# OR
+python3 multiTopicSub.py
 ```
