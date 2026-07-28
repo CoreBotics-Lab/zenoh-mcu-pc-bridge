@@ -5,7 +5,7 @@ import os
 # Ensure the shared zenoh_ros package can be imported
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../shared_libraries/python')))
 
-from zenoh_ros import ZenohNode, ZenohConfig, z_std_msgs
+from zenoh_ros import ZenohNode, ZenohConfig, msgs
 
 class MultiTopicSubscriberNode(ZenohNode):
     def __init__(self) -> None:
@@ -14,7 +14,7 @@ class MultiTopicSubscriberNode(ZenohNode):
 
         # Create subscription with standard ROS 2 message type (Int32) and depth 10
         self.counter_sub = self.z_create_subscription(
-            z_std_msgs.Int32,
+            msgs.Int32,
             "robot/sim_counter",
             self.counter_listener_callback,
             10
@@ -22,16 +22,16 @@ class MultiTopicSubscriberNode(ZenohNode):
 
         # Create subscription with standard ROS 2 message type (String) and depth 10
         self.string_sub = self.z_create_subscription(
-            z_std_msgs.String,
+            msgs.String,
             "robot/hello_string",
             self.string_listener_callback,
             10
         )
 
-    def counter_listener_callback(self, msg: z_std_msgs.Int32) -> None:
+    def counter_listener_callback(self, msg: msgs.Int32) -> None:
         print(f"[RECV COUNTER] sim_counter: {msg.data}")
 
-    def string_listener_callback(self, msg: z_std_msgs.String) -> None:
+    def string_listener_callback(self, msg: msgs.String) -> None:
         print(f"[RECV STRING] hello_string: {msg.data}")
 
 

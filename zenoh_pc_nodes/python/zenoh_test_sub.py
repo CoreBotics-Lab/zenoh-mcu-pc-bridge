@@ -5,7 +5,7 @@ import os
 # Ensure the shared zenoh_ros package can be imported
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../shared_libraries/python')))
 
-from zenoh_ros import ZenohNode, ZenohConfig, z_std_msgs
+from zenoh_ros import ZenohNode, ZenohConfig, msgs
 
 class CounterSubscriberNode(ZenohNode):
     def __init__(self) -> None:
@@ -14,14 +14,14 @@ class CounterSubscriberNode(ZenohNode):
 
         # Create subscription with standard ROS 2 message type (Int32) and depth 10
         self.sub = self.z_create_subscription(
-            z_std_msgs.Int32,
+            msgs.Int32,
             "robot/sim_counter",
             self.listener_callback,
             10
         )
 
-    def listener_callback(self, msg: z_std_msgs.Int32) -> None:
-        # Message is already deserialized into standard z_std_msgs.Int32 class!
+    def listener_callback(self, msg: msgs.Int32) -> None:
+        # Message is already deserialized into standard msgs.Int32 class!
         print(f"[RECV FROM ESP32-S3] sim_counter: {msg.data}")
 
 
