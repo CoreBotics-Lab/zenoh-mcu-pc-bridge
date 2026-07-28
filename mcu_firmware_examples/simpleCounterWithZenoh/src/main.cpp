@@ -38,7 +38,6 @@ public:
 private:
     int cnt_;
     ZenohPublisher<z_std_msgs::z_Int32>* publisher_;
-    ZenohPublisher<z_custom_msgs::z_Int32>* publisher_;
     ZenohTimer* timer_;
     
     // Pre-allocated message structure (exactly like String::SharedPtr msg in ROS 2)

@@ -61,6 +61,7 @@ void deserialize_msg(const uint8_t* buffer, size_t len, T& msg);
 // Include modular ROS2-style message libraries
 #include "msg_interface/pre_defined_interface/z_std_msgs.h"
 #include "msg_interface/pre_defined_interface/z_geometry_msgs.h"
+#include "msg_interface/pre_defined_interface/z_std_srvs.h"
 
 // Callback Types for Timer and Subscriptions
 typedef std::function<void()> TimerCallback;

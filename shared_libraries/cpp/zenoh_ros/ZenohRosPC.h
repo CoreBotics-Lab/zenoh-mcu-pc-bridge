@@ -58,6 +58,7 @@ struct SystemDefaultsQoS : public QoS {
 
 #include "msg_interface/pre_defined_interface/z_std_msgs_pc.h"
 #include "msg_interface/pre_defined_interface/z_geometry_msgs_pc.h"
+#include "msg_interface/pre_defined_interface/z_std_srvs_pc.h"
 
 // Callback types
 typedef std::function<void()> TimerCallback;
