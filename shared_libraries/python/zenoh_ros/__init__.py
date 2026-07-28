@@ -10,5 +10,9 @@ from .node import (
     ZenohSubscription,
     ZenohTimer
 )
-from . import msgs
-from . import srvs
+from . import std_msgs
+from . import z_std_msgs
+from . import geometry_msgs
+from . import z_geometry_msgs
+from . import custom_msgs
+from . import custom_srvs

@@ -6,7 +6,7 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../shared_libraries/python')))
 
 from zenoh_ros import ZenohNode, ZenohConfig
-from zenoh_ros.msgs import z_Int32
+from zenoh_ros.std_msgs import z_Int32
 
 class CounterSubscriberNode(ZenohNode):
     def __init__(self) -> None:

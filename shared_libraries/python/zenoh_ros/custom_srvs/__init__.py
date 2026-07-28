@@ -1,8 +1,7 @@
 import os
 import importlib
-import sys
 
-# 1. Dynamically scan and import all modules inside custom_interface/srvs/
+# Scan custom_interface/srvs/ to dynamically load custom services
 custom_srvs_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../msg_interface/custom_interface/srvs'))
 if os.path.exists(custom_srvs_path):
     # Iterate through package subdirectories (e.g. custom_srvs)
@@ -16,7 +15,7 @@ if os.path.exists(custom_srvs_path):
                     module_path = f"zenoh_ros.msg_interface.custom_interface.srvs.{pkg_dir}.{mod_name}"
                     try:
                         module = importlib.import_module(module_path)
-                        # Expose module classes to this package namespace
+                        # Expose module classes dynamically
                         target_class = f"z_{mod_name}"
                         if hasattr(module, target_class):
                             globals()[target_class] = getattr(module, target_class)
