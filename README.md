@@ -29,6 +29,9 @@ zenoh_ws/
 │   │           └── custom_interface/      # Place custom generated messages here
 │   │
 │   ├── cpp/
+│   │   ├── 3rdparty/          # Locally vendored dependencies (Modular Setup)
+│   │   │   ├── nlohmann/      # nlohmann/json C++ serialization
+│   │   │   └── zenoh-c/       # Zenoh C-SDK precompiled headers and libraries
 │   │   └── zenoh_ros/         # Shared PC C++ library (ZenohRosPC.h)
 │   │       └── msg_interface/
 │   │           ├── pre_defined_interface/ # z_std_msgs_pc.h, z_geometry_msgs_pc.h
@@ -51,9 +54,6 @@ zenoh_ws/
 │
 └── zenoh_pc_nodes/            # PC-side client nodes and runners
     ├── cpp/                   # C++ PC Node implementation
-    │   ├── 3rdparty/          # Locally vendored dependencies (Modular Setup)
-    │   │   ├── nlohmann/      # nlohmann/json C++ serialization
-    │   │   └── zenoh-c/       # Zenoh C-SDK precompiled headers and libraries
     │   ├── src/
     │   │   ├── zenoh_test_sub.cpp # Standalone subscriber node
     │   │   └── multi_topic_sub.cpp # Dual-topic subscriber node
