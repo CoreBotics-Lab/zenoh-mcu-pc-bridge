@@ -1,7 +1,8 @@
 #include <Arduino.h>
 #include <FastLED.h>
 #include <ZenohRos.h>
-#include <msg_interface/custom_interface/msgs/custom_msgs/SetLED.h>
+#include <zenoh_ros/custom_msgs/SetLED.h>
+
 
 #define NUM_LEDS 16
 #define DATA_PIN 14

@@ -640,8 +640,8 @@ def main():
         package = parts[1]
         
     # Generate relative output destinations
-    out_dir_mcu = os.path.join(ws_root, f"shared_libraries/mcu/zenoh_ros/msg_interface/custom_interface/{interface_type}s/{package}")
-    out_dir_cpp = os.path.join(ws_root, f"shared_libraries/cpp/zenoh_ros/msg_interface/custom_interface/{interface_type}s/{package}")
+    out_dir_mcu = os.path.join(ws_root, f"shared_libraries/mcu/zenoh_ros/zenoh_ros/{package}")
+    out_dir_cpp = os.path.join(ws_root, f"shared_libraries/cpp/zenoh_ros/zenoh_ros/{package}")
     out_dir_py = os.path.join(ws_root, f"shared_libraries/python/zenoh_ros/msg_interface/custom_interface/{interface_type}s/{package}")
     
     mcu_file = os.path.join(out_dir_mcu, f"{name}.h")
