@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <zenoh_ros/ZenohRos.h>
+#include <zenoh_ros/std_msgs/z_Int32.h>
 
 #include "credential.h"
 

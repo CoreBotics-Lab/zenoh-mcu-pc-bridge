@@ -1,5 +1,7 @@
 #include <Arduino.h>
 #include <zenoh_ros/ZenohRos.h>
+#include <zenoh_ros/std_msgs/z_Int32.h>
+#include <zenoh_ros/std_msgs/z_String.h>
 
 
 // --- Configuration Struct ---

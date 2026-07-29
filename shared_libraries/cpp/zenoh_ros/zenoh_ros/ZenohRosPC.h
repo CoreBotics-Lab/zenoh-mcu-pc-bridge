@@ -56,9 +56,13 @@ struct SystemDefaultsQoS : public QoS {
     }
 };
 
-#include "msg_interface/pre_defined_interface/z_std_msgs_pc.h"
-#include "msg_interface/pre_defined_interface/z_geometry_msgs_pc.h"
-#include "msg_interface/pre_defined_interface/z_std_srvs_pc.h"
+
+// --- Message serialization/deserialization helper template declarations ---
+template <typename T>
+std::vector<uint8_t> serialize_msg_pc(const T& msg);
+
+template <typename T>
+void deserialize_msg_pc(const std::vector<uint8_t>& buffer, T& msg);
 
 // Callback types
 typedef std::function<void()> TimerCallback;
