@@ -45,17 +45,21 @@ endif()
 # Executable targets
 add_executable(zenoh_test_sub src/zenoh_test_sub.cpp)
 add_executable(multi_topic_sub src/multi_topic_sub.cpp)
+add_executable(ws2812b_publisher src/ws2812b_publisher.cpp)
 
 # Include directories
 target_include_directories(zenoh_test_sub PRIVATE ../../shared_libraries/cpp/zenoh_ros)
 target_include_directories(multi_topic_sub PRIVATE ../../shared_libraries/cpp/zenoh_ros)
+target_include_directories(ws2812b_publisher PRIVATE ../../shared_libraries/cpp/zenoh_ros)
 
 # Link libraries
 target_link_libraries(zenoh_test_sub PRIVATE ${ZENOHC_LIB})
 target_link_libraries(multi_topic_sub PRIVATE ${ZENOHC_LIB})
+target_link_libraries(ws2812b_publisher PRIVATE ${ZENOHC_LIB})
 if(TARGET nlohmann_json::nlohmann_json)
     target_link_libraries(zenoh_test_sub PRIVATE nlohmann_json::nlohmann_json)
     target_link_libraries(multi_topic_sub PRIVATE nlohmann_json::nlohmann_json)
+    target_link_libraries(ws2812b_publisher PRIVATE nlohmann_json::nlohmann_json)
 endif()
 
 # Add RPATH so the executables can locate the local libzenohc.so at runtime
@@ -64,10 +68,12 @@ if(EXISTS "${LOCAL_3RDPARTY_DIR}/zenoh-c")
         set(CMAKE_INSTALL_RPATH "@loader_path/../3rdparty/zenoh-c/lib")
         set_target_properties(zenoh_test_sub PROPERTIES LINK_FLAGS "-Wl,-rpath,@loader_path/../3rdparty/zenoh-c/lib")
         set_target_properties(multi_topic_sub PROPERTIES LINK_FLAGS "-Wl,-rpath,@loader_path/../3rdparty/zenoh-c/lib")
+        set_target_properties(ws2812b_publisher PROPERTIES LINK_FLAGS "-Wl,-rpath,@loader_path/../3rdparty/zenoh-c/lib")
     else()
         set(CMAKE_INSTALL_RPATH "$ORIGIN/../3rdparty/zenoh-c/lib")
         set_target_properties(zenoh_test_sub PROPERTIES LINK_FLAGS "-Wl,-rpath,\$ORIGIN/../3rdparty/zenoh-c/lib")
         set_target_properties(multi_topic_sub PROPERTIES LINK_FLAGS "-Wl,-rpath,\$ORIGIN/../3rdparty/zenoh-c/lib")
+        set_target_properties(ws2812b_publisher PROPERTIES LINK_FLAGS "-Wl,-rpath,\$ORIGIN/../3rdparty/zenoh-c/lib")
     endif()
     set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 endif()
