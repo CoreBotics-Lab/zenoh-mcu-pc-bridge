@@ -19,52 +19,10 @@ It serves as a lightweight, real-time, low-latency, and high-performance alterna
 
 ## 📁 Workspace Directory Structure
 
-```text
-zenoh_ws/
-├── shared_libraries/          # Centralized shared wrappers (Single Source of Truth)
-│   ├── mcu/
-│   │   └── zenoh_ros/         # Shared MCU library (ZenohRos.h, library.json)
-│   │       └── msg_interface/
-│   │           ├── pre_defined_interface/ # z_std_msgs.h, z_geometry_msgs.h
-│   │           └── custom_interface/      # Place custom generated messages here
-│   │
-│   ├── cpp/
-│   │   ├── 3rdparty/          # Locally vendored dependencies (Modular Setup)
-│   │   │   ├── nlohmann/      # nlohmann/json C++ serialization
-│   │   │   └── zenoh-c/       # Zenoh C-SDK precompiled headers and libraries
-│   │   └── zenoh_ros/         # Shared PC C++ library (ZenohRosPC.h)
-│   │       └── msg_interface/
-│   │           ├── pre_defined_interface/ # z_std_msgs_pc.h, z_geometry_msgs_pc.h
-│   │           └── custom_interface/
-│   │
-│   └── python/
-│       └── zenoh_ros/         # Shared PC Python package
-│           └── msg_interface/
-│               ├── pre_defined_interface/ # z_std_msgs.py, z_geometry_msgs.py
-│               └── custom_interface/
-│
-├── mcu_firmware_examples/     # Microcontroller firmware configurations
-│   ├── simpleCounterWithZenoh/ # PlatformIO project for ESP32-S3 (STA Mode example)
-│   │   ├── src/main.cpp       # Main ESP32 application
-│   │   └── platformio.ini     # Links to shared_libraries/mcu
-│   │
-│   └── publishMultipleTopics/ # PlatformIO project for ESP32-S3 (AP Mode example)
-│       ├── src/main.cpp       # Multi-topic publisher ESP32 application
-│       └── platformio.ini     # Links to shared_libraries/mcu
-│
-└── zenoh_pc_nodes/            # PC-side client nodes and runners
-    ├── cpp/                   # C++ PC Node implementation
-    │   ├── src/
-    │   │   ├── zenoh_test_sub.cpp # Standalone subscriber node
-    │   │   └── multi_topic_sub.cpp # Dual-topic subscriber node
-    │   ├── CMakeLists.txt     # CMake configuration pointing to shared C++ folder
-    │   └── zenoh_install.sh   # Direct setup and compilation script
-    │
-    └── python/                # Python PC Node implementation
-        ├── requirements.txt   # Pip dependencies
-        ├── zenoh_test_sub.py  # Standalone Python subscriber
-        └── multiTopicSub.py   # Dual-topic Python subscriber
-```
+The workspace is organized into three main directories:
+* **`shared_libraries/`**: Centralized wrapper packages for C++ (MCU & PC) and Python targets (Single Source of Truth).
+* **`mcu_firmware_examples/`**: PlatformIO firmware projects for microcontrollers (e.g. ESP32-S3).
+* **`zenoh_pc_nodes/`**: PC-side subscriber and publisher implementations in C++ and Python.
 
 ---
 
