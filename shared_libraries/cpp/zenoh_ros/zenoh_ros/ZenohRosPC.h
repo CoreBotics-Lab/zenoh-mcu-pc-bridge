@@ -10,8 +10,9 @@
 #include <memory>
 #include <string>
 #include <csignal>
-#include <cstring>
 #include <cstdlib>
+#include <cstring>
+#include <vector>
 
 // Global flag to handle clean shutdown via Ctrl+C
 inline volatile sig_atomic_t shutdown_requested = 0;
@@ -241,6 +242,7 @@ private:
     static z_owned_session_t session;
     static bool session_opened;
     const char* node_name;
+    std::vector<std::function<void()>> cleanup_callbacks;
 
     static bool init_session(const char* connect_endpoint) {
         if (session_opened) return true;
@@ -274,6 +276,12 @@ private:
 
 public:
     ZenohNode(const char* name) : node_name(name) {}
+
+    ~ZenohNode() {
+        for (auto& cleanup : cleanup_callbacks) {
+            cleanup();
+        }
+    }
 
     static bool init(const ZenohConfig& config = ZenohConfig()) {
         std::string endpoint;
@@ -320,6 +328,7 @@ public:
         } else {
             std::cerr << "[Zenoh PC] WARNING: Create publisher before ZenohNode::init.\n";
         }
+        cleanup_callbacks.push_back([pub]() { delete pub; });
         return pub;
     }
 
@@ -338,6 +347,7 @@ public:
         } else {
             std::cerr << "[Zenoh PC] WARNING: Create subscription before ZenohNode::init.\n";
         }
+        cleanup_callbacks.push_back([sub]() { delete sub; });
         return sub;
     }
 
@@ -349,7 +359,9 @@ public:
     }
 
     ZenohTimer* z_create_timer(uint32_t period_ms, TimerCallback cb) {
-        return new ZenohTimer(period_ms, std::move(cb));
+        ZenohTimer* timer = new ZenohTimer(period_ms, std::move(cb));
+        cleanup_callbacks.push_back([timer]() { delete timer; });
+        return timer;
     }
 
     void z_spin() {

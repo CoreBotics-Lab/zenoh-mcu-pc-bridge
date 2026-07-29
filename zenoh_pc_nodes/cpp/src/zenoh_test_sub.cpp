@@ -17,12 +17,6 @@ public:
         );
     }
 
-    ~CounterSubscriberNode() {
-        if (sub_) {
-            delete sub_;
-        }
-        std::cout << "Destroying the Zenoh Node...\n";
-    }
 
 private:
     ZenohSubscription<z_Int32>* sub_ = nullptr;

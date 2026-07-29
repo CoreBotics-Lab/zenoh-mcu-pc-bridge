@@ -23,15 +23,6 @@ public:
         });
     }
 
-    ~WS2812BPublisherNode() {
-        if (pub_) {
-            delete pub_;
-        }
-        if (timer_) {
-            delete timer_;
-        }
-        std::cout << "Destroying the Zenoh Node...\n";
-    }
 
 private:
     ZenohPublisher<z_SetLED>* pub_ = nullptr;

@@ -27,11 +27,6 @@ public:
         );
     }
 
-    ~MultiTopicSubscriberNode() {
-        if (counter_sub_) delete counter_sub_;
-        if (string_sub_) delete string_sub_;
-        std::cout << "Destroying the Zenoh Node...\n";
-    }
 
 private:
     ZenohSubscription<z_Int32>* counter_sub_ = nullptr;

@@ -40,11 +40,6 @@ public:
         );
     }
 
-    ~WS2812B_Subscriber_Node() {
-        if (sub_) {
-            delete sub_;
-        }
-    }
 
 private:
     ZenohSubscription<z_SetLED>* sub_ = nullptr;

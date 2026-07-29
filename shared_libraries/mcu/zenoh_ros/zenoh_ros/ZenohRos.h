@@ -6,6 +6,7 @@
 #include <zenoh-pico.h>
 #include <ArduinoJson.h>
 #include <functional>
+#include <vector>
 
 // Configuration structure for the Zenoh node and Wi-Fi SoftAP
 struct ZenohConfig {
@@ -245,9 +246,16 @@ private:
     static z_owned_session_t session;
     static bool session_opened;
     const char* node_name;
+    std::vector<std::function<void()>> cleanup_callbacks;
 
 public:
     ZenohNode(const char* name) : node_name(name) {}
+
+    ~ZenohNode() {
+        for (auto& cleanup : cleanup_callbacks) {
+            cleanup();
+        }
+    }
 
     /**
      * Initializes the Wi-Fi AP network and starts the global Zenoh peer session.
@@ -372,6 +380,7 @@ public:
         } else {
             Serial.println("[Zenoh] WARNING: Attempted to create publisher before ZenohNode::init.");
         }
+        cleanup_callbacks.push_back([pub]() { delete pub; });
         return pub;
     }
 
@@ -397,6 +406,7 @@ public:
         } else {
             Serial.println("[Zenoh] WARNING: Attempted to create subscription before ZenohNode::init.");
         }
+        cleanup_callbacks.push_back([sub]() { delete sub; });
         return sub;
     }
 
@@ -414,7 +424,9 @@ public:
      * Creates a wall timer that repeatedly triggers a callback at defined milliseconds.
      */
     ZenohTimer* z_create_timer(uint32_t period_ms, TimerCallback cb) {
-        return new ZenohTimer(period_ms, cb);
+        ZenohTimer* timer = new ZenohTimer(period_ms, cb);
+        cleanup_callbacks.push_back([timer]() { delete timer; });
+        return timer;
     }
 
     /**
