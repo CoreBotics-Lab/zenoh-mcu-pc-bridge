@@ -66,7 +66,7 @@ Counter_publisher_node_class* node_instance = nullptr;
 
 void setup() {
     Serial.begin(115200);
-    delay(2000); // USB CDC Serial delay for ESP32-S3
+    z_delay(2000); // USB CDC Serial delay for ESP32-S3
 
     Serial.println("\n==========================================");
     Serial.println("  ESP32-S3 Zenoh SoftAP Counter Testbench");
@@ -80,7 +80,7 @@ void setup() {
         node_instance = new Counter_publisher_node_class();
     } else {
         Serial.println("[System] CRITICAL Error: Zenoh Client initialization failed!");
-        while (1) { delay(1000); }
+        while (1) { z_delay(1000); }
     }
 
     Serial.println("==========================================\n");
