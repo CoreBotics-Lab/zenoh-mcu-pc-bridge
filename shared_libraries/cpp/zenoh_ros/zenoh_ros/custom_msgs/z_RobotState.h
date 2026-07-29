@@ -45,4 +45,6 @@ inline void deserialize_msg_pc<custom_msgs::z_RobotState>(
   msg.velocity.angular.z = j["velocity"][1][2].get<double>();
 }
 
+using z_RobotState = custom_msgs::z_RobotState;
+
 #endif // CUSTOM_INTERFACE_PC_CUSTOM_MSGS_Z_ROBOTSTATE_H

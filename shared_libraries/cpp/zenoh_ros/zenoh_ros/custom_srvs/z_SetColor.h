@@ -60,4 +60,6 @@ inline void deserialize_msg_pc<custom_srvs::z_SetColor::Response>(
     msg.message = j["message"].get<std::string>();
 }
 
+using z_SetColor = custom_srvs::z_SetColor;
+
 #endif // CUSTOM_INTERFACE_PC_CUSTOM_SRVS_Z_SETCOLOR_H

@@ -9,18 +9,18 @@ public:
         std::cout << "[Node] " << this->z_get_name() << " has been started\n";
 
         // Create subscription to robot/sim_counter (Int32)
-        counter_sub_ = this->z_create_subscription<z_std_msgs::z_Int32>(
+        counter_sub_ = this->z_create_subscription<z_Int32>(
             "robot/sim_counter",
-            [this](const z_std_msgs::z_Int32& msg) -> void {
+            [this](const z_Int32& msg) -> void {
                 this->counter_listener_callback(msg);
             },
             10
         );
 
         // Create subscription to robot/hello_string (String)
-        string_sub_ = this->z_create_subscription<z_std_msgs::z_String>(
+        string_sub_ = this->z_create_subscription<z_String>(
             "robot/hello_string",
-            [this](const z_std_msgs::z_String& msg) -> void {
+            [this](const z_String& msg) -> void {
                 this->string_listener_callback(msg);
             },
             10
@@ -34,14 +34,14 @@ public:
     }
 
 private:
-    ZenohSubscription<z_std_msgs::z_Int32>* counter_sub_ = nullptr;
-    ZenohSubscription<z_std_msgs::z_String>* string_sub_ = nullptr;
+    ZenohSubscription<z_Int32>* counter_sub_ = nullptr;
+    ZenohSubscription<z_String>* string_sub_ = nullptr;
 
-    void counter_listener_callback(const z_std_msgs::z_Int32& msg) {
+    void counter_listener_callback(const z_Int32& msg) {
         std::cout << "[RECV COUNTER] sim_counter: " << msg.data << "\n";
     }
 
-    void string_listener_callback(const z_std_msgs::z_String& msg) {
+    void string_listener_callback(const z_String& msg) {
         std::cout << "[RECV STRING] hello_string: " << msg.data << "\n";
     }
 };

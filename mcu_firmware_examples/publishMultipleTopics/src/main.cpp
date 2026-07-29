@@ -18,8 +18,8 @@ public:
         Serial.printf("[Node] %s has been started\n", this->z_get_name());
         
         // 1. Create typed publishers (exactly like in ROS 2)
-        publisher_ = this->z_create_publisher<z_std_msgs::z_Int32>("robot/sim_counter", 10);
-        string_publisher_ = this->z_create_publisher<z_std_msgs::z_String>("robot/hello_string", 10);
+        publisher_ = this->z_create_publisher<z_Int32>("robot/sim_counter", 10);
+        string_publisher_ = this->z_create_publisher<z_String>("robot/hello_string", 10);
 
         // 2. Create the timers (triggers callback_timer every 1000ms, string_timer every 500ms)
         timer_ = this->z_create_timer(1000, [this]() -> void {
@@ -32,13 +32,13 @@ public:
 
 private:
     int cnt_;
-    ZenohPublisher<z_std_msgs::z_Int32>* publisher_;
-    ZenohPublisher<z_std_msgs::z_String>* string_publisher_;
+    ZenohPublisher<z_Int32>* publisher_;
+    ZenohPublisher<z_String>* string_publisher_;
     ZenohTimer* timer_;
     ZenohTimer* string_timer_;
     
     // Pre-allocated message structure (exactly like String::SharedPtr msg in ROS 2)
-    z_std_msgs::z_Int32 msg; 
+    z_Int32 msg; 
 
     void callback_timer() {
         this->cnt_++;
@@ -53,7 +53,7 @@ private:
 
     void callback_string_timer() {
         if (this->string_publisher_) {
-            z_std_msgs::z_String str_msg;
+            z_String str_msg;
             char str_buf[64];
             snprintf(str_buf, sizeof(str_buf), "HelloWorld_%d", this->cnt_);
             str_msg.data = str_buf;

@@ -29,7 +29,7 @@ public:
         Serial.printf("[Node] %s has been started (starting counter at: %d)\n", this->z_get_name(), cnt_);
         
         // 1. Create a typed publisher with custom queue depth (exactly like in ROS 2)
-        publisher_ = this->z_create_publisher<z_std_msgs::z_Int32>("robot/sim_counter", 10);
+        publisher_ = this->z_create_publisher<z_Int32>("robot/sim_counter", 10);
 
         // 2. Create the timer (triggers callback_timer every 1000ms)
         timer_ = this->z_create_timer(100, [this]() -> void {
@@ -39,11 +39,11 @@ public:
 
 private:
     int cnt_;
-    ZenohPublisher<z_std_msgs::z_Int32>* publisher_;
+    ZenohPublisher<z_Int32>* publisher_;
     ZenohTimer* timer_;
     
     // Pre-allocated message structure (exactly like String::SharedPtr msg in ROS 2)
-    z_std_msgs::z_Int32 msg; 
+    z_Int32 msg; 
 
     void callback_timer() {
         this->cnt_++;

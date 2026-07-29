@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include <FastLED.h>
 #include <zenoh_ros/ZenohRos.h>
-#include <zenoh_ros/custom_msgs/SetLED.h>
+#include <zenoh_ros/custom_msgs/z_SetLED.h>
 
 
 #define NUM_LEDS 16
@@ -31,9 +31,9 @@ public:
         Serial.printf("[Node] %s has been started.\n", this->z_get_name());
         
         // Create subscriber for /ws2812b topic
-        sub_ = this->z_create_subscription<custom_msgs::z_SetLED>(
+        sub_ = this->z_create_subscription<z_SetLED>(
             "ws2812b", 
-            [this](const custom_msgs::z_SetLED& msg) -> void {
+            [this](const z_SetLED& msg) -> void {
                 this->callback_set_led(msg);
             }, 
             10
@@ -47,9 +47,9 @@ public:
     }
 
 private:
-    ZenohSubscription<custom_msgs::z_SetLED>* sub_ = nullptr;
+    ZenohSubscription<z_SetLED>* sub_ = nullptr;
 
-    void callback_set_led(const custom_msgs::z_SetLED& msg) {
+    void callback_set_led(const z_SetLED& msg) {
         // Set the led color and show it
         setLed(msg.led_num, msg.r, msg.g, msg.b, msg.brightness);
         FastLED.show();

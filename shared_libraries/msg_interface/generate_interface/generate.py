@@ -378,6 +378,7 @@ inline void deserialize_msg<{package}::{z_name}::Response>(
             content += f"    {generate_cpp_field_deserialization(ftype, fname, 'doc', 'msg')}\n"
         content += f"""}}
 """
+    content += f"\nusing {z_name} = {package}::{z_name};\n"
     content += f"\n#endif // {guard}\n"
     return content
 
@@ -485,6 +486,7 @@ inline void deserialize_msg_pc<{package}::{z_name}::Response>(
             content += f"    {generate_pc_cpp_field_deserialization(ftype, fname, 'j', 'msg')}\n"
         content += f"""}}
 """
+    content += f"\nusing {z_name} = {package}::{z_name};\n"
     content += f"\n#endif // {guard}\n"
     return content
 
@@ -644,8 +646,8 @@ def main():
     out_dir_cpp = os.path.join(ws_root, f"shared_libraries/cpp/zenoh_ros/zenoh_ros/{package}")
     out_dir_py = os.path.join(ws_root, f"shared_libraries/python/zenoh_ros/msg_interface/custom_interface/{interface_type}s/{package}")
     
-    mcu_file = os.path.join(out_dir_mcu, f"{name}.h")
-    cpp_file = os.path.join(out_dir_cpp, f"{name}.h")
+    mcu_file = os.path.join(out_dir_mcu, f"z_{name}.h")
+    cpp_file = os.path.join(out_dir_cpp, f"z_{name}.h")
     py_file = os.path.join(out_dir_py, f"{name}.py")
     
     if action == 'rm':

@@ -52,4 +52,6 @@ inline void deserialize_msg<custom_msgs::z_RobotState>(
   msg.velocity.angular.z = doc["velocity"][1][2].as<double>();
 }
 
+using z_RobotState = custom_msgs::z_RobotState;
+
 #endif // CUSTOM_INTERFACE_CUSTOM_MSGS_Z_ROBOTSTATE_H

@@ -39,4 +39,6 @@ inline void deserialize_msg<custom_msgs::z_SetLED>(
     msg.led_num = doc["led_num"].as<uint8_t>();
 }
 
+using z_SetLED = custom_msgs::z_SetLED;
+
 #endif // CUSTOM_INTERFACE_CUSTOM_MSGS_Z_SETLED_H
