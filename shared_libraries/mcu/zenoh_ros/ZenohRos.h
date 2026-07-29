@@ -435,4 +435,9 @@ public:
 z_owned_session_t ZenohNode::session;
 bool ZenohNode::session_opened = false;
 
+// Global non-blocking RTOS delay helper
+inline void z_delay(uint32_t ms) {
+    vTaskDelay(pdMS_TO_TICKS(ms));
+}
+
 #endif // ZENOH_ROS_H
