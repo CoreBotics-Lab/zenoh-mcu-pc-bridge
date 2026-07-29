@@ -1,6 +1,6 @@
 #include <Arduino.h>
 #include <FastLED.h>
-#include <ZenohRos.h>
+#include <zenoh_ros/ZenohRos.h>
 #include <zenoh_ros/custom_msgs/SetLED.h>
 
 

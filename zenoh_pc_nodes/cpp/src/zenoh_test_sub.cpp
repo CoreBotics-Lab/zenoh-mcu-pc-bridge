@@ -1,4 +1,5 @@
 #include <zenoh_ros/ZenohRosPC.h>
+#include <zenoh_ros/std_msgs/z_Int32.h>
 #include <iostream>
 
 class CounterSubscriberNode : public ZenohNode {

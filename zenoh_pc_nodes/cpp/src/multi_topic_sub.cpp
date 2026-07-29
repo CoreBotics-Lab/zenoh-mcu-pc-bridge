@@ -1,4 +1,6 @@
 #include <zenoh_ros/ZenohRosPC.h>
+#include <zenoh_ros/std_msgs/z_Int32.h>
+#include <zenoh_ros/std_msgs/z_String.h>
 #include <iostream>
 
 class MultiTopicSubscriberNode : public ZenohNode {

@@ -47,8 +47,8 @@ add_executable(zenoh_test_sub src/zenoh_test_sub.cpp)
 add_executable(multi_topic_sub src/multi_topic_sub.cpp)
 
 # Include directories
-target_include_directories(zenoh_test_sub PRIVATE ../../shared_libraries/cpp)
-target_include_directories(multi_topic_sub PRIVATE ../../shared_libraries/cpp)
+target_include_directories(zenoh_test_sub PRIVATE ../../shared_libraries/cpp/zenoh_ros)
+target_include_directories(multi_topic_sub PRIVATE ../../shared_libraries/cpp/zenoh_ros)
 
 # Link libraries
 target_link_libraries(zenoh_test_sub PRIVATE ${ZENOHC_LIB})

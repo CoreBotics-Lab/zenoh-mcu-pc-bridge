@@ -1,5 +1,6 @@
 #include <Arduino.h>
-#include <ZenohRos.h>
+#include <zenoh_ros/ZenohRos.h>
+
 #include "credential.h"
 
 // --- Configuration Struct (AP Mode) ---
