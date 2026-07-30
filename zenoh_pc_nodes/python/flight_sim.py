@@ -71,61 +71,67 @@ class MPUSubscriberNode(ZenohNode):
         elif current_yaw < -180.0: current_yaw += 360.0
 
 
-# Define 3D Airplane Mesh Geometry (Vertices & Polygons)
+# Define 3D Airplane Mesh Geometry (Sleek Jet Aircraft)
 PLANE_VERTICES = np.array([
-    # Nose & Fuselage
-    [0.0, 0.0, 2.5],      # 0: Nose tip
-    [-0.3, 0.2, 0.5],     # 1: Left canopy top
-    [0.3, 0.2, 0.5],      # 2: Right canopy top
-    [0.0, -0.3, 0.5],     # 3: Bottom cockpit
-    [0.0, 0.4, -1.8],     # 4: Tail top
-    [0.0, -0.2, -1.8],    # 5: Tail bottom
+    # Fuselage & Cockpit
+    [0.0, 0.0, 2.8],       # 0: Sharp Nose tip
+    [-0.35, 0.25, 0.8],    # 1: Left canopy top
+    [0.35, 0.25, 0.8],     # 2: Right canopy top
+    [0.0, -0.3, 0.8],      # 3: Cockpit belly
+    [0.0, 0.45, -2.0],     # 4: Rear fuselage top
+    [0.0, -0.2, -2.0],     # 5: Rear fuselage bottom
     
-    # Main Wings
-    [-3.2, 0.0, 0.2],     # 6: Left wingtip
-    [3.2, 0.0, 0.2],      # 7: Right wingtip
-    [-0.4, 0.0, 0.8],     # 8: Left wing root front
-    [0.4, 0.0, 0.8],      # 9: Right wing root front
-    [-0.4, 0.0, -0.4],    # 10: Left wing root back
-    [0.4, 0.0, -0.4],     # 11: Right wing root back
+    # Swept Main Wings
+    [-3.6, 0.0, -0.2],     # 6: Left wingtip
+    [3.6, 0.0, -0.2],      # 7: Right wingtip
+    [-0.45, 0.0, 1.0],     # 8: Left wing root leading edge
+    [0.45, 0.0, 1.0],      # 9: Right wing root leading edge
+    [-0.45, 0.0, -0.6],    # 10: Left wing root trailing edge
+    [0.45, 0.0, -0.6],     # 11: Right wing root trailing edge
     
-    # Vertical Tail Fin (Extends UPWARD)
-    [0.0, 1.2, -1.8],     # 12: Vertical stabilizer top
-    [0.0, 0.4, -1.0],     # 13: Vertical stabilizer root
+    # Twin Vertical Tail Fins
+    [-0.6, 1.1, -2.0],     # 12: Left tail fin tip
+    [0.6, 1.1, -2.0],      # 13: Right tail fin tip
+    [-0.3, 0.4, -1.2],     # 14: Left tail fin root
+    [0.3, 0.4, -1.2],      # 15: Right tail fin root
     
-    # Horizontal Tail Wings
-    [-1.2, 0.0, -1.8],    # 14: Left tail wingtip
-    [1.2, 0.0, -1.8],     # 15: Right tail wingtip
+    # Horizontal Tail Stabilizers
+    [-1.4, 0.0, -2.0],     # 16: Left tail wingtip
+    [1.4, 0.0, -2.0],      # 17: Right tail wingtip
 ], dtype=np.float32)
 
 PLANE_EDGES = [
     # Fuselage
     (0, 1), (0, 2), (0, 3), (1, 4), (2, 4), (3, 5), (4, 5), (1, 2), (2, 3), (3, 1),
-    # Left Wing
+    # Main Swept Wings
     (8, 6), (6, 10), (10, 8),
-    # Right Wing
     (9, 7), (7, 11), (11, 9),
-    # Tail Fin
-    (13, 12), (12, 4),
-    # Tail Wings
-    (4, 14), (4, 15)
+    # Twin Tail Fins
+    (14, 12), (12, 4), (15, 13), (13, 4),
+    # Tail Stabilizers
+    (4, 16), (4, 17)
 ]
 
 PLANE_FACES = [
-    # Top Nose
-    ([0, 1, 2], (50, 120, 220)),
+    # Cockpit Glass
+    ([0, 1, 2], (80, 180, 240)),   # Cyan Glass
     # Left Fuselage
-    ([0, 1, 3], (40, 100, 190)),
+    ([0, 1, 3], (45, 55, 75)),     # Stealth Grey
     # Right Fuselage
-    ([0, 2, 3], (40, 100, 190)),
-    # Main Wings
-    ([8, 6, 10], (220, 60, 60)),  # Left wing (Red accent)
-    ([9, 7, 11], (220, 60, 60)),  # Right wing (Red accent)
-    # Tail Fin
-    ([13, 12, 4], (240, 200, 40)), # Yellow fin
-    # Tail Wings
-    ([4, 14, 5], (180, 180, 180)),
-    ([4, 15, 5], (180, 180, 180))
+    ([0, 2, 3], (45, 55, 75)),
+    # Rear Fuselage
+    ([1, 2, 4], (60, 70, 90)),
+    # Left Wing (Red accent)
+    ([8, 6, 10], (220, 50, 50)),
+    # Right Wing (Red accent)
+    ([9, 7, 11], (220, 50, 50)),
+    # Left Tail Fin
+    ([14, 12, 4], (240, 190, 40)), # Yellow fin
+    # Right Tail Fin
+    ([15, 13, 4], (240, 190, 40)),
+    # Horizontal Stabilizers
+    ([4, 16, 5], (120, 130, 150)),
+    ([4, 17, 5], (120, 130, 150))
 ]
 
 
@@ -172,52 +178,56 @@ def project_3d_to_2d(vertex, R, width, height, scale=120, distance=6.0):
 
 
 def draw_artificial_horizon(surface, rect, roll, pitch):
-    """Draws a classic aviation Attitude Indicator / Artificial Horizon gauge."""
-    cx, cy, radius = rect.centerx, rect.centery, rect.width // 2
-    
-    # Create circular clip mask
-    horizon_surf = pygame.Surface((rect.width, rect.height))
-    horizon_surf.fill((30, 30, 30))
+    """Draws a professional aviation Attitude Indicator with circular alpha mask."""
+    radius = rect.width // 2
 
-    # Horizon background (Sky Blue top, Earth Brown bottom)
-    sky_color = (60, 140, 220)
-    ground_color = (130, 80, 40)
+    # 1. Main gauge surface with Alpha channel (SRCALPHA)
+    gauge_surf = pygame.Surface((rect.width, rect.height), pygame.SRCALPHA)
 
-    # Offset horizon line based on pitch angle (-40 to +40 deg)
-    pitch_offset = int(pitch * 2.5)
+    # 2. Pitch / Roll horizon background
+    horizon_size = rect.width * 2
+    p_surf = pygame.Surface((horizon_size, horizon_size))
+    p_surf.fill((60, 140, 220)) # Sky Blue
+
+    # Pitch offset (-50 to +50 deg mapped to pixels)
+    pitch_offset = int(pitch * 2.0)
     
-    # Create pitch surface
-    p_surf = pygame.Surface((rect.width * 2, rect.height * 2))
-    p_surf.fill(sky_color)
-    pygame.draw.rect(p_surf, ground_color, (0, rect.height + pitch_offset, rect.width * 2, rect.height * 2))
-    
-    # Pitch ladder lines
+    # Earth Brown ground half
+    pygame.draw.rect(p_surf, (130, 80, 40), (0, horizon_size // 2 + pitch_offset, horizon_size, horizon_size))
+    # White Horizon Line
+    pygame.draw.line(p_surf, (255, 255, 255), (0, horizon_size // 2 + pitch_offset), (horizon_size, horizon_size // 2 + pitch_offset), 4)
+
+    # Pitch ladder markings (-60 deg to +60 deg)
     for p_deg in range(-60, 65, 10):
-        if p_deg == 0:
-            line_y = rect.height + pitch_offset
-            pygame.draw.line(p_surf, (255, 255, 255), (rect.width // 2, line_y), (rect.width * 3 // 2, line_y), 3)
-        else:
-            line_y = rect.height + pitch_offset - int(p_deg * 2.5)
-            w_len = 30 if abs(p_deg) % 20 == 0 else 18
-            pygame.draw.line(p_surf, (255, 255, 255), (rect.width - w_len, line_y), (rect.width + w_len, line_y), 2)
+        if p_deg == 0: continue
+        line_y = horizon_size // 2 + pitch_offset - int(p_deg * 2.0)
+        w_len = 25 if abs(p_deg) % 20 == 0 else 14
+        center_x = horizon_size // 2
+        pygame.draw.line(p_surf, (255, 255, 255), (center_x - w_len, line_y), (center_x + w_len, line_y), 2)
 
     # Rotate horizon surface by roll angle
     rot_p_surf = pygame.transform.rotate(p_surf, roll)
     rot_rect = rot_p_surf.get_rect(center=(radius, radius))
-    horizon_surf.blit(rot_p_surf, rot_rect.topleft)
+    gauge_surf.blit(rot_p_surf, rot_rect.topleft)
 
-    # Fixed Aircraft Symbol (Yellow reticle)
+    # 3. Apply Circular Alpha Mask (Cuts off corners perfectly!)
+    mask_surf = pygame.Surface((rect.width, rect.height), pygame.SRCALPHA)
+    pygame.draw.circle(mask_surf, (255, 255, 255, 255), (radius, radius), radius - 3)
+    gauge_surf.blit(mask_surf, (0, 0), special_flags=pygame.BLEND_RGBA_MIN)
+
+    # 4. Fixed Aircraft Symbol (Yellow reticle)
     reticle_color = (255, 220, 0)
-    pygame.draw.circle(horizon_surf, reticle_color, (radius, radius), 4)
-    pygame.draw.line(horizon_surf, reticle_color, (radius - 40, radius), (radius - 15, radius), 4)
-    pygame.draw.line(horizon_surf, reticle_color, (radius + 15, radius), (radius + 40, radius), 4)
-    pygame.draw.line(horizon_surf, reticle_color, (radius - 15, radius), (radius - 15, radius + 10), 4)
-    pygame.draw.line(horizon_surf, reticle_color, (radius + 15, radius), (radius + 15, radius + 10), 4)
+    pygame.draw.circle(gauge_surf, reticle_color, (radius, radius), 4)
+    pygame.draw.line(gauge_surf, reticle_color, (radius - 40, radius), (radius - 15, radius), 4)
+    pygame.draw.line(gauge_surf, reticle_color, (radius + 15, radius), (radius + 40, radius), 4)
+    pygame.draw.line(gauge_surf, reticle_color, (radius - 15, radius), (radius - 15, radius + 8), 4)
+    pygame.draw.line(gauge_surf, reticle_color, (radius + 15, radius), (radius + 15, radius + 8), 4)
 
-    # Draw outer bezel
-    pygame.draw.circle(horizon_surf, (200, 200, 200), (radius, radius), radius, 3)
+    # 5. Bezel Ring
+    pygame.draw.circle(gauge_surf, (220, 220, 220), (radius, radius), radius - 2, 4)
+    pygame.draw.circle(gauge_surf, (15, 15, 15), (radius, radius), radius, 2)
 
-    surface.blit(horizon_surf, rect.topleft)
+    surface.blit(gauge_surf, rect.topleft)
 
 
 def main():
