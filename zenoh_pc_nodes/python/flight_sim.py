@@ -54,11 +54,11 @@ class MPUSubscriberNode(ZenohNode):
         
         # Standard MPU6050 pitch & roll from gravity vector
         roll_acc = math.atan2(acc_y, acc_z)
-        pitch_acc = math.atan2(acc_x, math.sqrt(acc_y * acc_y + acc_z * acc_z)) # Inverted Pitch sign
+        pitch_acc = math.atan2(-acc_x, math.sqrt(acc_y * acc_y + acc_z * acc_z))
 
         # 2. Convert Gyro values from rad/s to deg/s
-        gyro_x_deg = math.degrees(msg.gyro_x)   # Roll rate
-        gyro_y_deg = -math.degrees(msg.gyro_y)  # Inverted Y pitch rate
+        gyro_x_deg = math.degrees(msg.gyro_x)  # Roll rate
+        gyro_y_deg = math.degrees(msg.gyro_y)   # Pitch rate
         gyro_z_deg = math.degrees(msg.gyro_z)   # Yaw rate
 
         # 3. Complementary Filter (96% Gyro + 4% Accelerometer)
@@ -71,33 +71,33 @@ class MPUSubscriberNode(ZenohNode):
         elif current_yaw < -180.0: current_yaw += 360.0
 
 
-# Define 3D Airplane Mesh Geometry (Sleek Jet Aircraft)
+# Define 3D Airplane Mesh Geometry (Scaled Compact Jet)
 PLANE_VERTICES = np.array([
-    # Fuselage & Cockpit
-    [0.0, 0.0, 2.8],       # 0: Sharp Nose tip
-    [-0.35, 0.25, 0.8],    # 1: Left canopy top
-    [0.35, 0.25, 0.8],     # 2: Right canopy top
-    [0.0, -0.3, 0.8],      # 3: Cockpit belly
-    [0.0, 0.45, -2.0],     # 4: Rear fuselage top
-    [0.0, -0.2, -2.0],     # 5: Rear fuselage bottom
+    # Nose & Fuselage (Pointing along +Z)
+    [0.0, 0.0, 2.5],       # 0: Sharp Nose tip
+    [-0.3, 0.25, 0.6],     # 1: Left canopy top
+    [0.3, 0.25, 0.6],      # 2: Right canopy top
+    [0.0, -0.25, 0.6],     # 3: Cockpit belly
+    [0.0, 0.35, -1.8],     # 4: Rear fuselage top
+    [0.0, -0.15, -1.8],    # 5: Rear fuselage bottom
     
-    # Swept Main Wings
-    [-3.6, 0.0, -0.2],     # 6: Left wingtip
-    [3.6, 0.0, -0.2],      # 7: Right wingtip
-    [-0.45, 0.0, 1.0],     # 8: Left wing root leading edge
-    [0.45, 0.0, 1.0],      # 9: Right wing root leading edge
-    [-0.45, 0.0, -0.6],    # 10: Left wing root trailing edge
-    [0.45, 0.0, -0.6],     # 11: Right wing root trailing edge
+    # Swept Main Wings (Extending along X)
+    [-3.0, 0.0, -0.2],     # 6: Left wingtip
+    [3.0, 0.0, -0.2],      # 7: Right wingtip
+    [-0.4, 0.0, 0.8],      # 8: Left wing root front
+    [0.4, 0.0, 0.8],       # 9: Right wing root front
+    [-0.4, 0.0, -0.5],     # 10: Left wing root back
+    [0.4, 0.0, -0.5],      # 11: Right wing root back
     
-    # Twin Vertical Tail Fins
-    [-0.6, 1.1, -2.0],     # 12: Left tail fin tip
-    [0.6, 1.1, -2.0],      # 13: Right tail fin tip
-    [-0.3, 0.4, -1.2],     # 14: Left tail fin root
-    [0.3, 0.4, -1.2],      # 15: Right tail fin root
+    # Twin Vertical Tail Fins (Extending UP +Y)
+    [-0.5, 1.0, -1.8],     # 12: Left tail fin tip
+    [0.5, 1.0, -1.8],      # 13: Right tail fin tip
+    [-0.25, 0.35, -1.1],   # 14: Left tail fin root
+    [0.25, 0.35, -1.1],    # 15: Right tail fin root
     
     # Horizontal Tail Stabilizers
-    [-1.4, 0.0, -2.0],     # 16: Left tail wingtip
-    [1.4, 0.0, -2.0],      # 17: Right tail wingtip
+    [-1.2, 0.0, -1.8],     # 16: Left tail wingtip
+    [1.2, 0.0, -1.8],      # 17: Right tail wingtip
 ], dtype=np.float32)
 
 PLANE_EDGES = [
@@ -136,36 +136,36 @@ PLANE_FACES = [
 
 
 def rotation_matrix(roll_deg, pitch_deg, yaw_deg):
-    """Calculates 3D Rotation Matrix for Roll, Pitch, Yaw in degrees."""
+    """Calculates 3D Euler Rotation Matrix (Roll=Z, Pitch=X, Yaw=Y)."""
     r = math.radians(roll_deg)
     p = math.radians(pitch_deg)
     y = math.radians(yaw_deg)
 
-    # Roll (X-axis)
-    Rx = np.array([
-        [1, 0, 0],
-        [0, math.cos(r), -math.sin(r)],
-        [0, math.sin(r), math.cos(r)]
-    ])
-
-    # Pitch (Y-axis)
-    Ry = np.array([
-        [math.cos(p), 0, math.sin(p)],
-        [0, 1, 0],
-        [-math.sin(p), 0, math.cos(p)]
-    ])
-
-    # Yaw (Z-axis)
-    Rz = np.array([
-        [math.cos(y), -math.sin(y), 0],
-        [math.sin(y), math.cos(y), 0],
+    # Roll around Z (Nose-Tail axis)
+    R_roll = np.array([
+        [math.cos(r), -math.sin(r), 0],
+        [math.sin(r), math.cos(r), 0],
         [0, 0, 1]
     ])
 
-    return Rz @ Ry @ Rx
+    # Pitch around X (Wing-to-Wing axis)
+    R_pitch = np.array([
+        [1, 0, 0],
+        [0, math.cos(p), -math.sin(p)],
+        [0, math.sin(p), math.cos(p)]
+    ])
+
+    # Yaw around Y (Up-Down axis)
+    R_yaw = np.array([
+        [math.cos(y), 0, math.sin(y)],
+        [0, 1, 0],
+        [-math.sin(y), 0, math.cos(y)]
+    ])
+
+    return R_yaw @ R_pitch @ R_roll
 
 
-def project_3d_to_2d(vertex, R, width, height, scale=120, distance=6.0):
+def project_3d_to_2d(vertex, R, width, height, scale=45, distance=6.0):
     """Rotates 3D vertex and projects it onto 2D screen coordinates."""
     rotated = R @ vertex
     x, y, z = rotated[0], rotated[1], rotated[2]
