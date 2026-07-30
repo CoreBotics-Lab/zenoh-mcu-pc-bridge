@@ -52,18 +52,18 @@ class MPUSubscriberNode(ZenohNode):
         # 1. Accelerometer Pitch and Roll estimation (in radians)
         acc_x, acc_y, acc_z = msg.accel_x, msg.accel_y, msg.accel_z
         
-        # Calculate pitch & roll from gravity vector
-        pitch_acc = math.atan2(acc_y, math.sqrt(acc_x * acc_x + acc_z * acc_z))
-        roll_acc = math.atan2(-acc_x, acc_z)
+        # Standard MPU6050 pitch & roll from gravity vector
+        roll_acc = math.atan2(acc_y, acc_z)
+        pitch_acc = math.atan2(-acc_x, math.sqrt(acc_y * acc_y + acc_z * acc_z))
 
         # 2. Convert Gyro values from rad/s to deg/s
-        gyro_x_deg = math.degrees(msg.gyro_x)
-        gyro_y_deg = math.degrees(msg.gyro_y)
-        gyro_z_deg = math.degrees(msg.gyro_z)
+        gyro_x_deg = math.degrees(msg.gyro_x) # Roll rate
+        gyro_y_deg = math.degrees(msg.gyro_y) # Pitch rate
+        gyro_z_deg = math.degrees(msg.gyro_z) # Yaw rate
 
-        # 3. Complementary Filter (96% Gyro integration + 4% Accelerometer correction)
-        current_pitch = 0.96 * (current_pitch + gyro_x_deg * dt) + 0.04 * math.degrees(pitch_acc)
-        current_roll = 0.96 * (current_roll + gyro_y_deg * dt) + 0.04 * math.degrees(roll_acc)
+        # 3. Complementary Filter (96% Gyro + 4% Accelerometer)
+        current_roll = 0.96 * (current_roll + gyro_x_deg * dt) + 0.04 * math.degrees(roll_acc)
+        current_pitch = 0.96 * (current_pitch + gyro_y_deg * dt) + 0.04 * math.degrees(pitch_acc)
         current_yaw += gyro_z_deg * dt
 
         # Keep yaw in range [-180, 180]
