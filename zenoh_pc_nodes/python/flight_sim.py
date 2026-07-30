@@ -235,7 +235,7 @@ def main():
     clock = pygame.time.Clock()
 
     font = pygame.font.SysFont("monospace", 16, bold=True)
-    title_font = pygame.font.SysFont("sans-serif", 22, bold=True)
+    title_font = pygame.font.SysFont("monospace", 20, bold=True)
 
     running = True
     print("[Flight Sim] 3D Renderer started. Press ESC or close window to exit.")
@@ -245,9 +245,6 @@ def main():
         for event in pygame.event.get():
             if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
                 running = False
-
-        # Process Zenoh events non-blockingly
-        node.z_spin_once(10)
 
         # Clear Screen (Dark cockpit background)
         screen.fill((18, 22, 30))
