@@ -181,6 +181,10 @@ def draw_artificial_horizon(surface, rect, roll, pitch):
     """Draws a professional aviation Attitude Indicator with circular alpha mask."""
     radius = rect.width // 2
 
+    # Invert roll and pitch for authentic cockpit perspective (horizon rotates opposite to aircraft bank)
+    horizon_roll = -roll
+    horizon_pitch = -pitch
+
     # 1. Main gauge surface with Alpha channel (SRCALPHA)
     gauge_surf = pygame.Surface((rect.width, rect.height), pygame.SRCALPHA)
 
@@ -190,7 +194,7 @@ def draw_artificial_horizon(surface, rect, roll, pitch):
     p_surf.fill((60, 140, 220)) # Sky Blue
 
     # Pitch offset (-50 to +50 deg mapped to pixels)
-    pitch_offset = int(pitch * 2.0)
+    pitch_offset = int(horizon_pitch * 2.0)
     
     # Earth Brown ground half
     pygame.draw.rect(p_surf, (130, 80, 40), (0, horizon_size // 2 + pitch_offset, horizon_size, horizon_size))
@@ -205,8 +209,8 @@ def draw_artificial_horizon(surface, rect, roll, pitch):
         center_x = horizon_size // 2
         pygame.draw.line(p_surf, (255, 255, 255), (center_x - w_len, line_y), (center_x + w_len, line_y), 2)
 
-    # Rotate horizon surface by roll angle
-    rot_p_surf = pygame.transform.rotate(p_surf, roll)
+    # Rotate horizon surface by inverted roll angle
+    rot_p_surf = pygame.transform.rotate(p_surf, horizon_roll)
     rot_rect = rot_p_surf.get_rect(center=(radius, radius))
     gauge_surf.blit(rot_p_surf, rot_rect.topleft)
 
