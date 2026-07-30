@@ -327,11 +327,18 @@ def main():
         pygame.display.flip()
         clock.tick(60)
 
-    # Cleanup
+    # Clean Pygame & Zenoh Shutdown
     pygame.quit()
-    node.z_destroy()
+    if node:
+        node.z_destroy()
     print("[Flight Sim] Closed successfully.")
 
 
 if __name__ == '__main__':
-    main()
+    import signal
+    signal.signal(signal.SIGINT, lambda sig, frame: sys.exit(0))
+    try:
+        main()
+    except (KeyboardInterrupt, SystemExit):
+        print("\n[Flight Sim] Closed.")
+        sys.exit(0)
