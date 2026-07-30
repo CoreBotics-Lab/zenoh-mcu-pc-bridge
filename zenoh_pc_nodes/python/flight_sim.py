@@ -54,12 +54,12 @@ class MPUSubscriberNode(ZenohNode):
         
         # Standard MPU6050 pitch & roll from gravity vector
         roll_acc = math.atan2(acc_y, acc_z)
-        pitch_acc = math.atan2(-acc_x, math.sqrt(acc_y * acc_y + acc_z * acc_z))
+        pitch_acc = math.atan2(acc_x, math.sqrt(acc_y * acc_y + acc_z * acc_z)) # Inverted Pitch sign
 
         # 2. Convert Gyro values from rad/s to deg/s
-        gyro_x_deg = math.degrees(msg.gyro_x) # Roll rate
-        gyro_y_deg = math.degrees(msg.gyro_y) # Pitch rate
-        gyro_z_deg = math.degrees(msg.gyro_z) # Yaw rate
+        gyro_x_deg = math.degrees(msg.gyro_x)   # Roll rate
+        gyro_y_deg = -math.degrees(msg.gyro_y)  # Inverted Y pitch rate
+        gyro_z_deg = math.degrees(msg.gyro_z)   # Yaw rate
 
         # 3. Complementary Filter (96% Gyro + 4% Accelerometer)
         current_roll = 0.96 * (current_roll + gyro_x_deg * dt) + 0.04 * math.degrees(roll_acc)
@@ -75,11 +75,11 @@ class MPUSubscriberNode(ZenohNode):
 PLANE_VERTICES = np.array([
     # Nose & Fuselage
     [0.0, 0.0, 2.5],      # 0: Nose tip
-    [-0.3, -0.2, 0.5],    # 1: Left canopy
-    [0.3, -0.2, 0.5],     # 2: Right canopy
-    [0.0, 0.3, 0.5],      # 3: Bottom cockpit
-    [0.0, -0.4, -1.8],    # 4: Tail top
-    [0.0, 0.2, -1.8],     # 5: Tail bottom
+    [-0.3, 0.2, 0.5],     # 1: Left canopy top
+    [0.3, 0.2, 0.5],      # 2: Right canopy top
+    [0.0, -0.3, 0.5],     # 3: Bottom cockpit
+    [0.0, 0.4, -1.8],     # 4: Tail top
+    [0.0, -0.2, -1.8],    # 5: Tail bottom
     
     # Main Wings
     [-3.2, 0.0, 0.2],     # 6: Left wingtip
@@ -89,9 +89,9 @@ PLANE_VERTICES = np.array([
     [-0.4, 0.0, -0.4],    # 10: Left wing root back
     [0.4, 0.0, -0.4],     # 11: Right wing root back
     
-    # Vertical Tail Fin
-    [0.0, -1.2, -1.8],    # 12: Vertical stabilizer top
-    [0.0, -0.4, -1.0],    # 13: Vertical stabilizer root
+    # Vertical Tail Fin (Extends UPWARD)
+    [0.0, 1.2, -1.8],     # 12: Vertical stabilizer top
+    [0.0, 0.4, -1.0],     # 13: Vertical stabilizer root
     
     # Horizontal Tail Wings
     [-1.2, 0.0, -1.8],    # 14: Left tail wingtip
