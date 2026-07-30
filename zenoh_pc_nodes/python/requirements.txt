@@ -1,2 +1,5 @@
 eclipse-zenoh
 msgpack
+pygame-ce
+numpy
+matplotlib
