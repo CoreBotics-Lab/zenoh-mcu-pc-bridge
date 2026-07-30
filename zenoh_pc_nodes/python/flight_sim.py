@@ -1,19 +1,4 @@
 #!/usr/bin/env python3
-"""
-====================================================================
-ESP32-S3 MPU6050 3D Flight Simulator & Artificial Horizon
-====================================================================
- ESP32-S3 Pinout Reference:
-  MPU / GY-87 Pin | ESP32-S3 Pin | Function
- -----------------+--------------+-----------------------------------
-  VCC_IN / VCC    | 5V or 3.3V   | Main Power Supply (5V or 3.3V)
-  GND             | GND          | Ground
-  SCL             | GPIO 10      | I2C Clock Line
-  SDA             | GPIO 9       | I2C Data Line
-  INTA            | GPIO 18      | MPU6050 Hardware Interrupt
-====================================================================
-"""
-
 import sys
 import os
 import time
