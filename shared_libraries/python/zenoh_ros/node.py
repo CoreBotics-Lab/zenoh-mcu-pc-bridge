@@ -96,6 +96,139 @@ class ZenohTimer:
         self.running = False
 
 
+class Future:
+    """ROS 2-style Future for asynchronous service requests."""
+    def __init__(self) -> None:
+        self._event = threading.Event()
+        self._result: Any = None
+        self._exception: Optional[Exception] = None
+
+    def done(self) -> bool:
+        return self._event.is_set()
+
+    def result(self, timeout_sec: Optional[float] = None) -> Any:
+        if self._event.wait(timeout=timeout_sec):
+            if self._exception:
+                raise self._exception
+            return self._result
+        raise TimeoutError("Future result timed out.")
+
+    def set_result(self, result: Any) -> None:
+        self._result = result
+        self._event.set()
+
+    def set_exception(self, exception: Exception) -> None:
+        self._exception = exception
+        self._event.set()
+
+
+class ZenohService:
+    def __init__(self, session: zenoh.Session, srv_type: Type, service_name: str, callback: Callable[[Any, Any], None]) -> None:
+        self.srv_type = srv_type
+        self.service_name = service_name
+        self.callback = callback
+
+        def queryable_handler(query: zenoh.Query):
+            try:
+                raw_payload = query.payload.to_bytes() if query.payload else b""
+                req_cls = getattr(self.srv_type, 'Request', None)
+                res_cls = getattr(self.srv_type, 'Response', None)
+
+                # Skip handling if this is an empty probe query from wait_for_service
+                if not raw_payload:
+                    query.reply(self.service_name, b"")
+                    return
+
+                if req_cls and hasattr(req_cls, 'deserialize'):
+                    req = req_cls.deserialize(raw_payload)
+                else:
+                    req = msgpack.unpackb(raw_payload)
+
+                res = res_cls() if res_cls else {}
+                self.callback(req, res)
+
+                if hasattr(res, 'serialize'):
+                    reply_payload = res.serialize()
+                elif isinstance(res, (dict, list)):
+                    reply_payload = msgpack.packb(res)
+                else:
+                    reply_payload = msgpack.packb([res])
+
+                query.reply(self.service_name, reply_payload)
+            except Exception as e:
+                print(f"[ZenohService] Error handling service query on '{self.service_name}': {e}")
+
+        self.queryable = session.declare_queryable(service_name, queryable_handler)
+
+    def undeclare(self) -> None:
+        if hasattr(self, 'queryable') and self.queryable:
+            self.queryable.undeclare()
+            self.queryable = None
+
+
+class ZenohClient:
+    def __init__(self, session: zenoh.Session, srv_type: Type, service_name: str) -> None:
+        self.session = session
+        self.srv_type = srv_type
+        self.service_name = service_name
+
+    def wait_for_service(self, timeout_sec: float = 5.0) -> bool:
+        """Wait for service queryable to be available on Zenoh network."""
+        start = time.time()
+        while time.time() - start < timeout_sec:
+            try:
+                replies = self.session.get(self.service_name, timeout=0.2)
+                for reply in replies:
+                    if reply and hasattr(reply, 'ok'):
+                        return True
+            except Exception:
+                pass
+            time.sleep(0.1)
+        return False
+
+    def call_async(self, request: Any) -> Future:
+        """Asynchronously call service and return a Future object (like ROS 2)."""
+        future = Future()
+
+        def _worker():
+            try:
+                if hasattr(request, 'serialize'):
+                    payload = request.serialize()
+                elif isinstance(request, (dict, list)):
+                    payload = msgpack.packb(request)
+                else:
+                    payload = msgpack.packb([request])
+
+                replies = self.session.get(self.service_name, payload=payload)
+                raw_reply = None
+                for reply in replies:
+                    if reply and hasattr(reply, 'ok') and reply.ok:
+                        raw_reply = reply.ok.payload.to_bytes()
+                        break
+
+                if raw_reply is not None:
+                    res_cls = getattr(self.srv_type, 'Response', None)
+
+                    if res_cls and hasattr(res_cls, 'deserialize'):
+                        response = res_cls.deserialize(raw_reply)
+                    else:
+                        response = msgpack.unpackb(raw_reply)
+                    future.set_result(response)
+                else:
+                    future.set_exception(RuntimeError("Service call failed or no response received."))
+            except Exception as e:
+                future.set_exception(e)
+
+        t = threading.Thread(target=_worker, daemon=True)
+        t.start()
+        return future
+
+    def call(self, request: Any, timeout_sec: float = 5.0) -> Any:
+        """Synchronously call service and return response (or raise TimeoutError)."""
+        future = self.call_async(request)
+        return future.result(timeout_sec=timeout_sec)
+
+
 class ZenohConfig:
     def __init__(self, host: str = "192.168.4.1", port: int = 7447, connect_endpoint: str = "") -> None:
         self.host = host
@@ -113,6 +246,8 @@ class ZenohNode:
         self.publishers = []
         self.subscriptions = []
         self.timers = []
+        self.services = []
+        self.clients = []
 
     @classmethod
     def init(cls, config: Optional[ZenohConfig] = None) -> None:
@@ -192,6 +327,28 @@ class ZenohNode:
         self.subscriptions.append(sub)
         return sub
 
+    def z_create_service(self, srv_type: Type, service_name: str, callback: Callable[[Any, Any], None]) -> ZenohService:
+        with self._lock:
+            if self._session is None:
+                ZenohNode.init()
+            session = self._session
+            assert session is not None
+
+        service = ZenohService(session, srv_type, service_name, callback)
+        self.services.append(service)
+        return service
+
+    def z_create_client(self, srv_type: Type, service_name: str) -> ZenohClient:
+        with self._lock:
+            if self._session is None:
+                ZenohNode.init()
+            session = self._session
+            assert session is not None
+
+        client = ZenohClient(session, srv_type, service_name)
+        self.clients.append(client)
+        return client
+
     def z_create_timer(self, period_ms: int, callback: Callable[[], None]) -> ZenohTimer:
         timer = ZenohTimer(period_ms, callback)
         self.timers.append(timer)
@@ -209,6 +366,10 @@ class ZenohNode:
         for timer in self.timers:
             timer.cancel()
         self.timers.clear()
+        for srv in self.services:
+            srv.undeclare()
+        self.services.clear()
+        self.clients.clear()
         self.publishers.clear()
         self.subscriptions.clear()
         ZenohNode.shutdown()

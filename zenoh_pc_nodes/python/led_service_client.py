@@ -1,6 +1,11 @@
-#!/usr/bin/env python3
+import sys
+import os
 import time
 import random
+
+# Ensure the shared zenoh_ros package can be imported
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../shared_libraries/python')))
+
 from zenoh_ros import ZenohNode
 from zenoh_ros.custom_srvs import z_SetLEDColor
 
