@@ -1,20 +1,21 @@
 import msgpack
 from typing import Any, List, Optional, cast
+from zenoh_ros.custom_msgs import z_SetLED
 
 class z_SetLEDColor:
     class Request:
-        def __init__(self, led_data: Any = None) -> None:
+        def __init__(self, led_data: z_SetLED = z_SetLED()) -> None:
             self.led_data = led_data
 
         def serialize(self) -> bytes:
-            return cast(bytes, msgpack.packb({"led_data": None}))
+            return cast(bytes, msgpack.packb({"led_data": self.led_data.serialize() if hasattr(self.led_data, "serialize") else msgpack.packb(self.led_data)}))
 
         @classmethod
         def deserialize(cls, payload: bytes) -> 'Request':
             data = msgpack.unpackb(payload)
             if not isinstance(data, dict):
                 data = {}
-            return cls(None)
+            return cls(z_SetLED.deserialize(data.get(b"led_data", data.get("led_data", b""))))
 
         def __repr__(self) -> str:
             return f"custom_srvs.z_SetLEDColor.Request(led_data={self.led_data})"

@@ -238,6 +238,30 @@ def generate_pc_cpp_field_deserialization(f_type, f_name, json_var, msg_var):
     return (f'  std::vector<uint8_t> {f_name}_buf = nlohmann::json::to_msgpack({json_var}["{f_name}"]);\n'
             f'  deserialize_msg_pc({f_name}_buf, {msg_var}.{f_name});')
 
+def get_python_type(raw_type):
+    if raw_type in TYPE_MAP_PYTHON:
+        return TYPE_MAP_PYTHON[raw_type]
+    if raw_type in NESTED_PYTHON_TYPES:
+        return NESTED_PYTHON_TYPES[raw_type]
+    msg_name = raw_type
+    if '/' in raw_type:
+        msg_name = raw_type.split('/')[-1]
+    return f"z_{msg_name}"
+
+def get_python_default(raw_type):
+    if raw_type == 'bool':
+        return 'False'
+    if raw_type in ['float32', 'float64']:
+        return '0.0'
+    if raw_type in ['string', 'String']:
+        return '""'
+    if raw_type in NESTED_PYTHON_TYPES:
+        return f"{NESTED_PYTHON_TYPES[raw_type]}()"
+    if raw_type in TYPE_MAP_PYTHON:
+        return '0'
+    py_type = get_python_type(raw_type)
+    return f"{py_type}()"
+
 # Python field serialization helpers
 def generate_python_serialize_field(f_type, f_name):
     if f_type in TYPE_MAP_PYTHON:
@@ -251,7 +275,7 @@ def generate_python_serialize_field(f_type, f_name):
                 f'                [self.{f_name}.linear.x, self.{f_name}.linear.y, self.{f_name}.linear.z],\n'
                 f'                [self.{f_name}.angular.x, self.{f_name}.angular.y, self.{f_name}.angular.z]\n'
                 f'            ]')
-    return f'"{f_name}": None'
+    return f'"{f_name}": self.{f_name}.serialize() if hasattr(self.{f_name}, "serialize") else msgpack.packb(self.{f_name})'
 
 def generate_python_deserialize_field(f_type, f_name):
     if f_type in TYPE_MAP_PYTHON:
@@ -292,7 +316,8 @@ def generate_python_deserialize_field(f_type, f_name):
                 f'                )\n'
                 f'            )')
                 
-    return 'None'
+    py_type = get_python_type(f_type)
+    return f'{py_type}.deserialize(data.get(b"{f_name}", data.get("{f_name}", b"")))'
 
 def generate_mcu_header(package, name, fields, is_srv=False, req_fields=None, res_fields=None):
     z_name = f"z_{name}"
@@ -517,17 +542,28 @@ def generate_python_module(package, name, fields, is_srv=False, req_fields=None,
     z_name = f"z_{name}"
     all_fields = fields if not is_srv else (req_fields + res_fields)
     has_geometry = False
+    custom_imports = set()
     for f_type, _ in all_fields:
         if 'geometry_msgs' in f_type:
             has_geometry = True
+        elif f_type not in TYPE_MAP_PYTHON:
+            pkg = 'custom_msgs'
+            msg_name = f_type
+            if '/' in f_type:
+                parts = f_type.split('/')
+                pkg = parts[0]
+                msg_name = parts[-1]
+            custom_imports.add(f"from zenoh_ros.{pkg} import z_{msg_name}")
 
-    geometry_import = ""
+    imports_str = ""
     if has_geometry:
-        geometry_import = "from zenoh_ros.msg_interface.pre_defined_interface import z_geometry_msgs\n"
+        imports_str += "from zenoh_ros.msg_interface.pre_defined_interface import z_geometry_msgs\n"
+    for imp in sorted(custom_imports):
+        imports_str += f"{imp}\n"
 
     content = f"""import msgpack
 from typing import Any, List, Optional, cast
-{geometry_import}
+{imports_str}
 """
     if not is_srv:
         params = []
