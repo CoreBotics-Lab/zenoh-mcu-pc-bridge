@@ -26,12 +26,14 @@ def main():
         node.z_destroy()
         return
 
-    print("[Client] Service connected! Beginning random RGB LED command loop...")
+    print("[Client] Service connected! Beginning sequential RGB LED command loop (0-15)...")
 
     try:
+        current_led = 0
         while True:
-            # Select random LED index (0-15) and random color
-            led_num = random.randint(0, 15)
+            led_num = current_led
+            current_led = (current_led + 1) % 16
+
             r = random.randint(0, 255)
             g = random.randint(0, 255)
             b = random.randint(0, 255)
