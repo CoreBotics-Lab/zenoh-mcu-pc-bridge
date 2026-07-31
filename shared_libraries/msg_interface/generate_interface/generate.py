@@ -275,7 +275,7 @@ def generate_python_serialize_field(f_type, f_name):
                 f'                [self.{f_name}.linear.x, self.{f_name}.linear.y, self.{f_name}.linear.z],\n'
                 f'                [self.{f_name}.angular.x, self.{f_name}.angular.y, self.{f_name}.angular.z]\n'
                 f'            ]')
-    return f'"{f_name}": self.{f_name}.serialize() if hasattr(self.{f_name}, "serialize") else msgpack.packb(self.{f_name})'
+    return f'"{f_name}": msgpack.unpackb(self.{f_name}.serialize()) if hasattr(self.{f_name}, "serialize") else self.{f_name}'
 
 def generate_python_deserialize_field(f_type, f_name):
     if f_type in TYPE_MAP_PYTHON:
@@ -317,7 +317,7 @@ def generate_python_deserialize_field(f_type, f_name):
                 f'            )')
                 
     py_type = get_python_type(f_type)
-    return f'{py_type}.deserialize(data.get(b"{f_name}", data.get("{f_name}", b"")))'
+    return f'{py_type}.deserialize(msgpack.packb(data.get(b"{f_name}", data.get("{f_name}", {{}}))))'
 
 def generate_mcu_header(package, name, fields, is_srv=False, req_fields=None, res_fields=None):
     z_name = f"z_{name}"

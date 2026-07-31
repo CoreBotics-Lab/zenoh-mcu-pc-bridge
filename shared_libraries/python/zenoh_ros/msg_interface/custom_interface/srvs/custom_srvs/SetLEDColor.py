@@ -8,14 +8,14 @@ class z_SetLEDColor:
             self.led_data = led_data
 
         def serialize(self) -> bytes:
-            return cast(bytes, msgpack.packb({"led_data": self.led_data.serialize() if hasattr(self.led_data, "serialize") else msgpack.packb(self.led_data)}))
+            return cast(bytes, msgpack.packb({"led_data": msgpack.unpackb(self.led_data.serialize()) if hasattr(self.led_data, "serialize") else self.led_data}))
 
         @classmethod
         def deserialize(cls, payload: bytes) -> 'Request':
             data = msgpack.unpackb(payload)
             if not isinstance(data, dict):
                 data = {}
-            return cls(z_SetLED.deserialize(data.get(b"led_data", data.get("led_data", b""))))
+            return cls(z_SetLED.deserialize(msgpack.packb(data.get(b"led_data", data.get("led_data", {})))))
 
         def __repr__(self) -> str:
             return f"custom_srvs.z_SetLEDColor.Request(led_data={self.led_data})"
