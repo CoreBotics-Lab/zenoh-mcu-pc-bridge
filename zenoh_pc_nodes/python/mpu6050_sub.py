@@ -1,18 +1,4 @@
 #!/usr/bin/env python3
-"""
-====================================================================
-ESP32-S3 ↔ MPU6050 (GY-87 / HW-290 Breakout) Wiring Reference
-====================================================================
- MPU / GY-87 Pin | ESP32-S3 Pin | Function / Description
------------------+--------------+-----------------------------------
- VCC_IN / VCC    | 5V or 3.3V   | Main Power Supply (5V or 3.3V)
- 3.3V            | (Unconnected)| Direct 3.3V Output (Leave NC)
- GND             | GND          | Common Ground
- SCL             | GPIO 10      | I2C Clock Line
- SDA             | GPIO 9       | I2C Data Line
- INTA            | GPIO 18      | MPU6050 Hardware Interrupt Pin
-====================================================================
-"""
 import sys
 import os
 
