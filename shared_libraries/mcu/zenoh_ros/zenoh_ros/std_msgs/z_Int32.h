@@ -1,5 +1,4 @@
-#ifndef STD_MSGS_Z_INT32_H
-#define STD_MSGS_Z_INT32_H
-#include "../../msg_interface/pre_defined_interface/z_std_msgs.h"
-using z_Int32 = z_std_msgs::z_Int32;
-#endif
+// Forwarding header — do not edit directly.
+// Actual implementation: zenoh_ros/msg_interface/pre_defined_interface/std_msgs/z_Int32.h
+#pragma once
+#include <zenoh_ros/msg_interface/pre_defined_interface/std_msgs/z_Int32.h>

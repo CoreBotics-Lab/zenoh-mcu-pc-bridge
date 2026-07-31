@@ -700,25 +700,47 @@ def main():
     else:
         package = parts[1]
         
-    # Generate relative output destinations
-    out_dir_mcu = os.path.join(ws_root, f"shared_libraries/mcu/zenoh_ros/zenoh_ros/{package}")
-    out_dir_cpp = os.path.join(ws_root, f"shared_libraries/cpp/zenoh_ros/zenoh_ros/{package}")
-    out_dir_py = os.path.join(ws_root, f"shared_libraries/python/zenoh_ros/msg_interface/custom_interface/{interface_type}s/{package}")
-    
+    # ---------------------------------------------------------------------------
+    # Canonical output paths (inside msg_interface/)
+    # ---------------------------------------------------------------------------
+    # MCU: zenoh_ros/zenoh_ros/msg_interface/custom_interface/{custom_msgs,custom_srvs}/
+    out_dir_mcu = os.path.join(
+        ws_root,
+        f"shared_libraries/mcu/zenoh_ros/zenoh_ros/msg_interface/custom_interface/{interface_type}s/{package}"
+    )
+    # PC C++: zenoh_ros/zenoh_ros/msg_interface/custom_interface/{custom_msgs,custom_srvs}/
+    out_dir_cpp = os.path.join(
+        ws_root,
+        f"shared_libraries/cpp/zenoh_ros/zenoh_ros/msg_interface/custom_interface/{interface_type}s/{package}"
+    )
+    # Python: msg_interface/custom_interface/{msgs,srvs}/{package}/
+    out_dir_py = os.path.join(
+        ws_root,
+        f"shared_libraries/python/zenoh_ros/msg_interface/custom_interface/{interface_type}s/{package}"
+    )
+
     mcu_file = os.path.join(out_dir_mcu, f"z_{name}.h")
     cpp_file = os.path.join(out_dir_cpp, f"z_{name}.h")
-    py_file = os.path.join(out_dir_py, f"{name}.py")
-    
+    py_file  = os.path.join(out_dir_py,  f"{name}.py")
+
+    # ---------------------------------------------------------------------------
+    # Forwarding header paths (old flat paths — kept for backward compatibility)
+    # ---------------------------------------------------------------------------
+    fwd_dir_mcu = os.path.join(ws_root, f"shared_libraries/mcu/zenoh_ros/zenoh_ros/{package}")
+    fwd_dir_cpp = os.path.join(ws_root, f"shared_libraries/cpp/zenoh_ros/zenoh_ros/{package}")
+    fwd_mcu_file = os.path.join(fwd_dir_mcu, f"z_{name}.h")
+    fwd_cpp_file = os.path.join(fwd_dir_cpp, f"z_{name}.h")
+
     if action == 'rm':
         print(f"Removing generated files for {package}/{name}...")
-        for f in [mcu_file, cpp_file, py_file]:
+        for f in [mcu_file, cpp_file, py_file, fwd_mcu_file, fwd_cpp_file]:
             if os.path.exists(f):
                 os.remove(f)
                 print(f"  Deleted: {f}")
             else:
                 print(f"  Not found: {f}")
         # Clean up directories if they become empty
-        for d in [out_dir_mcu, out_dir_cpp, out_dir_py]:
+        for d in [out_dir_mcu, out_dir_cpp, out_dir_py, fwd_dir_mcu, fwd_dir_cpp]:
             if os.path.exists(d) and not os.listdir(d):
                 os.rmdir(d)
                 print(f"  Removed empty directory: {d}")
@@ -754,7 +776,7 @@ def main():
         req_fields = parse_fields(req_lines)
         res_fields = parse_fields(res_lines)
         
-    # Ensure folders exist
+    # Ensure canonical folders exist
     for d in [out_dir_mcu, out_dir_cpp, out_dir_py]:
         os.makedirs(d, exist_ok=True)
         # Create empty __init__.py inside Python generated package directory
@@ -763,23 +785,48 @@ def main():
             if not os.path.exists(init_file):
                 with open(init_file, 'w') as init_f:
                     init_f.write("")
-                    
+
+    # Ensure forwarding header directories exist
+    for d in [fwd_dir_mcu, fwd_dir_cpp]:
+        os.makedirs(d, exist_ok=True)
+
     # Generate content
     mcu_code = generate_mcu_header(package, name, fields, is_srv, req_fields, res_fields)
     cpp_code = generate_pc_header(package, name, fields, is_srv, req_fields, res_fields)
-    py_code = generate_python_module(package, name, fields, is_srv, req_fields, res_fields)
-    
-    # Save files (overwriting if exists)
+    py_code  = generate_python_module(package, name, fields, is_srv, req_fields, res_fields)
+
+    # Build forwarding header content for MCU and PC C++
+    mcu_canonical_include = f"zenoh_ros/msg_interface/custom_interface/{interface_type}s/{package}/z_{name}.h"
+    cpp_canonical_include = f"zenoh_ros/msg_interface/custom_interface/{interface_type}s/{package}/z_{name}.h"
+
+    fwd_template = (
+        "// Forwarding header — do not edit directly.\n"
+        "// Actual implementation: {canonical}\n"
+        "#pragma once\n"
+        "#include <{canonical}>\n"
+    )
+    fwd_mcu_code = fwd_template.format(canonical=mcu_canonical_include)
+    fwd_cpp_code = fwd_template.format(canonical=cpp_canonical_include)
+
+    # Save canonical files (overwriting if exists)
     with open(mcu_file, 'w') as f:
         f.write(mcu_code)
     with open(cpp_file, 'w') as f:
         f.write(cpp_code)
     with open(py_file, 'w') as f:
         f.write(py_code)
-        
+
+    # Save forwarding headers at old flat paths
+    with open(fwd_mcu_file, 'w') as f:
+        f.write(fwd_mcu_code)
+    with open(fwd_cpp_file, 'w') as f:
+        f.write(fwd_cpp_code)
+
     print(f"Successfully generated interface files for {package}/{name}:")
-    print(f"  MCU: {mcu_file}")
-    print(f"  CPP: {cpp_file}")
+    print(f"  MCU  (canonical): {mcu_file}")
+    print(f"  MCU  (forwarding): {fwd_mcu_file}")
+    print(f"  CPP  (canonical): {cpp_file}")
+    print(f"  CPP  (forwarding): {fwd_cpp_file}")
     print(f"  Python: {py_file}")
 
 if __name__ == "__main__":
