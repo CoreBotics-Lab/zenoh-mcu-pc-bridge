@@ -78,8 +78,10 @@ def get_cpp_type(raw_type):
         return TYPE_MAP_CPP[raw_type]
     if raw_type in NESTED_TYPES:
         return NESTED_TYPES[raw_type]
-    # Fallback to raw
-    return raw_type
+    if '/' in raw_type:
+        parts = raw_type.split('/')
+        return f"{parts[0]}::z_{parts[-1]}"
+    return f"custom_msgs::z_{raw_type}"
 
 def get_python_type(raw_type):
     if raw_type in TYPE_MAP_PYTHON:
@@ -108,6 +110,17 @@ def get_cpp_includes(fields, is_pc=False):
     for f_type, _ in fields:
         if 'geometry_msgs' in f_type:
             has_geometry = True
+        elif f_type not in TYPE_MAP_CPP:
+            # Custom nested message type (e.g. SetLED -> custom_msgs/z_SetLED.h)
+            pkg = 'custom_msgs'
+            msg_name = f_type
+            if '/' in f_type:
+                parts = f_type.split('/')
+                pkg = parts[0]
+                msg_name = parts[-1]
+            header = f"zenoh_ros/{pkg}/z_{msg_name}.h"
+            includes.append(f'#include <{header}>')
+
     if has_geometry:
         if is_pc:
             includes.append('#include "msg_interface/pre_defined_interface/z_geometry_msgs_pc.h"')
@@ -144,7 +157,12 @@ def generate_cpp_field_serialization(f_type, f_name, doc_var, msg_var):
                 f'  {f_name}_ang.add({msg_var}.{f_name}.angular.y);\n'
                 f'  {f_name}_ang.add({msg_var}.{f_name}.angular.z);')
                 
-    return f'// Unsupported nested type: {f_type}'
+    # Custom nested struct serialization
+    return (f'  uint8_t {f_name}_buf[256];\n'
+            f'  size_t {f_name}_len = serialize_msg({msg_var}.{f_name}, {f_name}_buf, sizeof({f_name}_buf));\n'
+            f'  JsonDocument {f_name}_doc;\n'
+            f'  deserializeMsgPack({f_name}_doc, {f_name}_buf, {f_name}_len);\n'
+            f'  {doc_var}["{f_name}"] = {f_name}_doc;')
 
 def generate_cpp_field_deserialization(f_type, f_name, doc_var, msg_var):
     if f_type in TYPE_MAP_CPP:
@@ -169,7 +187,10 @@ def generate_cpp_field_deserialization(f_type, f_name, doc_var, msg_var):
                 f'  {msg_var}.{f_name}.angular.y = {doc_var}["{f_name}"][1][1].as<double>();\n'
                 f'  {msg_var}.{f_name}.angular.z = {doc_var}["{f_name}"][1][2].as<double>();')
                 
-    return f'// Unsupported nested type: {f_type}'
+    # Custom nested struct deserialization
+    return (f'  uint8_t {f_name}_buf[256];\n'
+            f'  size_t {f_name}_len = serializeMsgPack({doc_var}["{f_name}"], {f_name}_buf, sizeof({f_name}_buf));\n'
+            f'  deserialize_msg({f_name}_buf, {f_name}_len, {msg_var}.{f_name});')
 
 # PC C++ Serialization/Deserialization using nlohmann/json
 def generate_pc_cpp_field_serialization(f_type, f_name, json_var, msg_var):
@@ -188,7 +209,8 @@ def generate_pc_cpp_field_serialization(f_type, f_name, json_var, msg_var):
                 f'    {{{msg_var}.{f_name}.angular.x, {msg_var}.{f_name}.angular.y, {msg_var}.{f_name}.angular.z}}\n'
                 f'  }};')
                 
-    return f'// Unsupported nested type: {f_type}'
+    return (f'  std::vector<uint8_t> {f_name}_buf = serialize_msg_pc({msg_var}.{f_name});\n'
+            f'  {json_var}["{f_name}"] = nlohmann::json::from_msgpack({f_name}_buf);')
 
 def generate_pc_cpp_field_deserialization(f_type, f_name, json_var, msg_var):
     if f_type in TYPE_MAP_CPP:
@@ -213,7 +235,8 @@ def generate_pc_cpp_field_deserialization(f_type, f_name, json_var, msg_var):
                 f'  {msg_var}.{f_name}.angular.y = {json_var}["{f_name}"][1][1].get<double>();\n'
                 f'  {msg_var}.{f_name}.angular.z = {json_var}["{f_name}"][1][2].get<double>();')
                 
-    return f'// Unsupported nested type: {f_type}'
+    return (f'  std::vector<uint8_t> {f_name}_buf = nlohmann::json::to_msgpack({json_var}["{f_name}"]);\n'
+            f'  deserialize_msg_pc({f_name}_buf, {msg_var}.{f_name});')
 
 # Python field serialization helpers
 def generate_python_serialize_field(f_type, f_name):
