@@ -292,9 +292,13 @@ class ZenohNode:
             if cls._session is not None:
                 cls._session_refcount -= 1
                 if cls._session_refcount <= 0:
-                    cls._session.close()
-                    cls._session = None
-                    print("[Zenoh] Global session closed.")
+                    try:
+                        cls._session.close()
+                    except Exception as e:
+                        print(f"[Zenoh] Notice on session close: {e}")
+                    finally:
+                        cls._session = None
+                        print("[Zenoh] Global session closed.")
 
     def z_get_name(self) -> str:
         return self.node_name
