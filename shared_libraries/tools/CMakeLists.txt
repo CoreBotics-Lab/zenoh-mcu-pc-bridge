@@ -9,16 +9,7 @@ set(LOCAL_3RDPARTY_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../cpp/3rdparty")
 if(EXISTS "${LOCAL_3RDPARTY_DIR}/nlohmann/json.hpp")
     include_directories(SYSTEM "${LOCAL_3RDPARTY_DIR}")
 else()
-    find_package(nlohmann_json QUIET)
-    if(NOT nlohmann_json_FOUND)
-        include(FetchContent)
-        FetchContent_Declare(
-            json
-            GIT_REPOSITORY https://github.com/nlohmann/json.git
-            GIT_TAG v3.11.3
-        )
-        FetchContent_MakeAvailable(json)
-    endif()
+    find_package(nlohmann_json REQUIRED)
 endif()
 
 if(EXISTS "${LOCAL_3RDPARTY_DIR}/zenoh-c")
@@ -39,10 +30,8 @@ endif()
 
 if(EXISTS "${LOCAL_3RDPARTY_DIR}/zenoh-c")
     if(APPLE)
-        set(CMAKE_INSTALL_RPATH "@loader_path/../cpp/3rdparty/zenoh-c/lib")
         set_target_properties(echo PROPERTIES LINK_FLAGS "-Wl,-rpath,@loader_path/../cpp/3rdparty/zenoh-c/lib")
     else()
-        set(CMAKE_INSTALL_RPATH "$ORIGIN/../cpp/3rdparty/zenoh-c/lib")
         set_target_properties(echo PROPERTIES LINK_FLAGS "-Wl,-rpath,\$ORIGIN/../cpp/3rdparty/zenoh-c/lib")
     endif()
     set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
