@@ -19,15 +19,123 @@ shared_libraries/
 
 ---
 
-## 🛠️ API Reference & Methods
+## 🛠️ Interface Generator (`generate.py`) & How to Write `.msg` / `.srv` Files
+
+The generator system (`shared_libraries/msg_interface/generate_interface/generate.py`) converts standard ROS 2-style `.msg` and `.srv` definition files into cross-platform **MsgPack-serialized** C++ structs and Python classes across MCU C++, PC C++, and Python simultaneously.
+
+---
+
+### 1. How to Write `.msg` Files
+
+Message files define structured data payloads. Place `.msg` files in `shared_libraries/msg_interface/msg/custom_msgs/`.
+
+#### **1.1 Primitive Field Message (`SetLED.msg`)**
+Use standard primitive data types (`uint8`, `int32`, `float32`, `string`, `bool`, etc.):
+```text
+uint8 led_num
+uint8 r
+uint8 g
+uint8 b
+uint8 brightness
+```
+
+#### **1.2 Primitive Type Mapping**
+| `.msg` Type | C++ Type | Python Type |
+|---|---|---|
+| `int8` / `uint8` | `int8_t` / `uint8_t` | `int` |
+| `int16` / `uint16` | `int16_t` / `uint16_t` | `int` |
+| `int32` / `uint32` | `int32_t` / `uint32_t` | `int` |
+| `int64` / `uint64` | `int64_t` / `uint64_t` | `int` |
+| `float32` / `float64` | `float` / `double` | `float` |
+| `string` | `std::string` | `str` |
+| `bool` | `bool` | `bool` |
+
+---
+
+### 2. How to Write `.srv` Files
+
+Service files define Request/Response pairs separated by three dashes (`---`). Place `.srv` files in `shared_libraries/msg_interface/srv/custom_srvs/`.
+
+#### **2.1 Simple Service Definition (`SetColor.srv`)**
+```text
+# Request fields
+uint8 r
+uint8 g
+uint8 b
+---
+# Response fields
+bool success
+string message
+```
+
+#### **2.2 Nested Service Definition (`SetLEDColor.srv`)**
+Services can embed custom `.msg` types (e.g. `SetLED`) directly inside the Request or Response:
+```text
+# Request using nested custom SetLED message
+custom_msgs/SetLED led_data
+---
+# Response
+bool success
+string message
+```
+
+---
+
+### 3. How to Write Nested `.msg` Interfaces
+
+You can nest pre-defined ROS 2 interfaces or other custom `.msg` types into your message definitions.
+
+#### **3.1 Pre-defined Nested ROS 2 Message (`RobotOdom.msg`)**
+Embed standard ROS 2 types like `std_msgs/Header`, `geometry_msgs/Twist`, `nav_msgs/Odometry`, or `sensor_msgs/Imu`:
+```text
+std_msgs/Header header
+geometry_msgs/Twist velocity
+float32 battery_voltage
+```
+
+#### **3.2 Custom Nested Message (`RobotState.msg`)**
+Reference another custom message defined in `msg/custom_msgs/`:
+```text
+SetLED led_state         # References SetLED.msg
+string robot_status
+```
+
+---
+
+### 4. Running `generate.py`
+
+Navigate to `shared_libraries/msg_interface/generate_interface` and run:
+
+```bash
+cd shared_libraries/msg_interface/generate_interface
+
+# 1. Generate single custom message or service:
+python3 generate.py -generate msg/custom_msgs/SetLED.msg
+python3 generate.py -generate srv/custom_srvs/SetLEDColor.srv
+
+# 2. Batch generate ALL custom messages and services at once:
+python3 generate.py -generate custom
+
+# 3. Remove generated interface files:
+python3 generate.py -rm msg/custom_msgs/SetLED.msg
+python3 generate.py -rm srv/custom_srvs/SetLEDColor.srv
+```
+
+#### **Generated Files Location & Include Headers:**
+
+- **MCU C++ Header**: `#include <zenoh_ros/custom_msgs/z_SetLED.h>`
+- **PC C++ Header**: `#include <zenoh_ros/custom_msgs/z_SetLED.h>`
+- **PC Python Module**: `from zenoh_ros.custom_msgs import z_SetLED`
+
+---
+
+## 📡 API Reference & Core Methods
 
 All communication methods belong to `ZenohNode` and follow standard ROS 2 method signatures across C++ and Python.
 
 ---
 
 ### 1. Initializing Zenoh Session (`ZenohNode::init`)
-
-Initialize the network session before instantiating any node:
 
 - **MCU C++**:
   ```cpp
@@ -49,8 +157,6 @@ Initialize the network session before instantiating any node:
 
 ### 2. Creating a Publisher (`z_create_publisher`)
 
-Creates a typed publisher on a specific topic.
-
 - **C++ (MCU & PC)**:
   ```cpp
   ZenohPublisher<z_Int32>* pub = node->z_create_publisher<z_Int32>("topic_name", 10);
@@ -71,8 +177,6 @@ Creates a typed publisher on a specific topic.
 ---
 
 ### 3. Creating a Subscription (`z_create_subscription`)
-
-Subscribes to a topic and triggers a callback when data arrives.
 
 - **C++ (MCU & PC)**:
   ```cpp
@@ -96,8 +200,6 @@ Subscribes to a topic and triggers a callback when data arrives.
 
 ### 4. Creating a Timer (`z_create_timer`)
 
-Schedules a recurring wall timer callback.
-
 - **MCU C++**:
   ```cpp
   ZenohTimer* timer = node->z_create_timer(1000, []() {
@@ -112,8 +214,6 @@ Schedules a recurring wall timer callback.
 ---
 
 ### 5. Creating a Service Server (`z_create_service`)
-
-Registers a service server to handle incoming requests and return a response.
 
 - **C++ (MCU & PC)**:
   ```cpp
@@ -137,8 +237,6 @@ Registers a service server to handle incoming requests and return a response.
 ---
 
 ### 6. Creating a Service Client (`z_create_client`)
-
-Sends requests to a service server and waits for the response.
 
 - **Python Client (Async)**:
   ```python
@@ -169,8 +267,6 @@ Sends requests to a service server and waits for the response.
 
 ### 7. Logging (`ZLOG` & `ZenohLogger`)
 
-Severity levels: `DEBUG`, `INFO`, `WARN`, `ERROR`, `FATAL`.
-
 - **MCU C++**:
   ```cpp
   ZLogger logger("mcu_node");
@@ -189,19 +285,6 @@ Severity levels: `DEBUG`, `INFO`, `WARN`, `ERROR`, `FATAL`.
   logger.warn("Warning once", once=True)
   logger.error("Throttled", throttle_duration_sec=2.0)
   ```
-
----
-
-## 🛠️ Interface Generator (`generate.py`)
-
-Place `.msg` or `.srv` files in `shared_libraries/msg_interface/` and run:
-
-```bash
-cd shared_libraries/msg_interface/generate_interface
-
-# Generate custom interfaces across Python, MCU C++, and PC C++
-python3 generate.py -generate custom
-```
 
 ---
 
