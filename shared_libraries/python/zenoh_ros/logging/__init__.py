@@ -335,6 +335,12 @@ def get_logger_effective_level(name: str) -> LogLevel:
     return LogLevel.INFO
 
 
+def run_log_viewer() -> None:
+    """Launch the internal log viewer to monitor /zenoh_ros/log live."""
+    from .viewer import main
+    main()
+
+
 __all__ = [
     "ZenohLogger",
     "LogLevel",
@@ -343,4 +349,5 @@ __all__ = [
     "get_logger_effective_level",
     "_set_zenoh_session",
     "LOG_TOPIC",
+    "run_log_viewer",
 ]
