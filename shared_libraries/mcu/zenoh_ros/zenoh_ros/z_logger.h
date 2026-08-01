@@ -107,7 +107,7 @@ public:
     inline bool _enabled(uint8_t level) const { return level >= _level; }
 
     void _print(const char* color, const char* level_str, const char* fmt, ...) const {
-        char msg_buf[256];
+        char msg_buf[128];
         va_list args;
         va_start(args, fmt);
         vsnprintf(msg_buf, sizeof(msg_buf), fmt, args);
@@ -139,21 +139,17 @@ private:
     static void _publish_fn(void* node_ptr, const char* level_str,
                              const char* name, const char* message, uint64_t ts_us) {
         NodeT* node = reinterpret_cast<NodeT*>(node_ptr);
-        // Serialize as msgpack and publish to 'zenoh_ros/log'
-        // Uses ArduinoJson (already a dependency)
+        // Serialize as msgpack and publish to '{node_name}/log'
         JsonDocument doc;
         doc["severity"]     = level_str;
         doc["name"]         = name;
         doc["message"]      = message;
         doc["timestamp_ns"] = (uint64_t)(ts_us * 1000ULL);
-        doc["file"]         = "";
-        doc["line"]         = 0;
-        doc["function"]     = "";
 
-        uint8_t buf[256];
+        uint8_t buf[128];
         size_t  len = serializeMsgPack(doc, buf, sizeof(buf));
         if (len > 0) {
-            char log_topic[128];
+            char log_topic[64];
             snprintf(log_topic, sizeof(log_topic), "%s/log", name);
             node->z_publish_raw(log_topic, buf, len);
         }
