@@ -115,8 +115,8 @@ Once generated, all message and service types follow standard ROS 2 include conv
   #include <zenoh_ros/ZenohRos.h>
   #include <zenoh_ros/std_msgs/z_Int32.h>
 
-  ZenohPublisher<std_msgs::z_Int32>* pub = node->z_create_publisher<std_msgs::z_Int32>("my_topic", 10);
-  std_msgs::z_Int32 msg;
+  ZenohPublisher<z_Int32>* pub = node->z_create_publisher<z_Int32>("my_topic", 10);
+  z_Int32 msg;
   msg.data = 42;
   pub->publish(msg);
   ```
@@ -126,8 +126,8 @@ Once generated, all message and service types follow standard ROS 2 include conv
   #include <zenoh_ros/ZenohRosPC.h>
   #include <zenoh_ros/std_msgs/z_Int32.h>
 
-  ZenohPublisher<std_msgs::z_Int32>* pub = node->z_create_publisher<std_msgs::z_Int32>("my_topic", 10);
-  std_msgs::z_Int32 msg;
+  ZenohPublisher<z_Int32>* pub = node->z_create_publisher<z_Int32>("my_topic", 10);
+  z_Int32 msg;
   msg.data = 42;
   pub->publish(msg);
   ```
@@ -149,9 +149,9 @@ Once generated, all message and service types follow standard ROS 2 include conv
 
 - **MCU C++**:
   ```cpp
-  auto sub = node->z_create_subscription<std_msgs::z_Int32>(
+  auto sub = node->z_create_subscription<z_Int32>(
       "my_topic",
-      [](const std_msgs::z_Int32& msg) {
+      [](const z_Int32& msg) {
           Serial.printf("Recv: %d\n", msg.data);
       },
       10
@@ -160,9 +160,9 @@ Once generated, all message and service types follow standard ROS 2 include conv
 
 - **PC C++**:
   ```cpp
-  auto sub = node->z_create_subscription<std_msgs::z_Int32>(
+  auto sub = node->z_create_subscription<z_Int32>(
       "my_topic",
-      [](const std_msgs::z_Int32& msg) {
+      [](const z_Int32& msg) {
           std::cout << "Recv: " << msg.data << std::endl;
       },
       10
@@ -189,9 +189,9 @@ Services use a non-blocking Request/Response architecture.
   ```cpp
   #include <zenoh_ros/custom_srvs/z_SetLEDColor.h>
 
-  auto srv = node->z_create_service<custom_srvs::z_SetLEDColor>(
+  auto srv = node->z_create_service<z_SetLEDColor>(
       "set_led_color",
-      [](const custom_srvs::z_SetLEDColor::Request& req, custom_srvs::z_SetLEDColor::Response& res) {
+      [](const z_SetLEDColor::Request& req, z_SetLEDColor::Response& res) {
           res.success = true;
           res.message = "LED updated";
       }
@@ -232,10 +232,10 @@ Services use a non-blocking Request/Response architecture.
 
 - **MCU C++ Client**:
   ```cpp
-  ZenohClient<custom_srvs::z_SetLEDColor>* client = node->z_create_client<custom_srvs::z_SetLEDColor>("set_led_color");
+  ZenohClient<z_SetLEDColor>* client = node->z_create_client<z_SetLEDColor>("set_led_color");
   if (client->wait_for_service(5000)) {
-      custom_srvs::z_SetLEDColor::Request req;
-      custom_srvs::z_SetLEDColor::Response res;
+      z_SetLEDColor::Request req;
+      z_SetLEDColor::Response res;
       if (client->call(req, res, 5000)) {
           // Response received
       }
