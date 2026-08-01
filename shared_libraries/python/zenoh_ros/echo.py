@@ -55,29 +55,39 @@ def echo_topic(topic: str, host: Optional[str] = None, port: int = 7447) -> None
             # 1. Try MsgPack deserialization
             try:
                 data = msgpack.unpackb(payload_bytes, raw=False)
-                if isinstance(data, dict) and "severity" in data and "message" in data:
-                    # Formatted Log Event
-                    severity = str(data.get("severity", "INFO"))
-                    name     = str(data.get("name", "node"))
-                    message  = str(data.get("message", ""))
-                    ts_ns    = data.get("timestamp_ns", 0)
-                    sec      = ts_ns / 1_000_000_000
+                if not isinstance(data, dict):
+                    # Try unpacking with raw=True in case keys are bytes
+                    data = msgpack.unpackb(payload_bytes, raw=True)
 
-                    color = _Color.WHITE
-                    if severity == "DEBUG":      color = _Color.CYAN
-                    elif severity == "WARN":     color = _Color.YELLOW
-                    elif severity == "ERROR":    color = _Color.RED
-                    elif severity == "FATAL":    color = _Color.BOLD_RED
+                if isinstance(data, dict):
+                    # Normalize keys (handle bytes vs str)
+                    d = { (k.decode('utf-8') if isinstance(k, bytes) else str(k)): v for k, v in data.items() }
 
-                    print(f"{color}[{severity}] [{sec:.9f}] [{name}]: {message}{_Color.RESET}")
-                else:
-                    # Structured message dict
-                    print(f"--- [{sample.key_expr}] ---")
-                    print(data)
+                    if "severity" in d and "message" in d:
+                        severity = (d["severity"].decode('utf-8') if isinstance(d["severity"], bytes) else str(d["severity"]))
+                        name     = (d["name"].decode('utf-8') if isinstance(d["name"], bytes) else str(d["name"]))
+                        message  = (d["message"].decode('utf-8') if isinstance(d["message"], bytes) else str(d["message"]))
+                        ts_ns    = d.get("timestamp_ns", 0)
+                        sec      = float(ts_ns) / 1_000_000_000
+
+                        color = _Color.WHITE
+                        if severity == "DEBUG":      color = _Color.CYAN
+                        elif severity == "WARN":     color = _Color.YELLOW
+                        elif severity == "ERROR":    color = _Color.RED
+                        elif severity == "FATAL":    color = _Color.BOLD_RED
+
+                        print(f"{color}[{severity}] [{sec:.9f}] [{name}]: {message}{_Color.RESET}")
+                        return
+                    else:
+                        print(f"--- [{sample.key_expr}] ---")
+                        print(d)
+                        return
             except Exception:
-                # 2. Plain string fallback
-                text = payload_bytes.decode('utf-8', errors='replace')
-                print(f"[{sample.key_expr}]: {text}")
+                pass
+
+            # 2. Plain string fallback
+            text = payload_bytes.decode('utf-8', errors='replace')
+            print(f"[{sample.key_expr}]: {text}")
 
         except Exception as err:
             print(f"\033[31m[echo error]: {err}\033[0m")
