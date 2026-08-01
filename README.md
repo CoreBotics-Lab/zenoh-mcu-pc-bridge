@@ -6,6 +6,17 @@ The entire library lives inside a single portable folder: **`shared_libraries/`*
 
 ---
 
+> [!NOTE]
+> **Disclaimer & Upstream Acknowledgements**
+> This library (`zenoh_ros`) is a wrapper interface built directly on top of the following open-source projects:
+> - **[Eclipse Zenoh](https://zenoh.io/) & [Zenoh C-SDK](https://github.com/eclipse-zenoh/zenoh-c)** (Eclipse Public License 2.0 / Apache License 2.0)
+> - **[Eclipse Zenoh-Pico](https://github.com/eclipse-zenoh/zenoh-pico)** (Eclipse Public License 2.0 / Apache License 2.0)
+> - **[ArduinoJson](https://arduinojson.org/) by Benoit Blanchon** (MIT License)
+> - **[nlohmann/json](https://github.com/nlohmann/json)** (MIT License)
+> - **[msgpack-python](https://github.com/msgpack/msgpack-python)** (Apache License 2.0)
+
+---
+
 ## 📁 Shared Library Directory Structure
 
 ```text
