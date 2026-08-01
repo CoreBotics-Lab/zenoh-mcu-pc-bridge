@@ -38,9 +38,9 @@ public:
         ZLOG_INFO_ONCE(logger_, "WS2812B FastLED initialized (NUM_LEDS=%d, DATA_PIN=%d)", NUM_LEDS, DATA_PIN);
 
         // Create ROS 2 Service Server for SetLEDColor custom service
-        service_ = this->z_create_service<custom_srvs::z_SetLEDColor>(
+        service_ = this->z_create_service<z_SetLEDColor>(
             "set_led_color",
-            [this](const custom_srvs::z_SetLEDColor::Request& req, custom_srvs::z_SetLEDColor::Response& res) -> void {
+            [this](const z_SetLEDColor::Request& req, z_SetLEDColor::Response& res) -> void {
                 this->handle_set_led_color(req, res);
             }
         );
@@ -48,9 +48,9 @@ public:
 
 private:
     ZLogger logger_;
-    ZenohService<custom_srvs::z_SetLEDColor>* service_ = nullptr;
+    ZenohService<z_SetLEDColor>* service_ = nullptr;
 
-    void handle_set_led_color(const custom_srvs::z_SetLEDColor::Request& req, custom_srvs::z_SetLEDColor::Response& res) {
+    void handle_set_led_color(const z_SetLEDColor::Request& req, z_SetLEDColor::Response& res) {
         ZLOG_INFO(logger_, "[SERVICE RECV] LED: %u | RGB: (%u, %u, %u) | Brightness: %u%%",
                   req.led_data.led_num, req.led_data.r, req.led_data.g, req.led_data.b, req.led_data.brightness);
 

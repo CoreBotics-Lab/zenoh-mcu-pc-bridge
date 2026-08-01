@@ -47,7 +47,7 @@ add_executable(zenoh_test_sub src/zenoh_test_sub.cpp)
 add_executable(multi_topic_sub src/multi_topic_sub.cpp)
 add_executable(ws2812b_publisher src/ws2812b_publisher.cpp)
 add_executable(mpu6050_sub src/mpu6050_sub.cpp)
-add_executable(echo ../../shared_libraries/cpp/zenoh_ros/zenoh_ros/echo.cpp)
+add_executable(echo ../../shared_libraries/tools/src/echo.cpp)
 
 # Include directories
 target_include_directories(zenoh_test_sub PRIVATE ../../shared_libraries/cpp/zenoh_ros)
