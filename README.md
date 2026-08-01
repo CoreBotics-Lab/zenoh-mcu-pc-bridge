@@ -146,11 +146,12 @@ All communication methods belong to `ZenohNode` and follow standard ROS 2 method
   ```cpp
   ZenohConfig config;
   config.host = "192.168.4.1"; // ESP32 IP
+  config.port = 7447;          // Zenoh default port
   ZenohNode::init(config);
   ```
 - **PC Python**:
   ```python
-  ZenohNode.init(ZenohConfig(host="192.168.4.1"))
+  ZenohNode.init(ZenohConfig(host="192.168.4.1", port=7447))
   ```
 
 ---
