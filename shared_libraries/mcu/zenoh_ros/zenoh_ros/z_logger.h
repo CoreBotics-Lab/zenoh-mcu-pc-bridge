@@ -117,10 +117,7 @@ public:
         uint32_t s    = (uint32_t)(t_us / 1000000ULL);
         uint32_t ms   = (uint32_t)((t_us / 1000ULL) % 1000ULL);
 
-        Serial.printf("%s[%s] [%lu.%03lu] [%s]: %s%s\n",
-                      color, level_str,
-                      (unsigned long)s, (unsigned long)ms,
-                      _name, msg_buf, _ZLOG_COLOR_RESET);
+        Serial.printf("[%s] [%s]: %s\n", level_str, _name, msg_buf);
 
         // Publish to Zenoh if a node is attached
         if (_node != nullptr && _node_publish != nullptr) {
