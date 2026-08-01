@@ -107,17 +107,9 @@ def _publish_log(level: int, name: str, message: str,
                 _publisher_cache[topic] = _zenoh_session.declare_publisher(topic)
             pub = _publisher_cache[topic]
 
-        payload = msgpack.packb({
-            "severity":     _LEVEL_NAME.get(level, "UNKNOWN"),
-            "severity_int": int(level),
-            "name":         name,
-            "message":      message,
-            "timestamp_ns": stamp_ns,
-            "file":         file,
-            "line":         line,
-            "function":     func,
-        }, use_bin_type=True)
-        pub.put(bytes(payload))
+        lv_str = _LEVEL_NAME.get(level, "INFO")
+        formatted = f"[{lv_str}] [{name}]: {message}"
+        pub.put(formatted.encode("utf-8"))
     except Exception:
         pass  # logging must never crash the caller
 
@@ -271,9 +263,8 @@ class ZenohLogger:
             formatted = str(msg)
 
         # Build log line — matches ROS 2 default format
-        ts_sec   = wall_ns / 1_000_000_000
         lv_str   = _LEVEL_NAME.get(level, "UNKNOWN")
-        line_out = f"[{lv_str}] [{ts_sec:.9f}] [{self._name}]: {formatted}"
+        line_out = f"[{lv_str}] [{self._name}]: {formatted}"
 
         # Print to stderr with optional ANSI color
         if _USE_COLORS:

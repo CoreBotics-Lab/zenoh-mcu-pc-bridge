@@ -59,13 +59,8 @@ public:
         vsnprintf(msg_buf, sizeof(msg_buf), fmt, args);
         va_end(args);
 
-        auto now = std::chrono::system_clock::now();
-        auto duration = now.time_since_epoch();
-        auto sec = std::chrono::duration_cast<std::chrono::seconds>(duration).count();
-        auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count() % 1000000000;
-
         std::lock_guard<std::mutex> lock(mutex_);
-        std::cerr << color << "[" << level_str << "] [" << sec << "." << ns << "] [" << name_ << "]: " 
+        std::cerr << color << "[" << level_str << "] [" << name_ << "]: " 
                   << msg_buf << "\033[0m\n";
     }
 

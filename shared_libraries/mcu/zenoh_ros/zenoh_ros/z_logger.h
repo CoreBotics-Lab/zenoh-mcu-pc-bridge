@@ -138,21 +138,14 @@ private:
     template<typename NodeT>
     static void _publish_fn(void* node_ptr, const char* level_str,
                              const char* name, const char* message, uint64_t ts_us) {
+        (void)ts_us;
         NodeT* node = reinterpret_cast<NodeT*>(node_ptr);
-        // Serialize as msgpack and publish to '{node_name}/log'
-        JsonDocument doc;
-        doc["severity"]     = level_str;
-        doc["name"]         = name;
-        doc["message"]      = message;
-        doc["timestamp_ns"] = (uint64_t)(ts_us * 1000ULL);
-
-        uint8_t buf[128];
-        size_t  len = serializeMsgPack(doc, buf, sizeof(buf));
-        if (len > 0) {
-            char log_topic[64];
-            snprintf(log_topic, sizeof(log_topic), "%s/log", name);
-            node->z_publish_raw(log_topic, buf, len);
-        }
+        char log_buf[256];
+        snprintf(log_buf, sizeof(log_buf), "[%s] [%s]: %s", level_str, name, message);
+        
+        char log_topic[64];
+        snprintf(log_topic, sizeof(log_topic), "%s/log", name);
+        node->z_publish_raw(log_topic, (const uint8_t*)log_buf, strlen(log_buf));
     }
 };
 
