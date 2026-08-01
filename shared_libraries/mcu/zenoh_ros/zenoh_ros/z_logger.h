@@ -150,7 +150,7 @@ private:
         doc["line"]         = 0;
         doc["function"]     = "";
 
-        uint8_t buf[384];
+        uint8_t buf[128];
         size_t  len = serializeMsgPack(doc, buf, sizeof(buf));
         if (len > 0) {
             node->z_publish_raw("zenoh_ros/log", buf, len);
