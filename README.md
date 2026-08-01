@@ -107,7 +107,7 @@ float32 battery_voltage
 #### **3.2 Custom Nested Message (`RobotState.msg`)**
 Reference another custom message defined in `msg/custom_msgs/`:
 ```text
-SetLED led_state         # References SetLED.msg
+custom_msgs/SetLED led_state   # References SetLED.msg
 string robot_status
 ```
 
