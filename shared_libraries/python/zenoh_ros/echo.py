@@ -35,13 +35,11 @@ def echo_topic(topic: str, host: Optional[str] = None, port: int = 7447) -> None
     print(f"\033[36m  zenoh_ros Echo Tool — Topic: '{topic_clean}'\033[0m")
     print("\033[36m==========================================\033[0m")
 
+    target_host = host if host else "192.168.4.1"
     z_conf = zenoh.Config()
-    if host:
-        endpoints = [f"tcp/{host}:{port}"]
-        z_conf.insert_json5("connect/endpoints", str(endpoints).replace("'", '"'))
-        print(f"[zenoh_ros echo] Connecting directly to {host}:{port}...")
-    else:
-        print("[zenoh_ros echo] Auto-discovering peers on network...")
+    endpoints = [f"tcp/{target_host}:{port}"]
+    z_conf.insert_json5("connect/endpoints", str(endpoints).replace("'", '"'))
+    print(f"[zenoh_ros echo] Connecting to {target_host}:{port}...")
 
     try:
         session = zenoh.open(z_conf)

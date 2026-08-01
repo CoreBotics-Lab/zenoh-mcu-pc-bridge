@@ -88,13 +88,10 @@ int main(int argc, char** argv) {
     z_owned_config_t config;
     z_config_default(&config);
 
-    if (host && std::string(host).length() > 0) {
-        std::string endpoint = std::string("[\"tcp/") + host + ":7447\"]";
-        zc_config_insert_json5(z_config_loan_mut(&config), Z_CONFIG_CONNECT_KEY, endpoint.c_str());
-        std::cout << "[echo] Connecting directly to " << host << ":7447...\n";
-    } else {
-        std::cout << "[echo] Auto-discovering peers on network...\n";
-    }
+    std::string target_host = (host && std::string(host).length() > 0) ? host : "192.168.4.1";
+    std::string endpoint = std::string("[\"tcp/") + target_host + ":7447\"]";
+    zc_config_insert_json5(z_config_loan_mut(&config), Z_CONFIG_CONNECT_KEY, endpoint.c_str());
+    std::cout << "[echo] Connecting to endpoint: " << target_host << ":7447...\n";
 
     z_owned_session_t session;
     if (z_open(&session, z_config_move(&config), NULL) < 0) {
