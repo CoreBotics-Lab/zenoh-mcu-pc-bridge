@@ -153,7 +153,9 @@ private:
         uint8_t buf[256];
         size_t  len = serializeMsgPack(doc, buf, sizeof(buf));
         if (len > 0) {
-            node->z_publish_raw("zenoh_ros/log", buf, len);
+            char log_topic[128];
+            snprintf(log_topic, sizeof(log_topic), "%s/log", name);
+            node->z_publish_raw(log_topic, buf, len);
         }
     }
 };

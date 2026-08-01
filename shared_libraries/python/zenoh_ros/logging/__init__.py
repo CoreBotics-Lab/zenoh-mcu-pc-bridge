@@ -83,27 +83,30 @@ _registry: Dict[str, "ZenohLogger"] = {}
 
 # ─── Zenoh log publisher (optional, wired by ZenohNode.init()) ───────────────
 
-_log_publisher  = None
+_zenoh_session = None
+_publisher_cache: Dict[str, Any] = {}
 _publisher_lock = threading.Lock()
-LOG_TOPIC       = "zenoh_ros/log"
 
 
 def _set_zenoh_session(session) -> None:
     """Called by ZenohNode.init() to attach a Zenoh session for log publishing."""
-    global _log_publisher
+    global _zenoh_session
     with _publisher_lock:
-        try:
-            _log_publisher = session.declare_publisher(LOG_TOPIC)
-        except Exception:
-            _log_publisher = None
+        _zenoh_session = session
 
 
 def _publish_log(level: int, name: str, message: str,
                  stamp_ns: int, file: str, line: int, func: str) -> None:
-    global _log_publisher
-    if _log_publisher is None:
+    global _zenoh_session, _publisher_cache
+    if _zenoh_session is None:
         return
     try:
+        topic = f"{name}/log"
+        with _publisher_lock:
+            if topic not in _publisher_cache:
+                _publisher_cache[topic] = _zenoh_session.declare_publisher(topic)
+            pub = _publisher_cache[topic]
+
         payload = msgpack.packb({
             "severity":     _LEVEL_NAME.get(level, "UNKNOWN"),
             "severity_int": int(level),
@@ -114,7 +117,7 @@ def _publish_log(level: int, name: str, message: str,
             "line":         line,
             "function":     func,
         }, use_bin_type=True)
-        _log_publisher.put(bytes(payload))
+        pub.put(bytes(payload))
     except Exception:
         pass  # logging must never crash the caller
 
@@ -348,6 +351,4 @@ __all__ = [
     "set_logger_level",
     "get_logger_effective_level",
     "_set_zenoh_session",
-    "LOG_TOPIC",
-    "run_log_viewer",
 ]
