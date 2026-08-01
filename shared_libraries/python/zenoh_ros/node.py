@@ -275,8 +275,16 @@ class ZenohNode:
             else:
                 cls._session = zenoh.open(conf)
                 print("[Zenoh] Global session initialized (scouting for peers)")
-            
+
             cls._session_refcount = 1
+
+            # Wire the Zenoh session into the logging module so log messages
+            # are published to the 'zenoh_ros/log' topic automatically.
+            try:
+                from .logging import _set_zenoh_session
+                _set_zenoh_session(cls._session)
+            except Exception:
+                pass
 
     @classmethod
     def shutdown(cls) -> None:
