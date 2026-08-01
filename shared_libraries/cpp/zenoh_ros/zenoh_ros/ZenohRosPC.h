@@ -483,6 +483,10 @@ public:
         }
     }
 
+    static const z_loaned_session_t* get_session() {
+        return session_opened ? z_session_loan(&session) : nullptr;
+    }
+
     const char* z_get_name() const {
         return node_name;
     }
