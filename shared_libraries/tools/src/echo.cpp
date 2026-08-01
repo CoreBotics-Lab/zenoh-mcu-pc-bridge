@@ -30,37 +30,33 @@ void echo_sample_callback(z_loaned_sample_t* sample, void* arg) {
         const uint8_t* data = z_slice_data(z_slice_loan(&slice));
         size_t len = z_slice_len(z_slice_loan(&slice));
 
-        std::vector<uint8_t> buf(data, data + len);
+        std::string text(reinterpret_cast<const char*>(data), len);
         z_slice_drop(z_slice_move(&slice));
 
+        // 1. Check if payload is a formatted log string: "[SEVERITY] [name]: message"
+        if (text.size() > 2 && text[0] == '[') {
+            const char* color = "\033[37m"; // Default white (INFO)
+            if (text.rfind("[DEBUG]", 0) == 0)      color = "\033[36m";     // Cyan
+            else if (text.rfind("[INFO]", 0) == 0)  color = "\033[37m";     // White
+            else if (text.rfind("[WARN]", 0) == 0)  color = "\033[33m";     // Yellow
+            else if (text.rfind("[ERROR]", 0) == 0) color = "\033[31m";     // Red
+            else if (text.rfind("[FATAL]", 0) == 0) color = "\033[1;31m";   // Bold Red
+
+            std::cout << color << text << "\033[0m\n";
+            return;
+        }
+
+        // 2. Try MsgPack JSON formatting for structured messages (e.g. sensor_msgs)
         try {
+            std::vector<uint8_t> buf(data, data + len);
             nlohmann::json j = nlohmann::json::from_msgpack(buf);
-            if (j.is_object() && j.contains("severity") && j.contains("message")) {
-                std::string severity = j.value("severity", "INFO");
-                std::string name     = j.value("name", "node");
-                std::string message  = j.value("message", "");
-                uint64_t ts_ns       = j.value("timestamp_ns", (uint64_t)0);
-                double sec           = static_cast<double>(ts_ns) / 1e9;
-
-                const char* color = "\033[37m";
-                if (severity == "DEBUG")      color = "\033[36m";
-                else if (severity == "WARN")  color = "\033[33m";
-                else if (severity == "ERROR") color = "\033[31m";
-                else if (severity == "FATAL") color = "\033[1;31m";
-
-                char ts_buf[64];
-                snprintf(ts_buf, sizeof(ts_buf), "%.9f", sec);
-
-                std::cerr << color << "[" << severity << "] [" << ts_buf << "] [" << name << "]: " 
-                          << message << "\033[0m\n";
-            } else {
-                std::cout << j.dump(2) << "\n";
-            }
+            std::cout << j.dump(2) << "\n";
+            return;
         }
-        catch (...) {
-            std::string text(reinterpret_cast<const char*>(data), len);
-            std::cout << text << "\n";
-        }
+        catch (...) {}
+
+        // 3. Fallback raw print
+        std::cout << text << "\n";
     }
     catch (const std::exception& e) {
         std::cerr << "\033[31m[echo error] " << e.what() << "\033[0m\n";
