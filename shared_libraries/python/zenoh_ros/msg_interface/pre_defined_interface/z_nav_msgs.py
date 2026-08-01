@@ -70,3 +70,60 @@ class z_Odometry:
 
     def __repr__(self) -> str:
         return f"z_nav_msgs.z_Odometry(header={self.header}, child_frame_id='{self.child_frame_id}', pose={self.pose}, twist={self.twist})"
+
+
+class z_Path:
+    def __init__(self, header=None, poses=None):
+        self.header = header if header is not None else z_Header()
+        self.poses = poses if poses is not None else []
+
+    def serialize(self) -> bytes:
+        pose_list = []
+        for p in self.poses:
+            pose_list.append([
+                [p.pose.position.x, p.pose.position.y, p.pose.position.z],
+                [p.pose.orientation.x, p.pose.orientation.y, p.pose.orientation.z, p.pose.orientation.w]
+            ])
+        return cast(bytes, msgpack.packb({
+            "header": {"stamp": {"sec": self.header.stamp.sec, "nanosec": self.header.stamp.nanosec}, "frame_id": self.header.frame_id},
+            "poses": pose_list
+        }))
+
+    @classmethod
+    def deserialize(cls, payload: bytes) -> 'z_Path':
+        data = msgpack.unpackb(payload)
+        def gd(d, k, default=None): return d.get(k.encode() if isinstance(k, str) else k, d.get(k, default))
+        hdr = gd(data,"header",{}); stamp = gd(hdr,"stamp",{})
+        header = z_Header(stamp=z_Time(sec=int(gd(stamp,"sec",0)), nanosec=int(gd(stamp,"nanosec",0))), frame_id=str(gd(hdr,"frame_id","")))
+        from .z_geometry_msgs import z_Pose, z_Point, z_Quaternion
+        poses = []
+        for pa in gd(data,"poses",[]):
+            pos = pa[0]; ori = pa[1]
+            poses.append(z_Pose(z_Point(float(pos[0]),float(pos[1]),float(pos[2])), z_Quaternion(float(ori[0]),float(ori[1]),float(ori[2]),float(ori[3]))))
+        return cls(header=header, poses=poses)
+
+    def __repr__(self): return f"z_nav_msgs.z_Path(poses={len(self.poses)})"
+
+
+class z_MapMetaData:
+    def __init__(self, map_load_time=None, resolution: float = 0.0, width: int = 0, height: int = 0, origin=None):
+        self.map_load_time = map_load_time if map_load_time is not None else z_Time()
+        self.resolution = resolution; self.width = width; self.height = height
+        from .z_geometry_msgs import z_Pose
+        self.origin = origin if origin is not None else z_Pose()
+
+    def serialize(self) -> bytes:
+        return cast(bytes, msgpack.packb({
+            "map_load_time": {"sec": self.map_load_time.sec, "nanosec": self.map_load_time.nanosec},
+            "resolution": self.resolution, "width": self.width, "height": self.height
+        }))
+
+    @classmethod
+    def deserialize(cls, payload: bytes) -> 'z_MapMetaData':
+        data = msgpack.unpackb(payload)
+        def gd(d, k, default=None): return d.get(k.encode() if isinstance(k, str) else k, d.get(k, default))
+        ts = gd(data,"map_load_time",{})
+        time = z_Time(sec=int(gd(ts,"sec",0)), nanosec=int(gd(ts,"nanosec",0)))
+        return cls(map_load_time=time, resolution=float(gd(data,"resolution",0.0)), width=int(gd(data,"width",0)), height=int(gd(data,"height",0)))
+
+    def __repr__(self): return f"z_MapMetaData({self.width}x{self.height} @ {self.resolution}m/cell)"
