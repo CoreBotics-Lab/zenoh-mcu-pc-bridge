@@ -37,8 +37,9 @@ TYPE_MAP_PYTHON = {
     'bool': 'bool'
 }
 
-# Standard nested types mapping
+# Standard nested types mapping — mirrors ROS 2 package/Type → generated C++ qualified name
 NESTED_TYPES = {
+    # geometry_msgs
     'geometry_msgs/Vector3': 'z_geometry_msgs::z_Vector3',
     'geometry_msgs/msg/Vector3': 'z_geometry_msgs::z_Vector3',
     'geometry_msgs/Point': 'z_geometry_msgs::z_Point',
@@ -46,10 +47,33 @@ NESTED_TYPES = {
     'geometry_msgs/Quaternion': 'z_geometry_msgs::z_Quaternion',
     'geometry_msgs/msg/Quaternion': 'z_geometry_msgs::z_Quaternion',
     'geometry_msgs/Twist': 'z_geometry_msgs::z_Twist',
-    'geometry_msgs/msg/Twist': 'z_geometry_msgs::z_Twist'
+    'geometry_msgs/msg/Twist': 'z_geometry_msgs::z_Twist',
+    'geometry_msgs/Pose': 'z_geometry_msgs::z_Pose',
+    'geometry_msgs/msg/Pose': 'z_geometry_msgs::z_Pose',
+    # builtin_interfaces
+    'builtin_interfaces/Time': 'builtin_interfaces::z_Time',
+    'builtin_interfaces/msg/Time': 'builtin_interfaces::z_Time',
+    'builtin_interfaces/Duration': 'builtin_interfaces::z_Duration',
+    'builtin_interfaces/msg/Duration': 'builtin_interfaces::z_Duration',
+    # std_msgs complex nested types
+    'std_msgs/Header': 'z_std_msgs::z_Header',
+    'std_msgs/msg/Header': 'z_std_msgs::z_Header',
+    'std_msgs/ColorRGBA': 'z_std_msgs::z_ColorRGBA',
+    'std_msgs/msg/ColorRGBA': 'z_std_msgs::z_ColorRGBA',
+    # sensor_msgs
+    'sensor_msgs/Imu': 'z_sensor_msgs::z_Imu',
+    'sensor_msgs/msg/Imu': 'z_sensor_msgs::z_Imu',
+    'sensor_msgs/Temperature': 'z_sensor_msgs::z_Temperature',
+    'sensor_msgs/msg/Temperature': 'z_sensor_msgs::z_Temperature',
+    'sensor_msgs/Range': 'z_sensor_msgs::z_Range',
+    'sensor_msgs/msg/Range': 'z_sensor_msgs::z_Range',
+    # nav_msgs
+    'nav_msgs/Odometry': 'z_nav_msgs::z_Odometry',
+    'nav_msgs/msg/Odometry': 'z_nav_msgs::z_Odometry',
 }
 
 NESTED_PYTHON_TYPES = {
+    # geometry_msgs
     'geometry_msgs/Vector3': 'z_geometry_msgs.z_Vector3',
     'geometry_msgs/msg/Vector3': 'z_geometry_msgs.z_Vector3',
     'geometry_msgs/Point': 'z_geometry_msgs.z_Point',
@@ -57,7 +81,29 @@ NESTED_PYTHON_TYPES = {
     'geometry_msgs/Quaternion': 'z_geometry_msgs.z_Quaternion',
     'geometry_msgs/msg/Quaternion': 'z_geometry_msgs.z_Quaternion',
     'geometry_msgs/Twist': 'z_geometry_msgs.z_Twist',
-    'geometry_msgs/msg/Twist': 'z_geometry_msgs.z_Twist'
+    'geometry_msgs/msg/Twist': 'z_geometry_msgs.z_Twist',
+    'geometry_msgs/Pose': 'z_geometry_msgs.z_Pose',
+    'geometry_msgs/msg/Pose': 'z_geometry_msgs.z_Pose',
+    # builtin_interfaces
+    'builtin_interfaces/Time': 'z_builtin_interfaces.z_Time',
+    'builtin_interfaces/msg/Time': 'z_builtin_interfaces.z_Time',
+    'builtin_interfaces/Duration': 'z_builtin_interfaces.z_Duration',
+    'builtin_interfaces/msg/Duration': 'z_builtin_interfaces.z_Duration',
+    # std_msgs complex nested types
+    'std_msgs/Header': 'z_std_msgs.z_Header',
+    'std_msgs/msg/Header': 'z_std_msgs.z_Header',
+    'std_msgs/ColorRGBA': 'z_std_msgs.z_ColorRGBA',
+    'std_msgs/msg/ColorRGBA': 'z_std_msgs.z_ColorRGBA',
+    # sensor_msgs
+    'sensor_msgs/Imu': 'z_sensor_msgs.z_Imu',
+    'sensor_msgs/msg/Imu': 'z_sensor_msgs.z_Imu',
+    'sensor_msgs/Temperature': 'z_sensor_msgs.z_Temperature',
+    'sensor_msgs/msg/Temperature': 'z_sensor_msgs.z_Temperature',
+    'sensor_msgs/Range': 'z_sensor_msgs.z_Range',
+    'sensor_msgs/msg/Range': 'z_sensor_msgs.z_Range',
+    # nav_msgs
+    'nav_msgs/Odometry': 'z_nav_msgs.z_Odometry',
+    'nav_msgs/msg/Odometry': 'z_nav_msgs.z_Odometry',
 }
 
 def parse_fields(lines):
@@ -78,16 +124,23 @@ def get_cpp_type(raw_type):
         return TYPE_MAP_CPP[raw_type]
     if raw_type in NESTED_TYPES:
         return NESTED_TYPES[raw_type]
+    # Unknown nested type: derive from package/Name convention → package::z_Name
     if '/' in raw_type:
         parts = raw_type.split('/')
-        return f"{parts[0]}::z_{parts[-1]}"
-    return f"custom_msgs::z_{raw_type}"
+        pkg, name = parts[0], parts[-1]
+        return f'{pkg}::z_{name}'
+    return raw_type
 
 def get_python_type(raw_type):
     if raw_type in TYPE_MAP_PYTHON:
         return TYPE_MAP_PYTHON[raw_type]
     if raw_type in NESTED_PYTHON_TYPES:
         return NESTED_PYTHON_TYPES[raw_type]
+    # Unknown nested type: package/Name → package.z_Name
+    if '/' in raw_type:
+        parts = raw_type.split('/')
+        pkg, name = parts[0], parts[-1]
+        return f'{pkg}.z_{name}'
     return 'Any'
 
 def get_python_default(raw_type):
@@ -99,53 +152,150 @@ def get_python_default(raw_type):
         return '""'
     if raw_type in NESTED_PYTHON_TYPES:
         return f"{NESTED_PYTHON_TYPES[raw_type]}()"
-    # Int fallback
+    if '/' in raw_type:
+        return f"{get_python_type(raw_type)}()"
     if raw_type in TYPE_MAP_PYTHON:
         return '0'
     return 'None'
 
-def get_cpp_includes(fields, is_pc=False):
-    includes = []
-    has_geometry = False
-    for f_type, _ in fields:
-        if 'geometry_msgs' in f_type:
-            has_geometry = True
-        elif f_type not in TYPE_MAP_CPP:
-            # Custom nested message type (e.g. SetLED -> custom_msgs/z_SetLED.h)
-            pkg = 'custom_msgs'
-            msg_name = f_type
-            if '/' in f_type:
-                parts = f_type.split('/')
-                pkg = parts[0]
-                msg_name = parts[-1]
-            header = f"zenoh_ros/{pkg}/z_{msg_name}.h"
-            includes.append(f'#include <{header}>')
+# ---------------------------------------------------------------------------
+# Maps pre-defined package name → include path (relative to library root)
+# ---------------------------------------------------------------------------
+_PRE_DEFINED_INCLUDE_MCU = {
+    'geometry_msgs':      'msg_interface/pre_defined_interface/z_geometry_msgs.h',
+    'builtin_interfaces': 'msg_interface/pre_defined_interface/z_builtin_interfaces.h',
+    'std_msgs':           'msg_interface/pre_defined_interface/z_std_msgs.h',
+    'sensor_msgs':        'msg_interface/pre_defined_interface/z_sensor_msgs.h',
+    'nav_msgs':           'msg_interface/pre_defined_interface/z_nav_msgs.h',
+}
+_PRE_DEFINED_INCLUDE_PC = {
+    'geometry_msgs':      'msg_interface/pre_defined_interface/z_geometry_msgs_pc.h',
+    'builtin_interfaces': 'msg_interface/pre_defined_interface/z_builtin_interfaces.h',
+    'std_msgs':           'msg_interface/pre_defined_interface/z_std_msgs.h',
+    'sensor_msgs':        'msg_interface/pre_defined_interface/z_sensor_msgs_pc.h',
+    'nav_msgs':           'msg_interface/pre_defined_interface/z_nav_msgs_pc.h',
+}
 
-    if has_geometry:
-        if is_pc:
-            includes.append('#include "msg_interface/pre_defined_interface/z_geometry_msgs_pc.h"')
+def _field_pkg(f_type):
+    """Return the top-level package name from a nested type, or None for primitives."""
+    return f_type.split('/')[0] if '/' in f_type else None
+
+def get_cpp_includes(fields, is_pc=False, out_package=None):
+    """
+    Return all #include directives needed for the nested types in 'fields'.
+    - Pre-defined packages (geometry_msgs, builtin_interfaces, std_msgs) map to
+      their canonical pre-defined header or per-message include.
+    - Custom packages resolve to sibling directories inside zenoh_ros/zenoh_ros/.
+    """
+    includes = []
+    seen = set()
+    lookup = _PRE_DEFINED_INCLUDE_PC if is_pc else _PRE_DEFINED_INCLUDE_MCU
+
+    for f_type, _ in fields:
+        pkg = _field_pkg(f_type)
+        if pkg is None:
+            continue  # primitive — no include needed
+
+        nested_name = f_type.split('/')[-1]
+        if pkg in lookup:
+            inc = f'#include "{lookup[pkg]}"'
+            if inc not in seen:
+                seen.add(inc)
+                includes.append(inc)
         else:
-            includes.append('#include "msg_interface/pre_defined_interface/z_geometry_msgs.h"')
+            # Custom nested type: derive the per-type include path
+            if out_package and pkg == out_package:
+                inc = f'#include "z_{nested_name}.h"'          # same directory
+            else:
+                inc = f'#include <zenoh_ros/{pkg}/z_{nested_name}.h>' # standard include path
+            if inc not in seen:
+                seen.add(inc)
+                includes.append(inc)
+
     return includes
+
+def get_cpp_using_declarations(fields):
+    """
+    Return 'using Alias = Qualified::Type;' lines for every nested type.
+    This makes all nested types available in user code with a single #include.
+    Also propagates transitive aliases (z_Header → z_Time, z_Duration).
+    """
+    decls = []
+    seen = set()
+
+    for f_type, _ in fields:
+        if f_type in NESTED_TYPES:
+            cpp_qual = NESTED_TYPES[f_type]          # e.g. 'z_std_msgs::z_Header'
+            alias = cpp_qual.split('::')[-1]          # e.g. 'z_Header'
+        elif '/' in f_type:
+            pkg  = f_type.split('/')[0]
+            name = f_type.split('/')[-1]
+            alias    = f'z_{name}'
+            cpp_qual = f'{pkg}::z_{name}'
+        else:
+            continue  # primitive
+
+        if alias not in seen:
+            seen.add(alias)
+            decls.append(f'using {alias} = {cpp_qual};')
+
+        # Transitive: z_Header brings z_Time and z_Duration
+        if 'z_Header' in alias:
+            for extra_alias, extra_qual in [
+                ('z_Time',     'builtin_interfaces::z_Time'),
+                ('z_Duration', 'builtin_interfaces::z_Duration'),
+            ]:
+                if extra_alias not in seen:
+                    seen.add(extra_alias)
+                    decls.append(f'using {extra_alias} = {extra_qual};')
+
+    return decls
+
+def get_python_package_imports(fields, out_package=None):
+    """
+    Return import statements for all nested types found in 'fields'.
+    Pre-defined packages → pre_defined_interface module.
+    Custom packages      → msg_interface.custom_interface path.
+    """
+    imports = set()
+    for f_type, _ in fields:
+        pkg = _field_pkg(f_type)
+        if pkg is None:
+            continue
+        nested_name = f_type.split('/')[-1]
+        if pkg == 'geometry_msgs':
+            imports.add('from zenoh_ros.msg_interface.pre_defined_interface import z_geometry_msgs')
+        elif pkg == 'builtin_interfaces':
+            imports.add('from zenoh_ros.msg_interface.pre_defined_interface import z_builtin_interfaces')
+        elif pkg == 'std_msgs':
+            imports.add('from zenoh_ros.msg_interface.pre_defined_interface import z_std_msgs')
+        elif pkg == 'sensor_msgs':
+            imports.add('from zenoh_ros.msg_interface.pre_defined_interface import z_sensor_msgs')
+        elif pkg == 'nav_msgs':
+            imports.add('from zenoh_ros.msg_interface.pre_defined_interface import z_nav_msgs')
+        else:
+            # Custom nested type
+            imports.add(f'from zenoh_ros.custom_msgs import z_{nested_name}')
+    return sorted(imports)
 
 # Generate Inline Nesting Serialization/Deserialization C++ helper code
 def generate_cpp_field_serialization(f_type, f_name, doc_var, msg_var):
     if f_type in TYPE_MAP_CPP:
         return f'{doc_var}["{f_name}"] = {msg_var}.{f_name};'
-    
+
     if 'Vector3' in f_type or 'Point' in f_type:
         return (f'  JsonArray {f_name}_arr = {doc_var}.createNestedArray("{f_name}");\n'
                 f'  {f_name}_arr.add({msg_var}.{f_name}.x);\n'
                 f'  {f_name}_arr.add({msg_var}.{f_name}.y);\n'
                 f'  {f_name}_arr.add({msg_var}.{f_name}.z);')
-    
+
     if 'Quaternion' in f_type:
         return (f'  JsonArray {f_name}_arr = {doc_var}.createNestedArray("{f_name}");\n'
                 f'  {f_name}_arr.add({msg_var}.{f_name}.x);\n'
                 f'  {f_name}_arr.add({msg_var}.{f_name}.y);\n'
                 f'  {f_name}_arr.add({msg_var}.{f_name}.z);\n'
                 f'  {f_name}_arr.add({msg_var}.{f_name}.w);')
-    
+
     if 'Twist' in f_type:
         return (f'  JsonArray {f_name}_arr = {doc_var}.createNestedArray("{f_name}");\n'
                 f'  JsonArray {f_name}_lin = {f_name}_arr.createNestedArray();\n'
@@ -156,29 +306,54 @@ def generate_cpp_field_serialization(f_type, f_name, doc_var, msg_var):
                 f'  {f_name}_ang.add({msg_var}.{f_name}.angular.x);\n'
                 f'  {f_name}_ang.add({msg_var}.{f_name}.angular.y);\n'
                 f'  {f_name}_ang.add({msg_var}.{f_name}.angular.z);')
-                
-    # Custom nested struct serialization
-    return (f'  uint8_t {f_name}_buf[256];\n'
-            f'  size_t {f_name}_len = serialize_msg({msg_var}.{f_name}, {f_name}_buf, sizeof({f_name}_buf));\n'
-            f'  JsonDocument {f_name}_doc;\n'
-            f'  deserializeMsgPack({f_name}_doc, {f_name}_buf, {f_name}_len);\n'
-            f'  {doc_var}["{f_name}"] = {f_name}_doc;')
+
+    # builtin_interfaces/Time or Duration → nested JSON object { sec, nanosec }
+    if 'Time' in f_type or 'Duration' in f_type:
+        return (f'  JsonObject {f_name}_obj = {doc_var}["{f_name}"].to<JsonObject>();\n'
+                f'  {f_name}_obj["sec"]     = {msg_var}.{f_name}.sec;\n'
+                f'  {f_name}_obj["nanosec"] = {msg_var}.{f_name}.nanosec;')
+
+    # std_msgs/ColorRGBA → nested JSON object { r, g, b, a }
+    if 'ColorRGBA' in f_type:
+        return (f'  JsonObject {f_name}_obj = {doc_var}["{f_name}"].to<JsonObject>();\n'
+                f'  {f_name}_obj["r"] = {msg_var}.{f_name}.r;\n'
+                f'  {f_name}_obj["g"] = {msg_var}.{f_name}.g;\n'
+                f'  {f_name}_obj["b"] = {msg_var}.{f_name}.b;\n'
+                f'  {f_name}_obj["a"] = {msg_var}.{f_name}.a;')
+
+    # std_msgs/Header → nested JSON object { stamp: { sec, nanosec }, frame_id }
+    if 'Header' in f_type:
+        return (f'  JsonObject {f_name}_obj   = {doc_var}["{f_name}"].to<JsonObject>();\n'
+                f'  JsonObject {f_name}_stamp = {f_name}_obj["stamp"].to<JsonObject>();\n'
+                f'  {f_name}_stamp["sec"]     = {msg_var}.{f_name}.stamp.sec;\n'
+                f'  {f_name}_stamp["nanosec"] = {msg_var}.{f_name}.stamp.nanosec;\n'
+                f'  {f_name}_obj["frame_id"]  = {msg_var}.{f_name}.frame_id;')
+
+    # Generic custom nested message type (MCU): use serialize_msg / deserialize_msg via temporary buffer
+    if '/' in f_type:
+        return (f'  uint8_t {f_name}_buf[256];\n'
+                f'  size_t {f_name}_len = serialize_msg({msg_var}.{f_name}, {f_name}_buf, sizeof({f_name}_buf));\n'
+                f'  JsonDocument {f_name}_sub_doc;\n'
+                f'  deserializeMsgPack({f_name}_sub_doc, {f_name}_buf, {f_name}_len);\n'
+                f'  {doc_var}["{f_name}"] = {f_name}_sub_doc;')
+
+    return f'// Unsupported nested type: {f_type}'
 
 def generate_cpp_field_deserialization(f_type, f_name, doc_var, msg_var):
     if f_type in TYPE_MAP_CPP:
         return f'{msg_var}.{f_name} = {doc_var}["{f_name}"].as<{get_cpp_type(f_type)}>();'
-        
+
     if 'Vector3' in f_type or 'Point' in f_type:
         return (f'  {msg_var}.{f_name}.x = {doc_var}["{f_name}"][0].as<double>();\n'
                 f'  {msg_var}.{f_name}.y = {doc_var}["{f_name}"][1].as<double>();\n'
                 f'  {msg_var}.{f_name}.z = {doc_var}["{f_name}"][2].as<double>();')
-                
+
     if 'Quaternion' in f_type:
         return (f'  {msg_var}.{f_name}.x = {doc_var}["{f_name}"][0].as<double>();\n'
                 f'  {msg_var}.{f_name}.y = {doc_var}["{f_name}"][1].as<double>();\n'
                 f'  {msg_var}.{f_name}.z = {doc_var}["{f_name}"][2].as<double>();\n'
                 f'  {msg_var}.{f_name}.w = {doc_var}["{f_name}"][3].as<double>();')
-                
+
     if 'Twist' in f_type:
         return (f'  {msg_var}.{f_name}.linear.x = {doc_var}["{f_name}"][0][0].as<double>();\n'
                 f'  {msg_var}.{f_name}.linear.y = {doc_var}["{f_name}"][0][1].as<double>();\n'
@@ -186,47 +361,85 @@ def generate_cpp_field_deserialization(f_type, f_name, doc_var, msg_var):
                 f'  {msg_var}.{f_name}.angular.x = {doc_var}["{f_name}"][1][0].as<double>();\n'
                 f'  {msg_var}.{f_name}.angular.y = {doc_var}["{f_name}"][1][1].as<double>();\n'
                 f'  {msg_var}.{f_name}.angular.z = {doc_var}["{f_name}"][1][2].as<double>();')
-                
-    # Custom nested struct deserialization
-    return (f'  uint8_t {f_name}_buf[256];\n'
-            f'  size_t {f_name}_len = serializeMsgPack({doc_var}["{f_name}"], {f_name}_buf, sizeof({f_name}_buf));\n'
-            f'  deserialize_msg({f_name}_buf, {f_name}_len, {msg_var}.{f_name});')
+
+    # builtin_interfaces/Time or Duration
+    if 'Time' in f_type or 'Duration' in f_type:
+        return (f'  {msg_var}.{f_name}.sec     = {doc_var}["{f_name}"]["sec"].as<int32_t>();\n'
+                f'  {msg_var}.{f_name}.nanosec = {doc_var}["{f_name}"]["nanosec"].as<uint32_t>();')
+
+    # std_msgs/ColorRGBA
+    if 'ColorRGBA' in f_type:
+        return (f'  {msg_var}.{f_name}.r = {doc_var}["{f_name}"]["r"].as<float>();\n'
+                f'  {msg_var}.{f_name}.g = {doc_var}["{f_name}"]["g"].as<float>();\n'
+                f'  {msg_var}.{f_name}.b = {doc_var}["{f_name}"]["b"].as<float>();\n'
+                f'  {msg_var}.{f_name}.a = {doc_var}["{f_name}"]["a"].as<float>();')
+
+    # std_msgs/Header
+    if 'Header' in f_type:
+        return (f'  {msg_var}.{f_name}.stamp.sec     = {doc_var}["{f_name}"]["stamp"]["sec"].as<int32_t>();\n'
+                f'  {msg_var}.{f_name}.stamp.nanosec = {doc_var}["{f_name}"]["stamp"]["nanosec"].as<uint32_t>();\n'
+                f'  {msg_var}.{f_name}.frame_id      = {doc_var}["{f_name}"]["frame_id"].as<std::string>();')
+
+    # Generic custom nested message type (MCU)
+    if '/' in f_type:
+        return (f'  uint8_t {f_name}_buf[256];\n'
+                f'  size_t {f_name}_len = serializeMsgPack({doc_var}["{f_name}"], {f_name}_buf, sizeof({f_name}_buf));\n'
+                f'  deserialize_msg({f_name}_buf, {f_name}_len, {msg_var}.{f_name});')
+
+    return f'// Unsupported nested type: {f_type}'
 
 # PC C++ Serialization/Deserialization using nlohmann/json
 def generate_pc_cpp_field_serialization(f_type, f_name, json_var, msg_var):
     if f_type in TYPE_MAP_CPP:
         return f'{json_var}["{f_name}"] = {msg_var}.{f_name};'
-        
+
     if 'Vector3' in f_type or 'Point' in f_type:
         return f'{json_var}["{f_name}"] = {{{msg_var}.{f_name}.x, {msg_var}.{f_name}.y, {msg_var}.{f_name}.z}};'
-        
+
     if 'Quaternion' in f_type:
         return f'{json_var}["{f_name}"] = {{{msg_var}.{f_name}.x, {msg_var}.{f_name}.y, {msg_var}.{f_name}.z, {msg_var}.{f_name}.w}};'
-        
+
     if 'Twist' in f_type:
         return (f'{json_var}["{f_name}"] = {{\n'
                 f'    {{{msg_var}.{f_name}.linear.x, {msg_var}.{f_name}.linear.y, {msg_var}.{f_name}.linear.z}},\n'
                 f'    {{{msg_var}.{f_name}.angular.x, {msg_var}.{f_name}.angular.y, {msg_var}.{f_name}.angular.z}}\n'
                 f'  }};')
-                
-    return (f'  std::vector<uint8_t> {f_name}_buf = serialize_msg_pc({msg_var}.{f_name});\n'
-            f'  {json_var}["{f_name}"] = nlohmann::json::from_msgpack({f_name}_buf);')
+
+    # builtin_interfaces/Time or Duration
+    if 'Time' in f_type or 'Duration' in f_type:
+        return (f'{json_var}["{f_name}"] = {{{{"sec", {msg_var}.{f_name}.sec}}, {{"nanosec", {msg_var}.{f_name}.nanosec}}}};')
+
+    # std_msgs/ColorRGBA
+    if 'ColorRGBA' in f_type:
+        return (f'{json_var}["{f_name}"] = {{{{"r", {msg_var}.{f_name}.r}}, {{"g", {msg_var}.{f_name}.g}}, '
+                f'{{"b", {msg_var}.{f_name}.b}}, {{"a", {msg_var}.{f_name}.a}}}};')
+
+    # std_msgs/Header
+    if 'Header' in f_type:
+        return (f'{json_var}["{f_name}"] = {{{{"stamp", {{{{"sec", {msg_var}.{f_name}.stamp.sec}}, '
+                f'{{"nanosec", {msg_var}.{f_name}.stamp.nanosec}}}}}}, {{"frame_id", {msg_var}.{f_name}.frame_id}}}};')
+
+    # Generic custom nested message type (PC C++)
+    if '/' in f_type:
+        return f'{json_var}["{f_name}"] = nlohmann::json::from_msgpack(serialize_msg_pc({msg_var}.{f_name}));'
+
+    return f'// Unsupported nested type: {f_type}'
 
 def generate_pc_cpp_field_deserialization(f_type, f_name, json_var, msg_var):
     if f_type in TYPE_MAP_CPP:
         return f'{msg_var}.{f_name} = {json_var}["{f_name}"].get<{get_cpp_type(f_type)}>();'
-        
+
     if 'Vector3' in f_type or 'Point' in f_type:
         return (f'  {msg_var}.{f_name}.x = {json_var}["{f_name}"][0].get<double>();\n'
                 f'  {msg_var}.{f_name}.y = {json_var}["{f_name}"][1].get<double>();\n'
                 f'  {msg_var}.{f_name}.z = {json_var}["{f_name}"][2].get<double>();')
-                
+
     if 'Quaternion' in f_type:
         return (f'  {msg_var}.{f_name}.x = {json_var}["{f_name}"][0].get<double>();\n'
                 f'  {msg_var}.{f_name}.y = {json_var}["{f_name}"][1].get<double>();\n'
                 f'  {msg_var}.{f_name}.z = {json_var}["{f_name}"][2].get<double>();\n'
                 f'  {msg_var}.{f_name}.w = {json_var}["{f_name}"][3].get<double>();')
-                
+
     if 'Twist' in f_type:
         return (f'  {msg_var}.{f_name}.linear.x = {json_var}["{f_name}"][0][0].get<double>();\n'
                 f'  {msg_var}.{f_name}.linear.y = {json_var}["{f_name}"][0][1].get<double>();\n'
@@ -234,33 +447,31 @@ def generate_pc_cpp_field_deserialization(f_type, f_name, json_var, msg_var):
                 f'  {msg_var}.{f_name}.angular.x = {json_var}["{f_name}"][1][0].get<double>();\n'
                 f'  {msg_var}.{f_name}.angular.y = {json_var}["{f_name}"][1][1].get<double>();\n'
                 f'  {msg_var}.{f_name}.angular.z = {json_var}["{f_name}"][1][2].get<double>();')
-                
-    return (f'  std::vector<uint8_t> {f_name}_buf = nlohmann::json::to_msgpack({json_var}["{f_name}"]);\n'
-            f'  deserialize_msg_pc({f_name}_buf, {msg_var}.{f_name});')
 
-def get_python_type(raw_type):
-    if raw_type in TYPE_MAP_PYTHON:
-        return TYPE_MAP_PYTHON[raw_type]
-    if raw_type in NESTED_PYTHON_TYPES:
-        return NESTED_PYTHON_TYPES[raw_type]
-    msg_name = raw_type
-    if '/' in raw_type:
-        msg_name = raw_type.split('/')[-1]
-    return f"z_{msg_name}"
+    # builtin_interfaces/Time or Duration
+    if 'Time' in f_type or 'Duration' in f_type:
+        return (f'  {msg_var}.{f_name}.sec     = {json_var}["{f_name}"]["sec"].get<int32_t>();\n'
+                f'  {msg_var}.{f_name}.nanosec = {json_var}["{f_name}"]["nanosec"].get<uint32_t>();')
 
-def get_python_default(raw_type):
-    if raw_type == 'bool':
-        return 'False'
-    if raw_type in ['float32', 'float64']:
-        return '0.0'
-    if raw_type in ['string', 'String']:
-        return '""'
-    if raw_type in NESTED_PYTHON_TYPES:
-        return f"{NESTED_PYTHON_TYPES[raw_type]}()"
-    if raw_type in TYPE_MAP_PYTHON:
-        return '0'
-    py_type = get_python_type(raw_type)
-    return f"{py_type}()"
+    # std_msgs/ColorRGBA
+    if 'ColorRGBA' in f_type:
+        return (f'  {msg_var}.{f_name}.r = {json_var}["{f_name}"]["r"].get<float>();\n'
+                f'  {msg_var}.{f_name}.g = {json_var}["{f_name}"]["g"].get<float>();\n'
+                f'  {msg_var}.{f_name}.b = {json_var}["{f_name}"]["b"].get<float>();\n'
+                f'  {msg_var}.{f_name}.a = {json_var}["{f_name}"]["a"].get<float>();')
+
+    # std_msgs/Header
+    if 'Header' in f_type:
+        return (f'  {msg_var}.{f_name}.stamp.sec     = {json_var}["{f_name}"]["stamp"]["sec"].get<int32_t>();\n'
+                f'  {msg_var}.{f_name}.stamp.nanosec = {json_var}["{f_name}"]["stamp"]["nanosec"].get<uint32_t>();\n'
+                f'  {msg_var}.{f_name}.frame_id      = {json_var}["{f_name}"]["frame_id"].get<std::string>();')
+
+    # Generic custom nested message type (PC C++)
+    if '/' in f_type:
+        return (f'  std::vector<uint8_t> {f_name}_bytes = nlohmann::json::to_msgpack({json_var}["{f_name}"]);\n'
+                f'  deserialize_msg_pc({f_name}_bytes, {msg_var}.{f_name});')
+
+    return f'// Unsupported nested type: {f_type}'
 
 # Python field serialization helpers
 def generate_python_serialize_field(f_type, f_name):
@@ -275,49 +486,85 @@ def generate_python_serialize_field(f_type, f_name):
                 f'                [self.{f_name}.linear.x, self.{f_name}.linear.y, self.{f_name}.linear.z],\n'
                 f'                [self.{f_name}.angular.x, self.{f_name}.angular.y, self.{f_name}.angular.z]\n'
                 f'            ]')
-    return f'"{f_name}": msgpack.unpackb(self.{f_name}.serialize()) if hasattr(self.{f_name}, "serialize") else self.{f_name}'
+    # builtin_interfaces/Time or Duration → dict { sec, nanosec }
+    if 'Time' in f_type or 'Duration' in f_type:
+        return f'"{f_name}": {{"sec": self.{f_name}.sec, "nanosec": self.{f_name}.nanosec}}'
+    # std_msgs/ColorRGBA → dict { r, g, b, a }
+    if 'ColorRGBA' in f_type:
+        return f'"{f_name}": {{"r": self.{f_name}.r, "g": self.{f_name}.g, "b": self.{f_name}.b, "a": self.{f_name}.a}}'
+    # std_msgs/Header → nested dict
+    if 'Header' in f_type:
+        return (f'"{f_name}": {{"stamp": {{"sec": self.{f_name}.stamp.sec, "nanosec": self.{f_name}.stamp.nanosec}}, '
+                f'"frame_id": self.{f_name}.frame_id}}')
+    # Generic custom nested type: delegate to the type's own serialize()
+    if '/' in f_type:
+        return f'"{f_name}": msgpack.unpackb(self.{f_name}.serialize())'
+    return f'"{f_name}": None'
+
+def _get_nested_sub(f_name):
+    """Helper snippet: safely extract a nested sub-dict from msgpack data."""
+    return f'(data.get(b"{f_name}", data.get("{f_name}", {{}})) or {{}})'
 
 def generate_python_deserialize_field(f_type, f_name):
     if f_type in TYPE_MAP_PYTHON:
         py_type = get_python_type(f_type)
         default_val = get_python_default(f_type)
         return f'{py_type}(data.get(b"{f_name}", data.get("{f_name}", {default_val})))'
-        
+
     if 'Vector3' in f_type or 'Point' in f_type:
         pkg = 'z_geometry_msgs'
-        cls_name = 'Vector3' if 'Vector3' in f_type else 'Point'
+        cls_name = 'z_Vector3' if 'Vector3' in f_type else 'z_Point'
         return (f'{pkg}.{cls_name}(\n'
                 f'                float(data.get(b"{f_name}", data.get("{f_name}", [0,0,0]))[0]),\n'
                 f'                float(data.get(b"{f_name}", data.get("{f_name}", [0,0,0]))[1]),\n'
                 f'                float(data.get(b"{f_name}", data.get("{f_name}", [0,0,0]))[2])\n'
                 f'            )')
-                
+
     if 'Quaternion' in f_type:
         pkg = 'z_geometry_msgs'
-        return (f'{pkg}.Quaternion(\n'
+        return (f'{pkg}.z_Quaternion(\n'
                 f'                float(data.get(b"{f_name}", data.get("{f_name}", [0,0,0,1]))[0]),\n'
                 f'                float(data.get(b"{f_name}", data.get("{f_name}", [0,0,0,1]))[1]),\n'
                 f'                float(data.get(b"{f_name}", data.get("{f_name}", [0,0,0,1]))[2]),\n'
                 f'                float(data.get(b"{f_name}", data.get("{f_name}", [0,0,0,1]))[3])\n'
                 f'            )')
-                
+
     if 'Twist' in f_type:
         pkg = 'z_geometry_msgs'
-        return (f'{pkg}.Twist(\n'
-                f'                linear={pkg}.Vector3(\n'
+        return (f'{pkg}.z_Twist(\n'
+                f'                linear={pkg}.z_Vector3(\n'
                 f'                    float(data.get(b"{f_name}", data.get("{f_name}", [[0,0,0],[0,0,0]]))[0][0]),\n'
                 f'                    float(data.get(b"{f_name}", data.get("{f_name}", [[0,0,0],[0,0,0]]))[0][1]),\n'
                 f'                    float(data.get(b"{f_name}", data.get("{f_name}", [[0,0,0],[0,0,0]]))[0][2])\n'
                 f'                ),\n'
-                f'                angular={pkg}.Vector3(\n'
+                f'                angular={pkg}.z_Vector3(\n'
                 f'                    float(data.get(b"{f_name}", data.get("{f_name}", [[0,0,0],[0,0,0]]))[1][0]),\n'
                 f'                    float(data.get(b"{f_name}", data.get("{f_name}", [[0,0,0],[0,0,0]]))[1][1]),\n'
                 f'                    float(data.get(b"{f_name}", data.get("{f_name}", [[0,0,0],[0,0,0]]))[1][2])\n'
                 f'                )\n'
                 f'            )')
-                
-    py_type = get_python_type(f_type)
-    return f'{py_type}.deserialize(msgpack.packb(data.get(b"{f_name}", data.get("{f_name}", {{}}))))'
+
+    # builtin_interfaces/Time or Duration: delegate to type's deserialize() with re-packed sub-dict
+    if 'Time' in f_type or 'Duration' in f_type:
+        py_type = get_python_type(f_type)
+        return (f'{py_type}.deserialize(msgpack.packb({_get_nested_sub(f_name)}))')
+
+    # std_msgs/ColorRGBA
+    if 'ColorRGBA' in f_type:
+        py_type = get_python_type(f_type)
+        return f'{py_type}.deserialize(msgpack.packb({_get_nested_sub(f_name)}))'
+
+    # std_msgs/Header
+    if 'Header' in f_type:
+        py_type = get_python_type(f_type)
+        return f'{py_type}.deserialize(msgpack.packb({_get_nested_sub(f_name)}))'
+
+    # Generic custom nested type: delegate to type's own deserialize()
+    if '/' in f_type:
+        py_type = get_python_type(f_type)
+        return f'{py_type}.deserialize(msgpack.packb({_get_nested_sub(f_name)}))'
+
+    return 'None'
 
 def generate_mcu_header(package, name, fields, is_srv=False, req_fields=None, res_fields=None):
     z_name = f"z_{name}"
@@ -325,7 +572,7 @@ def generate_mcu_header(package, name, fields, is_srv=False, req_fields=None, re
     
     # Process includes
     all_fields = fields if not is_srv else (req_fields + res_fields)
-    includes = get_cpp_includes(all_fields, is_pc=False)
+    includes = get_cpp_includes(all_fields, is_pc=False, out_package=package)
     include_str = '\n'.join(includes)
     if include_str:
         include_str += '\n'
@@ -426,6 +673,11 @@ inline void deserialize_msg<{package}::{z_name}::Response>(
             content += f"    {generate_cpp_field_deserialization(ftype, fname, 'doc', 'msg')}\n"
         content += f"""}}
 """
+    # Convenience using declarations so a single #include brings in all nested types
+    using_decls = get_cpp_using_declarations(all_fields)
+    if using_decls:
+        content += '\n// Convenience aliases for nested types (no extra #include needed in user code)\n'
+        content += '\n'.join(using_decls) + '\n'
     content += f"\nusing {z_name} = {package}::{z_name};\n"
     content += f"\n#endif // {guard}\n"
     return content
@@ -436,7 +688,7 @@ def generate_pc_header(package, name, fields, is_srv=False, req_fields=None, res
     
     # Process includes
     all_fields = fields if not is_srv else (req_fields + res_fields)
-    includes = get_cpp_includes(all_fields, is_pc=True)
+    includes = get_cpp_includes(all_fields, is_pc=True, out_package=package)
     include_str = '\n'.join(includes)
     if include_str:
         include_str += '\n'
@@ -534,6 +786,11 @@ inline void deserialize_msg_pc<{package}::{z_name}::Response>(
             content += f"    {generate_pc_cpp_field_deserialization(ftype, fname, 'j', 'msg')}\n"
         content += f"""}}
 """
+    # Convenience using declarations so a single #include brings in all nested types
+    using_decls = get_cpp_using_declarations(all_fields)
+    if using_decls:
+        content += '\n// Convenience aliases for nested types (no extra #include needed in user code)\n'
+        content += '\n'.join(using_decls) + '\n'
     content += f"\nusing {z_name} = {package}::{z_name};\n"
     content += f"\n#endif // {guard}\n"
     return content
@@ -541,30 +798,15 @@ inline void deserialize_msg_pc<{package}::{z_name}::Response>(
 def generate_python_module(package, name, fields, is_srv=False, req_fields=None, res_fields=None):
     z_name = f"z_{name}"
     all_fields = fields if not is_srv else (req_fields + res_fields)
-    has_geometry = False
-    custom_imports = set()
-    for f_type, _ in all_fields:
-        if 'geometry_msgs' in f_type:
-            has_geometry = True
-        elif f_type not in TYPE_MAP_PYTHON:
-            pkg = 'custom_msgs'
-            msg_name = f_type
-            if '/' in f_type:
-                parts = f_type.split('/')
-                pkg = parts[0]
-                msg_name = parts[-1]
-            custom_imports.add(f"from zenoh_ros.{pkg} import z_{msg_name}")
-
-    imports_str = ""
-    if has_geometry:
-        imports_str += "from zenoh_ros.msg_interface.pre_defined_interface import z_geometry_msgs\n"
-    for imp in sorted(custom_imports):
-        imports_str += f"{imp}\n"
+    # Detect all nested type imports needed
+    nested_imports = get_python_package_imports(all_fields, out_package=package)
+    import_str = '\n'.join(nested_imports)
+    if import_str:
+        import_str += '\n'
 
     content = f"""import msgpack
 from typing import Any, List, Optional, cast
-{imports_str}
-"""
+{import_str}"""
     if not is_srv:
         params = []
         inits = []
@@ -703,17 +945,14 @@ def main():
     # ---------------------------------------------------------------------------
     # Canonical output paths (inside msg_interface/)
     # ---------------------------------------------------------------------------
-    # MCU: zenoh_ros/zenoh_ros/msg_interface/custom_interface/{custom_msgs,custom_srvs}/
     out_dir_mcu = os.path.join(
         ws_root,
         f"shared_libraries/mcu/zenoh_ros/zenoh_ros/msg_interface/custom_interface/{interface_type}s/{package}"
     )
-    # PC C++: zenoh_ros/zenoh_ros/msg_interface/custom_interface/{custom_msgs,custom_srvs}/
     out_dir_cpp = os.path.join(
         ws_root,
         f"shared_libraries/cpp/zenoh_ros/zenoh_ros/msg_interface/custom_interface/{interface_type}s/{package}"
     )
-    # Python: msg_interface/custom_interface/{msgs,srvs}/{package}/
     out_dir_py = os.path.join(
         ws_root,
         f"shared_libraries/python/zenoh_ros/msg_interface/custom_interface/{interface_type}s/{package}"
@@ -745,22 +984,22 @@ def main():
                 os.rmdir(d)
                 print(f"  Removed empty directory: {d}")
         sys.exit(0)
-        
+
     # Generate action
     if not os.path.exists(input_file):
         print(f"Error: Input definition file not found: {input_file}")
         sys.exit(1)
-        
+
     print(f"Reading definition from: {input_file}")
     with open(input_file, 'r') as f:
         content_lines = f.readlines()
-        
+
     # Parse fields
     is_srv = (ext == '.srv')
     fields = []
     req_fields = []
     res_fields = []
-    
+
     if not is_srv:
         fields = parse_fields(content_lines)
     else:
@@ -775,11 +1014,10 @@ def main():
             target.append(line)
         req_fields = parse_fields(req_lines)
         res_fields = parse_fields(res_lines)
-        
+
     # Ensure canonical folders exist
     for d in [out_dir_mcu, out_dir_cpp, out_dir_py]:
         os.makedirs(d, exist_ok=True)
-        # Create empty __init__.py inside Python generated package directory
         if d == out_dir_py:
             init_file = os.path.join(d, "__init__.py")
             if not os.path.exists(init_file):
@@ -796,19 +1034,18 @@ def main():
     py_code  = generate_python_module(package, name, fields, is_srv, req_fields, res_fields)
 
     # Build forwarding header content for MCU and PC C++
-    mcu_canonical_include = f"zenoh_ros/msg_interface/custom_interface/{interface_type}s/{package}/z_{name}.h"
-    cpp_canonical_include = f"zenoh_ros/msg_interface/custom_interface/{interface_type}s/{package}/z_{name}.h"
-
+    mcu_canonical = f"zenoh_ros/msg_interface/custom_interface/{interface_type}s/{package}/z_{name}.h"
+    cpp_canonical = f"zenoh_ros/msg_interface/custom_interface/{interface_type}s/{package}/z_{name}.h"
     fwd_template = (
         "// Forwarding header — do not edit directly.\n"
         "// Actual implementation: {canonical}\n"
         "#pragma once\n"
         "#include <{canonical}>\n"
     )
-    fwd_mcu_code = fwd_template.format(canonical=mcu_canonical_include)
-    fwd_cpp_code = fwd_template.format(canonical=cpp_canonical_include)
+    fwd_mcu_code = fwd_template.format(canonical=mcu_canonical)
+    fwd_cpp_code = fwd_template.format(canonical=cpp_canonical)
 
-    # Save canonical files (overwriting if exists)
+    # Save canonical files
     with open(mcu_file, 'w') as f:
         f.write(mcu_code)
     with open(cpp_file, 'w') as f:

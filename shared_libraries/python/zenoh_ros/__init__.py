@@ -14,10 +14,16 @@ from . import std_msgs
 from . import z_std_msgs
 from . import geometry_msgs
 from . import z_geometry_msgs
+from . import sensor_msgs
+from . import z_sensor_msgs
+from . import nav_msgs
+from . import z_nav_msgs
 from . import custom_msgs
 from . import custom_srvs
 from . import std_srvs
 from . import z_std_srvs
+from . import builtin_interfaces
+from . import z_builtin_interfaces
 
 import time
 
