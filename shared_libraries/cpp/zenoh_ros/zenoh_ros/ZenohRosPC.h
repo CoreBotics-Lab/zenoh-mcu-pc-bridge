@@ -652,6 +652,23 @@ public:
         return timer;
     }
 
+    void z_publish_raw(const char* topic_name, const uint8_t* payload, size_t len) {
+        if (!session_opened || payload == nullptr || len == 0) return;
+
+        z_view_keyexpr_t keyexpr;
+        z_view_keyexpr_from_str(&keyexpr, topic_name);
+
+        z_put_options_t options;
+        z_put_options_default(&options);
+
+        z_owned_bytes_t bytes;
+        z_bytes_copy_from_buf(&bytes, payload, len);
+
+        ZenohSessionMutexPC::lock();
+        z_put(z_session_loan(&session), z_view_keyexpr_loan(&keyexpr), z_bytes_move(&bytes), &options);
+        ZenohSessionMutexPC::unlock();
+    }
+
     void z_spin() {
         while (session_opened && !shutdown_requested) {
             std::this_thread::sleep_for(std::chrono::milliseconds(200));
