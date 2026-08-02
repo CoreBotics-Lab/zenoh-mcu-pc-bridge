@@ -48,14 +48,28 @@ void echo_sample_callback(z_loaned_sample_t* sample, void* arg) {
 
         // 2. Try MsgPack JSON formatting for structured messages (e.g. sensor_msgs)
         try {
-            nlohmann::json j = nlohmann::json::from_msgpack(data, data + len);
-            std::cout << j.dump(2) << "\n";
-            return;
+            nlohmann::json j = nlohmann::json::from_msgpack(data, data + len, true, false);
+            if (!j.is_discarded() && !j.is_null()) {
+                std::cout << j.dump(2) << "\n";
+                return;
+            }
         }
         catch (...) {}
 
-        // 3. Fallback raw print (if plain text)
-        std::cout << text << "\n";
+        // Fallback: Check if string has printable characters
+        bool is_printable = true;
+        for (size_t i = 0; i < len; ++i) {
+            if (data[i] < 32 && data[i] != '\n' && data[i] != '\r' && data[i] != '\t') {
+                is_printable = false;
+                break;
+            }
+        }
+
+        if (is_printable) {
+            std::cout << text << "\n";
+        } else {
+            std::cout << "\033[33m[binary payload: " << len << " bytes]\033[0m\n";
+        }
     }
     catch (const std::exception& e) {
         std::cerr << "\033[31m[echo error] " << e.what() << "\033[0m\n";
