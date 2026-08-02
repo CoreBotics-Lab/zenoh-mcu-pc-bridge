@@ -1,5 +1,5 @@
 #include <zenoh_ros/ZenohRosPC.h>
-#include <zenoh_ros/custom_msgs/z_MPU6050Data.h>
+#include <zenoh_ros/sensor_msgs/z_Imu.h>
 #include <iostream>
 #include <iomanip>
 
@@ -8,10 +8,10 @@ public:
     MPU6050SubscriberNode() : ZenohNode("mpu6050_subscriber") {
         std::cout << "[Node] " << this->z_get_name() << " has been started\n";
 
-        // Create subscription to topic "robot/mpu6050"
-        sub_ = this->z_create_subscription<z_MPU6050Data>(
+        // Create subscription to topic "robot/mpu6050" with standard ROS 2 z_Imu interface
+        sub_ = this->z_create_subscription<z_Imu>(
             "robot/mpu6050",
-            [this](const z_MPU6050Data& msg) -> void {
+            [this](const z_Imu& msg) -> void {
                 this->listener_callback(msg);
             },
             10
@@ -19,17 +19,17 @@ public:
     }
 
 private:
-    ZenohSubscription<z_MPU6050Data>* sub_ = nullptr;
+    ZenohSubscription<z_Imu>* sub_ = nullptr;
 
-    void listener_callback(const z_MPU6050Data& msg) {
+    void listener_callback(const z_Imu& msg) {
         std::cout << std::fixed << std::setprecision(2)
-                  << "[IMU RECV] Accel: (" 
-                  << std::setw(6) << msg.accel_x << ", " 
-                  << std::setw(6) << msg.accel_y << ", " 
-                  << std::setw(6) << msg.accel_z << ") m/s² | Gyro: ("
-                  << std::setw(6) << msg.gyro_x << ", " 
-                  << std::setw(6) << msg.gyro_y << ", " 
-                  << std::setw(6) << msg.gyro_z << ") rad/s\n";
+                  << "[IMU RECV] [stamp: " << msg.header.stamp.sec << "." << msg.header.stamp.nanosec << "] Accel: (" 
+                  << std::setw(6) << msg.linear_acceleration.x << ", " 
+                  << std::setw(6) << msg.linear_acceleration.y << ", " 
+                  << std::setw(6) << msg.linear_acceleration.z << ") m/s² | Gyro: ("
+                  << std::setw(6) << msg.angular_velocity.x << ", " 
+                  << std::setw(6) << msg.angular_velocity.y << ", " 
+                  << std::setw(6) << msg.angular_velocity.z << ") rad/s\n";
     }
 };
 

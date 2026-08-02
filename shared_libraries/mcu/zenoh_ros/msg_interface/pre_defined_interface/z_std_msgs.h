@@ -4,6 +4,7 @@
 #include <ArduinoJson.h>
 #include <vector>
 #include <string>
+#include "z_builtin_interfaces.h"
 
 // --- Helper macro to define primitive message types and their serialization traits ---
 #define DEFINE_Z_STD_MSG_PRIMITIVE(TypeName, Type) \
@@ -85,6 +86,10 @@ namespace z_std_msgs {
     struct z_String {
         std::string data;
     };
+    struct z_Header {
+        builtin_interfaces::z_Time stamp;
+        std::string frame_id;
+    };
 }
 template <>
 inline size_t serialize_msg<z_std_msgs::z_String>(const z_std_msgs::z_String& msg, uint8_t* buffer, size_t max_len) {
@@ -97,6 +102,23 @@ inline void deserialize_msg<z_std_msgs::z_String>(const uint8_t* buffer, size_t 
     JsonDocument doc;
     deserializeMsgPack(doc, buffer, len);
     msg.data = doc[0].as<std::string>();
+}
+
+template <>
+inline size_t serialize_msg<z_std_msgs::z_Header>(const z_std_msgs::z_Header& msg, uint8_t* buffer, size_t max_len) {
+    JsonDocument doc;
+    doc["stamp"]["sec"] = msg.stamp.sec;
+    doc["stamp"]["nanosec"] = msg.stamp.nanosec;
+    doc["frame_id"] = msg.frame_id;
+    return serializeMsgPack(doc, buffer, max_len);
+}
+template <>
+inline void deserialize_msg<z_std_msgs::z_Header>(const uint8_t* buffer, size_t len, z_std_msgs::z_Header& msg) {
+    JsonDocument doc;
+    deserializeMsgPack(doc, buffer, len);
+    msg.stamp.sec = doc["stamp"]["sec"].as<int32_t>();
+    msg.stamp.nanosec = doc["stamp"]["nanosec"].as<uint32_t>();
+    msg.frame_id = doc["frame_id"].as<std::string>();
 }
 
 // --- Custom Specialization for z_std_msgs::z_Empty ---

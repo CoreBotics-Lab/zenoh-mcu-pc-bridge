@@ -4,6 +4,7 @@
 #include <nlohmann/json.hpp>
 #include <vector>
 #include <string>
+#include "z_builtin_interfaces.h"
 
 // Forward declarations of serialization templates
 template <typename T>
@@ -82,6 +83,10 @@ namespace z_std_msgs {
     struct z_String {
         std::string data;
     };
+    struct z_Header {
+        builtin_interfaces::z_Time stamp;
+        std::string frame_id;
+    };
 }
 template <>
 inline std::vector<uint8_t> serialize_msg_pc<z_std_msgs::z_String>(const z_std_msgs::z_String& msg) {
@@ -93,6 +98,22 @@ template <>
 inline void deserialize_msg_pc<z_std_msgs::z_String>(const std::vector<uint8_t>& buffer, z_std_msgs::z_String& msg) {
     nlohmann::json j = nlohmann::json::from_msgpack(buffer);
     msg.data = j[0].get<std::string>();
+}
+
+template <>
+inline std::vector<uint8_t> serialize_msg_pc<z_std_msgs::z_Header>(const z_std_msgs::z_Header& msg) {
+    nlohmann::json j;
+    j["stamp"]["sec"] = msg.stamp.sec;
+    j["stamp"]["nanosec"] = msg.stamp.nanosec;
+    j["frame_id"] = msg.frame_id;
+    return nlohmann::json::to_msgpack(j);
+}
+template <>
+inline void deserialize_msg_pc<z_std_msgs::z_Header>(const std::vector<uint8_t>& buffer, z_std_msgs::z_Header& msg) {
+    nlohmann::json j = nlohmann::json::from_msgpack(buffer);
+    msg.stamp.sec = j["stamp"]["sec"].get<int32_t>();
+    msg.stamp.nanosec = j["stamp"]["nanosec"].get<uint32_t>();
+    msg.frame_id = j["frame_id"].get<std::string>();
 }
 
 // --- Custom Specialization for z_std_msgs::z_Empty ---

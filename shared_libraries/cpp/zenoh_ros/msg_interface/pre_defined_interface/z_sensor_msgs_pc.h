@@ -5,7 +5,7 @@
 #include <vector>
 #include <string>
 #include "z_std_msgs.h"
-#include "z_geometry_msgs_pc.h"
+#include "z_geometry_msgs.h"
 #include "z_builtin_interfaces.h"
 
 // Forward declarations

@@ -18,7 +18,7 @@
 #include <MPU6050.h>
 
 #include <zenoh_ros/ZenohRos.h>
-#include <zenoh_ros/custom_msgs/z_MPU6050Data.h>
+#include <zenoh_ros/sensor_msgs/z_Imu.h>
 
 // --- Pin Definitions for ESP32-S3 ---
 #define I2C_SDA_PIN  9
@@ -43,8 +43,8 @@ public:
     MPU6050_Publisher_Node() : ZenohNode("mpu6050_publisher") {
         Serial.printf("[Node] %s has been started\n", this->z_get_name());
         
-        // 1. Create a typed publisher
-        publisher_ = this->z_create_publisher<z_MPU6050Data>("robot/mpu6050", 10);
+        // 1. Create a typed publisher with standard ROS 2 z_Imu message interface
+        publisher_ = this->z_create_publisher<z_Imu>("robot/mpu6050", 10);
 
         // 2. Create timer (triggers callback_timer every 50ms / 20Hz)
         timer_ = this->z_create_timer(50, [this]() -> void {
@@ -53,9 +53,9 @@ public:
     }
 
 private:
-    ZenohPublisher<z_MPU6050Data>* publisher_ = nullptr;
+    ZenohPublisher<z_Imu>* publisher_ = nullptr;
     ZenohTimer* timer_ = nullptr;
-    z_MPU6050Data msg_;
+    z_Imu msg_;
 
     void callback_timer() {
         if (!this->publisher_ || !mpu_detected) return;
@@ -69,23 +69,37 @@ private:
             mpu.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
         }
 
-        // Convert raw values to standard SI units:
-        msg_.accel_x = (ax / 16384.0f) * 9.80665f;
-        msg_.accel_y = (ay / 16384.0f) * 9.80665f;
-        msg_.accel_z = (az / 16384.0f) * 9.80665f;
+        // Standard ROS 2 Header with timestamp
+        ZenohTime now_time = this->now();
+        msg_.header.stamp.sec = now_time.sec;
+        msg_.header.stamp.nanosec = now_time.nanosec;
+        msg_.header.frame_id = "imu_link";
 
-        msg_.gyro_x = (gx / 131.0f) * (3.14159265f / 180.0f);
-        msg_.gyro_y = (gy / 131.0f) * (3.14159265f / 180.0f);
-        msg_.gyro_z = (gz / 131.0f) * (3.14159265f / 180.0f);
-        msg_.temperature = 0.0f;
+        // Convert raw values to standard SI units:
+        // Linear Acceleration (m/s²)
+        msg_.linear_acceleration.x = (ax / 16384.0) * 9.80665;
+        msg_.linear_acceleration.y = (ay / 16384.0) * 9.80665;
+        msg_.linear_acceleration.z = (az / 16384.0) * 9.80665;
+
+        // Angular Velocity (rad/s)
+        msg_.angular_velocity.x = (gx / 131.0) * (3.141592653589793 / 180.0);
+        msg_.angular_velocity.y = (gy / 131.0) * (3.141592653589793 / 180.0);
+        msg_.angular_velocity.z = (gz / 131.0) * (3.141592653589793 / 180.0);
+
+        // Identity Orientation Quaternion (0,0,0,1)
+        msg_.orientation.x = 0.0;
+        msg_.orientation.y = 0.0;
+        msg_.orientation.z = 0.0;
+        msg_.orientation.w = 1.0;
 
         // Publish over Zenoh
         this->publisher_->publish(msg_);
 
-        Serial.printf("[%s] Publishing Accel: (%6.2f, %6.2f, %6.2f) m/s² | Gyro: (%6.2f, %6.2f, %6.2f) rad/s\n",
+        Serial.printf("[%s] [stamp: %d.%09u] Accel: (%6.2f, %6.2f, %6.2f) m/s² | Gyro: (%6.2f, %6.2f, %6.2f) rad/s\n",
                       this->z_get_name(),
-                      msg_.accel_x, msg_.accel_y, msg_.accel_z,
-                      msg_.gyro_x, msg_.gyro_y, msg_.gyro_z);
+                      msg_.header.stamp.sec, msg_.header.stamp.nanosec,
+                      msg_.linear_acceleration.x, msg_.linear_acceleration.y, msg_.linear_acceleration.z,
+                      msg_.angular_velocity.x, msg_.angular_velocity.y, msg_.angular_velocity.z);
     }
 };
 

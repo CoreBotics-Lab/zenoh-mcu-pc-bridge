@@ -6,25 +6,26 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../shared_libraries/python')))
 
 from zenoh_ros import ZenohNode, ZenohConfig
-from zenoh_ros.custom_msgs import z_MPU6050Data
+from zenoh_ros.sensor_msgs import z_Imu
 
 class MPU6050SubscriberNode(ZenohNode):
     def __init__(self) -> None:
         super().__init__("mpu6050_subscriber")
         print(f"[Node] {self.z_get_name()} has been started")
 
-        # Create subscription to topic "robot/mpu6050" with z_MPU6050Data type
+        # Create subscription to topic "robot/mpu6050" with standard ROS 2 z_Imu type
         self.sub = self.z_create_subscription(
-            z_MPU6050Data,
+            z_Imu,
             "robot/mpu6050",
             self.listener_callback,
             10
         )
 
-    def listener_callback(self, msg: z_MPU6050Data) -> None:
+    def listener_callback(self, msg: z_Imu) -> None:
         print(
-            f"[IMU RECV] Accel: ({msg.accel_x:6.2f}, {msg.accel_y:6.2f}, {msg.accel_z:6.2f}) m/s² | "
-            f"Gyro: ({msg.gyro_x:6.2f}, {msg.gyro_y:6.2f}, {msg.gyro_z:6.2f}) rad/s"
+            f"[IMU RECV] [stamp: {msg.header.stamp.sec}.{msg.header.stamp.nanosec:09d}] "
+            f"Accel: ({msg.linear_acceleration.x:6.2f}, {msg.linear_acceleration.y:6.2f}, {msg.linear_acceleration.z:6.2f}) m/s² | "
+            f"Gyro: ({msg.angular_velocity.x:6.2f}, {msg.angular_velocity.y:6.2f}, {msg.angular_velocity.z:6.2f}) rad/s"
         )
 
 
