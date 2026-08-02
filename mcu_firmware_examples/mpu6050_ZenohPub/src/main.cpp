@@ -19,6 +19,7 @@
 
 #include <zenoh_ros/ZenohRos.h>
 #include <zenoh_ros/sensor_msgs/z_Imu.h>
+#include <zenoh_ros/z_logger.h>
 
 // --- Pin Definitions for ESP32-S3 ---
 #define I2C_SDA_PIN  9
@@ -40,8 +41,9 @@ bool mpu_detected = false;
 
 class MPU6050_Publisher_Node : public ZenohNode {
 public:
-    MPU6050_Publisher_Node() : ZenohNode("mpu6050_publisher") {
-        Serial.printf("[Node] %s has been started\n", this->z_get_name());
+    MPU6050_Publisher_Node() : ZenohNode("mpu6050_publisher"), logger_("mpu6050_publisher") {
+        logger_.z_attach(this);
+        ZLOG_INFO(logger_, "[Node] %s has been started and ZLogger attached", this->z_get_name());
         
         // 1. Create a typed publisher with standard ROS 2 z_Imu message interface
         publisher_ = this->z_create_publisher<z_Imu>("robot/mpu6050", 10);
@@ -53,6 +55,7 @@ public:
     }
 
 private:
+    ZLogger logger_;
     ZenohPublisher<z_Imu>* publisher_ = nullptr;
     ZenohTimer* timer_ = nullptr;
     z_Imu msg_;
@@ -95,11 +98,9 @@ private:
         // Publish over Zenoh
         this->publisher_->publish(msg_);
 
-        Serial.printf("[%s] [stamp: %d.%09u] Accel: (%6.2f, %6.2f, %6.2f) m/s² | Gyro: (%6.2f, %6.2f, %6.2f) rad/s\n",
-                      this->z_get_name(),
-                      msg_.header.stamp.sec, msg_.header.stamp.nanosec,
-                      msg_.linear_acceleration.x, msg_.linear_acceleration.y, msg_.linear_acceleration.z,
-                      msg_.angular_velocity.x, msg_.angular_velocity.y, msg_.angular_velocity.z);
+        ZLOG_INFO_THROTTLE(logger_, 1000, "Accel: (%6.2f, %6.2f, %6.2f) m/s² | Gyro: (%6.2f, %6.2f, %6.2f) rad/s",
+                           msg_.linear_acceleration.x, msg_.linear_acceleration.y, msg_.linear_acceleration.z,
+                           msg_.angular_velocity.x, msg_.angular_velocity.y, msg_.angular_velocity.z);
     }
 };
 
