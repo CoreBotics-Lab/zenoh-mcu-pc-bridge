@@ -13,6 +13,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <vector>
+#include <mutex>
 
 // Global flag to handle clean shutdown via Ctrl+C
 inline volatile sig_atomic_t shutdown_requested = 0;
@@ -71,6 +72,19 @@ typedef std::function<void()> TimerCallback;
 template <typename MsgType>
 using SubscriptionCallback = std::function<void(const MsgType& msg)>;
 
+// --- Thread-Safety Mutex Helper for PC C++ ---
+struct ZenohSessionMutexPC {
+    static std::mutex mutex;
+
+    static inline void lock() {
+        mutex.lock();
+    }
+
+    static inline void unlock() {
+        mutex.unlock();
+    }
+};
+
 // Templated Zenoh Publisher Class for PC
 template <typename MsgType>
 class ZenohPublisher {
@@ -126,7 +140,11 @@ public:
         z_owned_bytes_t bytes;
         z_bytes_copy_from_buf(&bytes, buffer.data(), buffer.size());
 
-        return z_publisher_put(z_publisher_loan(&pub), z_bytes_move(&bytes), &options) == 0;
+        ZenohSessionMutexPC::lock();
+        int res = z_publisher_put(z_publisher_loan(&pub), z_bytes_move(&bytes), &options);
+        ZenohSessionMutexPC::unlock();
+
+        return res == 0;
     }
 };
 
@@ -254,7 +272,10 @@ public:
                     z_bytes_copy_from_buf(&reply_bytes, reply_buf.data(), reply_buf.size());
 
                     const z_loaned_keyexpr_t* q_key = z_query_keyexpr(query);
+
+                    ZenohSessionMutexPC::lock();
                     z_query_reply(query, q_key, z_bytes_move(&reply_bytes), &options);
+                    ZenohSessionMutexPC::unlock();
                 }
             },
             NULL,
@@ -346,7 +367,11 @@ public:
             &ctx
         );
 
-        if (z_get(session, z_view_keyexpr_loan(&keyexpr), "", z_closure_reply_move(&closure), &options) < 0) {
+        ZenohSessionMutexPC::lock();
+        int get_res = z_get(session, z_view_keyexpr_loan(&keyexpr), "", z_closure_reply_move(&closure), &options);
+        ZenohSessionMutexPC::unlock();
+
+        if (get_res < 0) {
             std::cerr << "[ZenohClient PC] ERROR: Failed to send service call to '" << service_name << "'\n";
             return false;
         }
@@ -569,6 +594,7 @@ public:
 // Static definitions
 z_owned_session_t ZenohNode::session;
 bool ZenohNode::session_opened = false;
+std::mutex ZenohSessionMutexPC::mutex;
 
 // Global non-blocking thread sleep helper
 inline void z_delay(uint32_t ms) {

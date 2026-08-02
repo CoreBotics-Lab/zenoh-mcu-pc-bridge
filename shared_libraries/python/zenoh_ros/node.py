@@ -48,8 +48,9 @@ class ZenohPublisher:
             payload = msgpack.packb(msg)
         else:
             payload = msgpack.packb([msg])
-            
-        self.pub.put(payload)
+
+        with ZenohNode._lock:
+            self.pub.put(payload)
 
 
 class ZenohSubscription:

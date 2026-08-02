@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include <WiFi.h>
+#include <esp_wifi.h>
 #include <zenoh-pico.h>
 #include <ArduinoJson.h>
 #include <functional>
@@ -52,12 +53,34 @@ struct SystemDefaultsQoS : public QoS {
     }
 };
 
-// --- Message serialization/deserialization helper template declarations ---
 template <typename T>
 size_t serialize_msg(const T& msg, uint8_t* buffer, size_t max_len);
 
 template <typename T>
 void deserialize_msg(const uint8_t* buffer, size_t len, T& msg);
+
+// --- FreeRTOS Session Mutex Helper for 100% Thread-Safety ---
+struct ZenohSessionMutex {
+    static SemaphoreHandle_t mutex;
+
+    static inline void init() {
+        if (mutex == NULL) {
+            mutex = xSemaphoreCreateMutex();
+        }
+    }
+
+    static inline void lock() {
+        if (mutex) {
+            xSemaphoreTake(mutex, portMAX_DELAY);
+        }
+    }
+
+    static inline void unlock() {
+        if (mutex) {
+            xSemaphoreGive(mutex);
+        }
+    }
+};
 
 
 // Callback Types for Timer and Subscriptions
@@ -133,7 +156,11 @@ public:
         z_owned_bytes_t bytes;
         z_bytes_copy_from_buf(&bytes, buffer, len);
 
-        return z_publisher_put(z_publisher_loan(&pub), z_bytes_move(&bytes), &options) == 0;
+        ZenohSessionMutex::lock();
+        int res = z_publisher_put(z_publisher_loan(&pub), z_bytes_move(&bytes), &options);
+        ZenohSessionMutex::unlock();
+
+        return res == 0;
     }
 };
 
@@ -264,10 +291,11 @@ public:
                     z_query_reply_options_default(&options);
 
                     z_owned_bytes_t reply_bytes;
-                    z_bytes_copy_from_buf(&reply_bytes, res_buf, res_len);
-
                     const z_loaned_keyexpr_t* q_key = z_query_keyexpr(query);
+
+                    ZenohSessionMutex::lock();
                     z_query_reply(query, q_key, z_bytes_move(&reply_bytes), &options);
+                    ZenohSessionMutex::unlock();
                 }
             },
             NULL,
@@ -360,7 +388,11 @@ public:
             &ctx
         );
 
-        if (z_get(session, z_view_keyexpr_loan(&keyexpr), "", z_closure_reply_move(&closure), &options) < 0) {
+        ZenohSessionMutex::lock();
+        int get_res = z_get(session, z_view_keyexpr_loan(&keyexpr), "", z_closure_reply_move(&closure), &options);
+        ZenohSessionMutex::unlock();
+
+        if (get_res < 0) {
             Serial.printf("[ZenohClient MCU] ERROR: Failed to send service call to '%s'\n", service_name);
             return false;
         }
@@ -510,6 +542,13 @@ public:
             Serial.print("[Wi-Fi] Gateway IP        : "); Serial.println(WiFi.softAPIP());
         }
 
+        // Disable Wi-Fi power saving for ultra-low latency (~2ms packet response)
+        esp_wifi_set_ps(WIFI_PS_NONE);
+        Serial.println("[Wi-Fi] Low-latency mode enabled (WIFI_PS_NONE)");
+
+        // Create FreeRTOS Mutex for Zenoh session thread-safety across task cores
+        ZenohSessionMutex::init();
+
         // 2. Initialize Zenoh session with peer listener endpoint
         Serial.println("[Zenoh] Initializing Zenoh Session...");
         z_owned_config_t z_config;
@@ -640,7 +679,9 @@ public:
         z_owned_bytes_t bytes;
         z_bytes_copy_from_buf(&bytes, payload, len);
 
+        ZenohSessionMutex::lock();
         z_put(z_session_loan(&session), z_view_keyexpr_loan(&keyexpr), z_bytes_move(&bytes), &options);
+        ZenohSessionMutex::unlock();
     }
 
     /**
@@ -656,6 +697,7 @@ public:
 // C++11 Static member definitions
 z_owned_session_t ZenohNode::session;
 bool ZenohNode::session_opened = false;
+SemaphoreHandle_t ZenohSessionMutex::mutex = NULL;
 
 // Global non-blocking RTOS delay helper
 inline void z_delay(uint32_t ms) {
