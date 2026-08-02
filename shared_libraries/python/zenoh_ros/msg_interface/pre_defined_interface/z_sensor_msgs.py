@@ -36,30 +36,47 @@ class z_Imu:
     def deserialize(cls, payload: bytes) -> 'z_Imu':
         data = msgpack.unpackb(payload)
         if not isinstance(data, dict): data = {}
+        
         hdr_data = data.get(b"header", data.get("header", {}))
+        if not isinstance(hdr_data, dict): hdr_data = {}
+        
         stamp_data = hdr_data.get(b"stamp", hdr_data.get("stamp", {}))
+        if not isinstance(stamp_data, dict): stamp_data = {}
+        
+        sec_val = stamp_data.get(b"sec", stamp_data.get("sec", 0))
+        nanosec_val = stamp_data.get(b"nanosec", stamp_data.get("nanosec", 0))
+        frame_val = hdr_data.get(b"frame_id", hdr_data.get("frame_id", ""))
+        if frame_val is None: frame_val = ""
+        if isinstance(frame_val, bytes): frame_val = frame_val.decode('utf-8', errors='ignore')
+        
         header = z_Header(
-            stamp=z_Time(sec=int(stamp_data.get(b"sec", stamp_data.get("sec", 0))), nanosec=int(stamp_data.get(b"nanosec", stamp_data.get("nanosec", 0)))),
-            frame_id=str(hdr_data.get(b"frame_id", hdr_data.get("frame_id", "")))
+            stamp=z_Time(sec=int(sec_val) if sec_val is not None else 0, nanosec=int(nanosec_val) if nanosec_val is not None else 0),
+            frame_id=str(frame_val)
         )
+        
         ori_d = data.get(b"orientation", data.get("orientation", {}))
+        if not isinstance(ori_d, dict): ori_d = {}
         ori = z_Quaternion(
-            float(ori_d.get(b"x", ori_d.get("x", 0.0))),
-            float(ori_d.get(b"y", ori_d.get("y", 0.0))),
-            float(ori_d.get(b"z", ori_d.get("z", 0.0))),
-            float(ori_d.get(b"w", ori_d.get("w", 1.0)))
+            float(ori_d.get(b"x", ori_d.get("x", 0.0)) or 0.0),
+            float(ori_d.get(b"y", ori_d.get("y", 0.0)) or 0.0),
+            float(ori_d.get(b"z", ori_d.get("z", 0.0)) or 0.0),
+            float(ori_d.get(b"w", ori_d.get("w", 1.0)) or 1.0)
         )
+        
         ang_d = data.get(b"angular_velocity", data.get("angular_velocity", {}))
+        if not isinstance(ang_d, dict): ang_d = {}
         ang = z_Vector3(
-            float(ang_d.get(b"x", ang_d.get("x", 0.0))),
-            float(ang_d.get(b"y", ang_d.get("y", 0.0))),
-            float(ang_d.get(b"z", ang_d.get("z", 0.0)))
+            float(ang_d.get(b"x", ang_d.get("x", 0.0)) or 0.0),
+            float(ang_d.get(b"y", ang_d.get("y", 0.0)) or 0.0),
+            float(ang_d.get(b"z", ang_d.get("z", 0.0)) or 0.0)
         )
+        
         lin_d = data.get(b"linear_acceleration", data.get("linear_acceleration", {}))
+        if not isinstance(lin_d, dict): lin_d = {}
         lin = z_Vector3(
-            float(lin_d.get(b"x", lin_d.get("x", 0.0))),
-            float(lin_d.get(b"y", lin_d.get("y", 0.0))),
-            float(lin_d.get(b"z", lin_d.get("z", 0.0)))
+            float(lin_d.get(b"x", lin_d.get("x", 0.0)) or 0.0),
+            float(lin_d.get(b"y", lin_d.get("y", 0.0)) or 0.0),
+            float(lin_d.get(b"z", lin_d.get("z", 0.0)) or 0.0)
         )
         return cls(header=header, orientation=ori, angular_velocity=ang, linear_acceleration=lin)
 
