@@ -107,7 +107,7 @@ template <typename MsgType>
 using SubscriptionCallback = std::function<void(const MsgType& msg)>;
 
 // Modular Templated Zenoh Publisher Class
-template <typename MsgType, size_t MaxBufferSize = 128>
+template <typename MsgType, size_t MaxBufferSize = 512>
 class ZenohPublisher {
 private:
     z_owned_publisher_t pub;
@@ -652,7 +652,7 @@ public:
      * Creates a new publisher and registers it within the active Zenoh session.
      * Returns a dynamically allocated publisher pointer.
      */
-    template <typename MsgType, size_t MaxBufferSize = 128>
+    template <typename MsgType, size_t MaxBufferSize = 512>
     ZenohPublisher<MsgType, MaxBufferSize>* z_create_publisher(const char* topic_name, const QoS& qos = QoS()) {
         ZenohPublisher<MsgType, MaxBufferSize>* pub = new ZenohPublisher<MsgType, MaxBufferSize>(topic_name, qos);
         if (session_opened) {
@@ -667,7 +667,7 @@ public:
     /**
      * Shorthand creator for a publisher with a custom queue depth (exactly like ROS 2).
      */
-    template <typename MsgType, size_t MaxBufferSize = 128>
+    template <typename MsgType, size_t MaxBufferSize = 512>
     ZenohPublisher<MsgType, MaxBufferSize>* z_create_publisher(const char* topic_name, uint32_t queue_size) {
         QoS qos;
         qos.depth = queue_size;
