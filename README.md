@@ -277,26 +277,57 @@ All communication methods belong to `ZenohNode` and follow standard ROS 2 method
 
 ---
 
-### 7. Logging (`ZLOG` & `ZenohLogger`)
+---
 
-- **MCU C++**:
+### 8. ROS 2 Clock & Timestamps (`now()`, `get_clock()`)
+
+Get uniform timestamps (`sec`, `nanosec`) matching ROS 2 across MCU, PC C++, and PC Python:
+
+- **C++ (MCU & PC)**:
   ```cpp
-  ZLogger logger("mcu_node");
-  logger.z_attach(this); // Stream live logs to 'mcu_node/log'
-
-  ZLOG_INFO(logger, "Ready");
-  ZLOG_WARN_ONCE(logger, "Warning once");
-  ZLOG_DEBUG_THROTTLE(logger, 2000, "Throttled every 2s");
+  ZenohTime t1 = node->now();
+  ZenohTime t2 = node->get_clock()->now();
+  std::cout << "Sec: " << t1.sec << " Nanosec: " << t1.nanosec << "\n";
   ```
 - **Python**:
   ```python
-  from zenoh_ros import get_logger
-  logger = get_logger("py_node")
-
-  logger.info("Ready")
-  logger.warn("Warning once", once=True)
-  logger.error("Throttled", throttle_duration_sec=2.0)
+  t = node.now()  # or node.get_clock().now()
+  print(f"Sec: {t.sec}, Nanosec: {t.nanosec}")
   ```
+
+---
+
+### 9. Parameter Server (`z_declare_parameter`, `z_get_parameter`)
+
+Set and query configuration parameters dynamically without re-compiling firmware:
+
+- **C++ (MCU & PC)**:
+  ```cpp
+  node->z_declare_parameter("sample_rate", 50);
+  node->z_declare_parameter("gain", 1.5f);
+
+  int rate = node->z_get_parameter("sample_rate", 50);
+  float gain = node->z_get_parameter("gain", 1.0f);
+  ```
+- **Python**:
+  ```python
+  node.z_declare_parameter("sample_rate", 50)
+  rate = node.z_get_parameter("sample_rate", 50)
+  ```
+
+---
+
+## ⚡ Performance, Low-Latency & Thread Safety Architecture
+
+1. **Ultra-Low Latency Wi-Fi Mode (`WIFI_PS_NONE`)**:
+   - `esp_wifi_set_ps(WIFI_PS_NONE)` automatically locks ESP32 Wi-Fi radio out of modem sleep mode, dropping packet response latency to **~2ms**.
+
+2. **Cross-Platform Thread Safety Mutexes**:
+   - **MCU C++**: `ZenohSessionMutex` FreeRTOS mutex protects session buffers from multi-core task crashes when timers (Core 1) and network callbacks (Core 0) run concurrently.
+   - **PC C++ & Python**: `ZenohSessionMutexPC` (`std::mutex`) and `ZenohNode._lock` protect session buffers across multi-threaded publish and service calls.
+
+3. **Automatic Node Liveliness Token**:
+   - Declares `@ros2/{node_name}/liveliness` tokens automatically upon session initialization for network node discovery.
 
 ---
 

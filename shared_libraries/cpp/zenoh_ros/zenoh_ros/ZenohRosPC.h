@@ -59,12 +59,31 @@ struct SystemDefaultsQoS : public QoS {
 };
 
 
-// --- Message serialization/deserialization helper template declarations ---
 template <typename T>
 std::vector<uint8_t> serialize_msg_pc(const T& msg);
 
 template <typename T>
 void deserialize_msg_pc(const std::vector<uint8_t>& buffer, T& msg);
+
+// --- ROS 2 Time / Clock Abstraction for PC ---
+struct ZenohTime {
+    int32_t sec = 0;
+    uint32_t nanosec = 0;
+};
+
+class ZenohClock {
+public:
+    ZenohTime now() const {
+        ZenohTime t;
+        auto now_p = std::chrono::system_clock::now();
+        auto duration = now_p.time_since_epoch();
+        auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration);
+        auto nanoseconds = std::chrono::duration_cast<std::chrono::nanoseconds>(duration - seconds);
+        t.sec = static_cast<int32_t>(seconds.count());
+        t.nanosec = static_cast<uint32_t>(nanoseconds.count());
+        return t;
+    }
+};
 
 // Callback types
 typedef std::function<void()> TimerCallback;
@@ -432,9 +451,12 @@ struct ZenohConfig {
 class ZenohNode {
 private:
     static z_owned_session_t session;
+    static z_owned_liveliness_token_t liveliness_token;
     static bool session_opened;
     const char* node_name;
     std::vector<std::function<void()>> cleanup_callbacks;
+    ZenohClock node_clock;
+    std::vector<std::pair<std::string, std::string>> parameters;
 
     static bool init_session(const char* connect_endpoint) {
         if (session_opened) return true;
@@ -463,6 +485,11 @@ private:
 
         std::cout << "[Zenoh PC] Session opened successfully!\n";
         session_opened = true;
+
+        z_view_keyexpr_t live_key;
+        z_view_keyexpr_from_str(&live_key, "@ros2/pc_node/liveliness");
+        z_liveliness_declare_token(z_session_loan(&session), &liveliness_token, z_view_keyexpr_loan(&live_key), NULL);
+
         return true;
     }
 
@@ -473,6 +500,47 @@ public:
         for (auto& cleanup : cleanup_callbacks) {
             cleanup();
         }
+    }
+
+    const ZenohClock* get_clock() const {
+        return &node_clock;
+    }
+
+    ZenohTime now() const {
+        return node_clock.now();
+    }
+
+    void z_declare_parameter(const std::string& name, int default_val) {
+        parameters.push_back({name, std::to_string(default_val)});
+    }
+
+    void z_declare_parameter(const std::string& name, float default_val) {
+        parameters.push_back({name, std::to_string(default_val)});
+    }
+
+    void z_declare_parameter(const std::string& name, const std::string& default_val) {
+        parameters.push_back({name, default_val});
+    }
+
+    int z_get_parameter(const std::string& name, int default_val) const {
+        for (const auto& p : parameters) {
+            if (p.first == name) return std::stoi(p.second);
+        }
+        return default_val;
+    }
+
+    float z_get_parameter(const std::string& name, float default_val) const {
+        for (const auto& p : parameters) {
+            if (p.first == name) return std::stof(p.second);
+        }
+        return default_val;
+    }
+
+    std::string z_get_parameter(const std::string& name, const std::string& default_val) const {
+        for (const auto& p : parameters) {
+            if (p.first == name) return p.second;
+        }
+        return default_val;
     }
 
     static bool init(const ZenohConfig& config = ZenohConfig()) {
@@ -593,6 +661,7 @@ public:
 
 // Static definitions
 z_owned_session_t ZenohNode::session;
+z_owned_liveliness_token_t ZenohNode::liveliness_token;
 bool ZenohNode::session_opened = false;
 std::mutex ZenohSessionMutexPC::mutex;
 

@@ -59,6 +59,23 @@ size_t serialize_msg(const T& msg, uint8_t* buffer, size_t max_len);
 template <typename T>
 void deserialize_msg(const uint8_t* buffer, size_t len, T& msg);
 
+// --- ROS 2 Time / Clock Abstraction ---
+struct ZenohTime {
+    int32_t sec = 0;
+    uint32_t nanosec = 0;
+};
+
+class ZenohClock {
+public:
+    ZenohTime now() const {
+        ZenohTime t;
+        uint64_t micros_total = esp_timer_get_time();
+        t.sec = (int32_t)(micros_total / 1000000ULL);
+        t.nanosec = (uint32_t)((micros_total % 1000000ULL) * 1000ULL);
+        return t;
+    }
+};
+
 // --- FreeRTOS Session Mutex Helper for 100% Thread-Safety ---
 struct ZenohSessionMutex {
     static SemaphoreHandle_t mutex;
@@ -448,9 +465,12 @@ public:
 class ZenohNode {
 private:
     static z_owned_session_t session;
+    static z_owned_liveliness_token_t liveliness_token;
     static bool session_opened;
     const char* node_name;
     std::vector<std::function<void()>> cleanup_callbacks;
+    ZenohClock node_clock;
+    std::vector<std::pair<String, String>> parameters;
 
 public:
     ZenohNode(const char* name) : node_name(name) {}
@@ -459,6 +479,47 @@ public:
         for (auto& cleanup : cleanup_callbacks) {
             cleanup();
         }
+    }
+
+    const ZenohClock* get_clock() const {
+        return &node_clock;
+    }
+
+    ZenohTime now() const {
+        return node_clock.now();
+    }
+
+    void z_declare_parameter(const char* name, int default_val) {
+        parameters.push_back({String(name), String(default_val)});
+    }
+
+    void z_declare_parameter(const char* name, float default_val) {
+        parameters.push_back({String(name), String(default_val)});
+    }
+
+    void z_declare_parameter(const char* name, const char* default_val) {
+        parameters.push_back({String(name), String(default_val)});
+    }
+
+    int z_get_parameter(const char* name, int default_val) const {
+        for (const auto& p : parameters) {
+            if (p.first == name) return p.second.toInt();
+        }
+        return default_val;
+    }
+
+    float z_get_parameter(const char* name, float default_val) const {
+        for (const auto& p : parameters) {
+            if (p.first == name) return p.second.toFloat();
+        }
+        return default_val;
+    }
+
+    String z_get_parameter(const char* name, const char* default_val) const {
+        for (const auto& p : parameters) {
+            if (p.first == name) return p.second;
+        }
+        return String(default_val);
     }
 
     /**
@@ -569,6 +630,14 @@ public:
 
         Serial.println("[Zenoh] Session opened successfully!");
         session_opened = true;
+
+        // Declare ROS 2 node liveliness token
+        z_view_keyexpr_t live_key;
+        char live_topic[128];
+        snprintf(live_topic, sizeof(live_topic), "@ros2/%s/liveliness", cfg.ssid ? cfg.ssid : "mcu_node");
+        z_view_keyexpr_from_str(&live_key, live_topic);
+        z_liveliness_declare_token(z_session_loan(&session), &liveliness_token, z_view_keyexpr_loan(&live_key), NULL);
+
         return true;
     }
 
@@ -696,6 +765,7 @@ public:
 
 // C++11 Static member definitions
 z_owned_session_t ZenohNode::session;
+z_owned_liveliness_token_t ZenohNode::liveliness_token;
 bool ZenohNode::session_opened = false;
 SemaphoreHandle_t ZenohSessionMutex::mutex = NULL;
 

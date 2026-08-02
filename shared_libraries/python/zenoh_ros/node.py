@@ -28,6 +28,20 @@ class SystemDefaultsQoS(QoS):
         super().__init__(reliability=Reliability.RELIABLE, durability=Durability.VOLATILE, depth=10)
 
 
+class ZenohTime:
+    def __init__(self, sec: int = 0, nanosec: int = 0) -> None:
+        self.sec = sec
+        self.nanosec = nanosec
+
+
+class ZenohClock:
+    def now(self) -> ZenohTime:
+        ns = time.time_ns()
+        sec = ns // 1000000000
+        nanosec = ns % 1000000000
+        return ZenohTime(sec, nanosec)
+
+
 class ZenohPublisher:
     def __init__(self, session: zenoh.Session, msg_type: Type, topic: str, qos: QoS) -> None:
         self.msg_type = msg_type
@@ -244,11 +258,25 @@ class ZenohNode:
 
     def __init__(self, node_name: str) -> None:
         self.node_name = node_name
+        self.node_clock = ZenohClock()
+        self.parameters = {}
         self.publishers = []
         self.subscriptions = []
         self.timers = []
         self.services = []
         self.clients = []
+
+    def get_clock(self) -> ZenohClock:
+        return self.node_clock
+
+    def now(self) -> ZenohTime:
+        return self.node_clock.now()
+
+    def z_declare_parameter(self, name: str, default_val: Any) -> None:
+        self.parameters[name] = default_val
+
+    def z_get_parameter(self, name: str, default_val: Any = None) -> Any:
+        return self.parameters.get(name, default_val)
 
     @classmethod
     def init(cls, config: Optional[ZenohConfig] = None) -> None:
@@ -276,6 +304,12 @@ class ZenohNode:
             else:
                 cls._session = zenoh.open(conf)
                 print("[Zenoh] Global session initialized (scouting for peers)")
+
+            # Declare ROS 2 node liveliness token
+            try:
+                cls._liveliness_token = cls._session.liveliness().declare_token("@ros2/python_node/liveliness")
+            except Exception:
+                pass
 
             cls._session_refcount = 1
 
