@@ -1,7 +1,6 @@
 import msgpack
 from typing import Any, List, Optional, cast
 from zenoh_ros.msg_interface.pre_defined_interface import z_geometry_msgs
-
 class z_RobotState:
     def __init__(self, name: str = "", position: z_geometry_msgs.z_Vector3 = z_geometry_msgs.z_Vector3(), velocity: z_geometry_msgs.z_Twist = z_geometry_msgs.z_Twist()) -> None:
         self.name = name
@@ -20,17 +19,17 @@ class z_RobotState:
         # Handle empty/invalid payload
         if not isinstance(data, dict):
             data = {}
-        return cls(str(data.get(b"name", data.get("name", ""))), z_geometry_msgs.Vector3(
+        return cls((lambda v: v.decode("utf-8") if isinstance(v, bytes) else str(v))(data.get(b"name", data.get("name", ""))), z_geometry_msgs.z_Vector3(
                 float(data.get(b"position", data.get("position", [0,0,0]))[0]),
                 float(data.get(b"position", data.get("position", [0,0,0]))[1]),
                 float(data.get(b"position", data.get("position", [0,0,0]))[2])
-            ), z_geometry_msgs.Twist(
-                linear=z_geometry_msgs.Vector3(
+            ), z_geometry_msgs.z_Twist(
+                linear=z_geometry_msgs.z_Vector3(
                     float(data.get(b"velocity", data.get("velocity", [[0,0,0],[0,0,0]]))[0][0]),
                     float(data.get(b"velocity", data.get("velocity", [[0,0,0],[0,0,0]]))[0][1]),
                     float(data.get(b"velocity", data.get("velocity", [[0,0,0],[0,0,0]]))[0][2])
                 ),
-                angular=z_geometry_msgs.Vector3(
+                angular=z_geometry_msgs.z_Vector3(
                     float(data.get(b"velocity", data.get("velocity", [[0,0,0],[0,0,0]]))[1][0]),
                     float(data.get(b"velocity", data.get("velocity", [[0,0,0],[0,0,0]]))[1][1]),
                     float(data.get(b"velocity", data.get("velocity", [[0,0,0],[0,0,0]]))[1][2])

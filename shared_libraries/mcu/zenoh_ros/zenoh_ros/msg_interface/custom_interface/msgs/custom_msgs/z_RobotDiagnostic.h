@@ -30,12 +30,12 @@ inline size_t serialize_msg<custom_msgs::z_RobotDiagnostic>(
   velocity_arr.add(msg.velocity.x);
   velocity_arr.add(msg.velocity.y);
   velocity_arr.add(msg.velocity.z);
-      uint8_t left_motor_buf[256];
+      static uint8_t left_motor_buf[512];
   size_t left_motor_len = serialize_msg(msg.left_motor, left_motor_buf, sizeof(left_motor_buf));
   JsonDocument left_motor_sub_doc;
   deserializeMsgPack(left_motor_sub_doc, left_motor_buf, left_motor_len);
   doc["left_motor"] = left_motor_sub_doc;
-      uint8_t right_motor_buf[256];
+      static uint8_t right_motor_buf[512];
   size_t right_motor_len = serialize_msg(msg.right_motor, right_motor_buf, sizeof(right_motor_buf));
   JsonDocument right_motor_sub_doc;
   deserializeMsgPack(right_motor_sub_doc, right_motor_buf, right_motor_len);
@@ -56,10 +56,10 @@ inline void deserialize_msg<custom_msgs::z_RobotDiagnostic>(
       msg.velocity.x = doc["velocity"][0].as<double>();
   msg.velocity.y = doc["velocity"][1].as<double>();
   msg.velocity.z = doc["velocity"][2].as<double>();
-      uint8_t left_motor_buf[256];
+      static uint8_t left_motor_buf[512];
   size_t left_motor_len = serializeMsgPack(doc["left_motor"], left_motor_buf, sizeof(left_motor_buf));
   deserialize_msg(left_motor_buf, left_motor_len, msg.left_motor);
-      uint8_t right_motor_buf[256];
+      static uint8_t right_motor_buf[512];
   size_t right_motor_len = serializeMsgPack(doc["right_motor"], right_motor_buf, sizeof(right_motor_buf));
   deserialize_msg(right_motor_buf, right_motor_len, msg.right_motor);
     msg.robot_name = doc["robot_name"].as<std::string>();

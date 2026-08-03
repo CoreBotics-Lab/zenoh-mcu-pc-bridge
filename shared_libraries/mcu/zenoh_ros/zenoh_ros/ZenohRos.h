@@ -448,7 +448,7 @@ public:
         xTaskCreatePinnedToCore(
             timerTask,
             "ZenohTimer",
-            4096,
+            16384,
             this,
             1,
             &task_handle,

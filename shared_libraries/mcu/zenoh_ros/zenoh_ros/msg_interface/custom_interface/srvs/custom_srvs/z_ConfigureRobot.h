@@ -23,7 +23,7 @@ template <>
 inline size_t serialize_msg<custom_srvs::z_ConfigureRobot::Request>(
     const custom_srvs::z_ConfigureRobot::Request& msg, uint8_t* buffer, size_t max_len) {
     JsonDocument doc;
-      uint8_t target_status_buf[256];
+      static uint8_t target_status_buf[512];
   size_t target_status_len = serialize_msg(msg.target_status, target_status_buf, sizeof(target_status_buf));
   JsonDocument target_status_sub_doc;
   deserializeMsgPack(target_status_sub_doc, target_status_buf, target_status_len);
@@ -38,7 +38,7 @@ inline void deserialize_msg<custom_srvs::z_ConfigureRobot::Request>(
     const uint8_t* buffer, size_t len, custom_srvs::z_ConfigureRobot::Request& msg) {
     JsonDocument doc;
     deserializeMsgPack(doc, buffer, len);
-      uint8_t target_status_buf[256];
+      static uint8_t target_status_buf[512];
   size_t target_status_len = serializeMsgPack(doc["target_status"], target_status_buf, sizeof(target_status_buf));
   deserialize_msg(target_status_buf, target_status_len, msg.target_status);
     msg.mode = doc["mode"].as<int32_t>();

@@ -1,6 +1,5 @@
 import msgpack
 from typing import Any, List, Optional, cast
-
 class z_MPU6050Data:
     def __init__(self, accel_x: float = 0.0, accel_y: float = 0.0, accel_z: float = 0.0, gyro_x: float = 0.0, gyro_y: float = 0.0, gyro_z: float = 0.0, temperature: float = 0.0) -> None:
         self.accel_x = accel_x

@@ -24,8 +24,7 @@ template <>
 inline std::vector<uint8_t> serialize_msg<custom_srvs::z_SetLEDColor::Request>(
     const custom_srvs::z_SetLEDColor::Request& msg) {
     nlohmann::json j;
-      std::vector<uint8_t> led_data_buf = serialize_msg(msg.led_data);
-  j["led_data"] = nlohmann::json::from_msgpack(led_data_buf);
+    j["led_data"] = nlohmann::json::from_msgpack(serialize_msg(msg.led_data));
     return nlohmann::json::to_msgpack(j);
 }
 
@@ -34,8 +33,8 @@ template <>
 inline void deserialize_msg<custom_srvs::z_SetLEDColor::Request>(
     const std::vector<uint8_t>& buffer, custom_srvs::z_SetLEDColor::Request& msg) {
     nlohmann::json j = nlohmann::json::from_msgpack(buffer);
-      std::vector<uint8_t> led_data_buf = nlohmann::json::to_msgpack(j["led_data"]);
-  deserialize_msg(led_data_buf, msg.led_data);
+      std::vector<uint8_t> led_data_bytes = nlohmann::json::to_msgpack(j["led_data"]);
+  deserialize_msg(led_data_bytes, msg.led_data);
 }
 
 // --- Service Response Serializer ---
@@ -56,6 +55,9 @@ inline void deserialize_msg<custom_srvs::z_SetLEDColor::Response>(
     msg.success = j["success"].get<bool>();
     msg.message = j["message"].get<std::string>();
 }
+
+// Convenience aliases for nested types (no extra #include needed in user code)
+using z_SetLED = custom_msgs::z_SetLED;
 
 using z_SetLEDColor = custom_srvs::z_SetLEDColor;
 

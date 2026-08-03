@@ -24,7 +24,7 @@ class z_RobotDiagnostic:
                 float(data.get(b"velocity", data.get("velocity", [0,0,0]))[0]),
                 float(data.get(b"velocity", data.get("velocity", [0,0,0]))[1]),
                 float(data.get(b"velocity", data.get("velocity", [0,0,0]))[2])
-            ), z_MotorStatus.deserialize(msgpack.packb((data.get(b"left_motor", data.get("left_motor", {})) or {}))), z_MotorStatus.deserialize(msgpack.packb((data.get(b"right_motor", data.get("right_motor", {})) or {}))), str(data.get(b"robot_name", data.get("robot_name", ""))))
+            ), z_MotorStatus.deserialize(msgpack.packb((data.get(b"left_motor", data.get("left_motor", {})) or {}))), z_MotorStatus.deserialize(msgpack.packb((data.get(b"right_motor", data.get("right_motor", {})) or {}))), (lambda v: v.decode("utf-8") if isinstance(v, bytes) else str(v))(data.get(b"robot_name", data.get("robot_name", ""))))
 
     def __repr__(self) -> str:
         return f"custom_msgs.z_RobotDiagnostic(header={self.header}, velocity={self.velocity}, left_motor={self.left_motor}, right_motor={self.right_motor}, robot_name={self.robot_name})"

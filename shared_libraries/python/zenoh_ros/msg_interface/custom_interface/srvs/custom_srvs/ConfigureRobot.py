@@ -33,7 +33,7 @@ class z_ConfigureRobot:
             data = msgpack.unpackb(payload)
             if not isinstance(data, dict):
                 data = {}
-            return cls(bool(data.get(b"success", data.get("success", False))), str(data.get(b"status_message", data.get("status_message", ""))))
+            return cls(bool(data.get(b"success", data.get("success", False))), (lambda v: v.decode("utf-8") if isinstance(v, bytes) else str(v))(data.get(b"status_message", data.get("status_message", ""))))
 
         def __repr__(self) -> str:
             return f"custom_srvs.z_ConfigureRobot.Response(success={self.success}, status_message={self.status_message})"

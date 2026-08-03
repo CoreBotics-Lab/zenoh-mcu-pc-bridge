@@ -1,4 +1,4 @@
 // Forwarding header — do not edit directly.
-// Actual implementation: zenoh_ros/msg_interface/custom_interface/custom_srvs/z_SetColor.h
+// Actual implementation: zenoh_ros/msg_interface/custom_interface/srvs/custom_srvs/z_SetColor.h
 #pragma once
-#include <zenoh_ros/msg_interface/custom_interface/custom_srvs/z_SetColor.h>
+#include <zenoh_ros/msg_interface/custom_interface/srvs/custom_srvs/z_SetColor.h>
