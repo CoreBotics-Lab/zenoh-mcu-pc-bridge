@@ -16,7 +16,7 @@ struct z_RobotState {
 
 // --- Topic Serialization Override ---
 template <>
-inline std::vector<uint8_t> serialize_msg_pc<custom_msgs::z_RobotState>(
+inline std::vector<uint8_t> serialize_msg<custom_msgs::z_RobotState>(
     const custom_msgs::z_RobotState& msg) {
     nlohmann::json j;
     j["name"] = msg.name;
@@ -30,7 +30,7 @@ inline std::vector<uint8_t> serialize_msg_pc<custom_msgs::z_RobotState>(
 
 // --- Topic Deserialization Override ---
 template <>
-inline void deserialize_msg_pc<custom_msgs::z_RobotState>(
+inline void deserialize_msg<custom_msgs::z_RobotState>(
     const std::vector<uint8_t>& buffer, custom_msgs::z_RobotState& msg) {
     nlohmann::json j = nlohmann::json::from_msgpack(buffer);
     msg.name = j["name"].get<std::string>();

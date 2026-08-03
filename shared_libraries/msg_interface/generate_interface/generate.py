@@ -266,15 +266,15 @@ _PRE_DEFINED_INCLUDE_PC = {
     'geometry_msgs':      'msg_interface/pre_defined_interface/z_geometry_msgs_pc.h',
     'builtin_interfaces': 'msg_interface/pre_defined_interface/z_builtin_interfaces.h',
     'std_msgs':           'msg_interface/pre_defined_interface/z_std_msgs.h',
-    'sensor_msgs':        'msg_interface/pre_defined_interface/z_sensor_msgs_pc.h',
-    'nav_msgs':           'msg_interface/pre_defined_interface/z_nav_msgs_pc.h',
+    'sensor_msgs':        'msg_interface/pre_defined_interface/z_sensor_msgs.h',
+    'nav_msgs':           'msg_interface/pre_defined_interface/z_nav_msgs.h',
 }
 
 def _field_pkg(f_type):
     """Return the top-level package name from a nested type, or None for primitives."""
     return f_type.split('/')[0] if '/' in f_type else None
 
-def get_cpp_includes(fields, is_pc=False, out_package=None):
+def get_cpp_includes(fields, is_mcu=True, out_package=None):
     """
     Return all #include directives needed for the nested types in 'fields'.
     - Pre-defined packages (geometry_msgs, builtin_interfaces, std_msgs) map to
@@ -283,7 +283,7 @@ def get_cpp_includes(fields, is_pc=False, out_package=None):
     """
     includes = []
     seen = set()
-    lookup = _PRE_DEFINED_INCLUDE_PC if is_pc else _PRE_DEFINED_INCLUDE_MCU
+    lookup = _PRE_DEFINED_INCLUDE_PC if not is_mcu else _PRE_DEFINED_INCLUDE_MCU
 
     for f_type, _ in fields:
         pkg = _field_pkg(f_type)
@@ -515,7 +515,7 @@ def generate_pc_cpp_field_serialization(f_type, f_name, json_var, msg_var):
 
     # Generic custom nested message type (PC C++)
     if '/' in f_type:
-        return f'{json_var}["{f_name}"] = nlohmann::json::from_msgpack(serialize_msg_pc({msg_var}.{f_name}));'
+        return f'{json_var}["{f_name}"] = nlohmann::json::from_msgpack(serialize_msg({msg_var}.{f_name}));'
 
     return f'// Unsupported nested type: {f_type}'
 
@@ -563,7 +563,7 @@ def generate_pc_cpp_field_deserialization(f_type, f_name, json_var, msg_var):
     # Generic custom nested message type (PC C++)
     if '/' in f_type:
         return (f'  std::vector<uint8_t> {f_name}_bytes = nlohmann::json::to_msgpack({json_var}["{f_name}"]);\n'
-                f'  deserialize_msg_pc({f_name}_bytes, {msg_var}.{f_name});')
+                f'  deserialize_msg({f_name}_bytes, {msg_var}.{f_name});')
 
     return f'// Unsupported nested type: {f_type}'
 
@@ -666,7 +666,7 @@ def generate_mcu_header(package, name, fields, is_srv=False, req_fields=None, re
     
     # Process includes
     all_fields = fields if not is_srv else (req_fields + res_fields)
-    includes = get_cpp_includes(all_fields, is_pc=False, out_package=package)
+    includes = get_cpp_includes(all_fields, is_mcu=True, out_package=package)
     include_str = '\n'.join(includes)
     if include_str:
         include_str += '\n'
@@ -782,7 +782,7 @@ def generate_pc_header(package, name, fields, is_srv=False, req_fields=None, res
     
     # Process includes
     all_fields = fields if not is_srv else (req_fields + res_fields)
-    includes = get_cpp_includes(all_fields, is_pc=True, out_package=package)
+    includes = get_cpp_includes(all_fields, is_mcu=False, out_package=package)
     include_str = '\n'.join(includes)
     if include_str:
         include_str += '\n'
@@ -805,7 +805,7 @@ namespace {package} {{
 
 // --- Topic Serialization Override ---
 template <>
-inline std::vector<uint8_t> serialize_msg_pc<{package}::{z_name}>(
+inline std::vector<uint8_t> serialize_msg<{package}::{z_name}>(
     const {package}::{z_name}& msg) {{
     nlohmann::json j;
 """
@@ -816,7 +816,7 @@ inline std::vector<uint8_t> serialize_msg_pc<{package}::{z_name}>(
 
 // --- Topic Deserialization Override ---
 template <>
-inline void deserialize_msg_pc<{package}::{z_name}>(
+inline void deserialize_msg<{package}::{z_name}>(
     const std::vector<uint8_t>& buffer, {package}::{z_name}& msg) {{
     nlohmann::json j = nlohmann::json::from_msgpack(buffer);
 """
@@ -840,7 +840,7 @@ inline void deserialize_msg_pc<{package}::{z_name}>(
 
 // --- Service Request Serializer ---
 template <>
-inline std::vector<uint8_t> serialize_msg_pc<{package}::{z_name}::Request>(
+inline std::vector<uint8_t> serialize_msg<{package}::{z_name}::Request>(
     const {package}::{z_name}::Request& msg) {{
     nlohmann::json j;
 """
@@ -851,7 +851,7 @@ inline std::vector<uint8_t> serialize_msg_pc<{package}::{z_name}::Request>(
 
 // --- Service Request Deserializer ---
 template <>
-inline void deserialize_msg_pc<{package}::{z_name}::Request>(
+inline void deserialize_msg<{package}::{z_name}::Request>(
     const std::vector<uint8_t>& buffer, {package}::{z_name}::Request& msg) {{
     nlohmann::json j = nlohmann::json::from_msgpack(buffer);
 """
@@ -861,7 +861,7 @@ inline void deserialize_msg_pc<{package}::{z_name}::Request>(
 
 // --- Service Response Serializer ---
 template <>
-inline std::vector<uint8_t> serialize_msg_pc<{package}::{z_name}::Response>(
+inline std::vector<uint8_t> serialize_msg<{package}::{z_name}::Response>(
     const {package}::{z_name}::Response& msg) {{
     nlohmann::json j;
 """
@@ -872,7 +872,7 @@ inline std::vector<uint8_t> serialize_msg_pc<{package}::{z_name}::Response>(
 
 // --- Service Response Deserializer ---
 template <>
-inline void deserialize_msg_pc<{package}::{z_name}::Response>(
+inline void deserialize_msg<{package}::{z_name}::Response>(
     const std::vector<uint8_t>& buffer, {package}::{z_name}::Response& msg) {{
     nlohmann::json j = nlohmann::json::from_msgpack(buffer);
 """

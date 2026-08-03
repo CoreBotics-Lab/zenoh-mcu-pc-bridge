@@ -1,5 +1,5 @@
-#ifndef Z_NAV_MSGS_PC_H
-#define Z_NAV_MSGS_PC_H
+#ifndef Z_NAV_MSGS_H
+#define Z_NAV_MSGS_H
 
 #include <nlohmann/json.hpp>
 #include <vector>
@@ -131,4 +131,4 @@ inline void deserialize_msg<z_nav_msgs::z_MapMetaData>(const uint8_t* buffer, si
     msg.resolution = doc["resolution"].as<float>(); msg.width = doc["width"].as<uint32_t>(); msg.height = doc["height"].as<uint32_t>();
 }
 
-#endif // Z_NAV_MSGS_PC_H
+#endif // Z_NAV_MSGS_H

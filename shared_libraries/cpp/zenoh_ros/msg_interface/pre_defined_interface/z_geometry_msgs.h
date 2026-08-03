@@ -6,10 +6,10 @@
 
 // Forward declarations of serialization templates
 template <typename T>
-std::vector<uint8_t> serialize_msg_pc(const T& msg);
+std::vector<uint8_t> serialize_msg(const T& msg);
 
 template <typename T>
-void deserialize_msg_pc(const std::vector<uint8_t>& buffer, T& msg);
+void deserialize_msg(const std::vector<uint8_t>& buffer, T& msg);
 
 namespace z_geometry_msgs {
 
@@ -63,25 +63,25 @@ namespace z_geometry_msgs {
 // --- Serialization Specializations ---
 
 template <>
-inline std::vector<uint8_t> serialize_msg_pc<z_geometry_msgs::z_Vector3>(const z_geometry_msgs::z_Vector3& msg) {
+inline std::vector<uint8_t> serialize_msg<z_geometry_msgs::z_Vector3>(const z_geometry_msgs::z_Vector3& msg) {
     nlohmann::json j = {msg.x, msg.y, msg.z};
     return nlohmann::json::to_msgpack(j);
 }
 
 template <>
-inline std::vector<uint8_t> serialize_msg_pc<z_geometry_msgs::z_Point>(const z_geometry_msgs::z_Point& msg) {
+inline std::vector<uint8_t> serialize_msg<z_geometry_msgs::z_Point>(const z_geometry_msgs::z_Point& msg) {
     nlohmann::json j = {msg.x, msg.y, msg.z};
     return nlohmann::json::to_msgpack(j);
 }
 
 template <>
-inline std::vector<uint8_t> serialize_msg_pc<z_geometry_msgs::z_Quaternion>(const z_geometry_msgs::z_Quaternion& msg) {
+inline std::vector<uint8_t> serialize_msg<z_geometry_msgs::z_Quaternion>(const z_geometry_msgs::z_Quaternion& msg) {
     nlohmann::json j = {msg.x, msg.y, msg.z, msg.w};
     return nlohmann::json::to_msgpack(j);
 }
 
 template <>
-inline std::vector<uint8_t> serialize_msg_pc<z_geometry_msgs::z_Pose>(const z_geometry_msgs::z_Pose& msg) {
+inline std::vector<uint8_t> serialize_msg<z_geometry_msgs::z_Pose>(const z_geometry_msgs::z_Pose& msg) {
     nlohmann::json j = {
         {msg.position.x, msg.position.y, msg.position.z},
         {msg.orientation.x, msg.orientation.y, msg.orientation.z, msg.orientation.w}
@@ -90,7 +90,7 @@ inline std::vector<uint8_t> serialize_msg_pc<z_geometry_msgs::z_Pose>(const z_ge
 }
 
 template <>
-inline std::vector<uint8_t> serialize_msg_pc<z_geometry_msgs::z_Twist>(const z_geometry_msgs::z_Twist& msg) {
+inline std::vector<uint8_t> serialize_msg<z_geometry_msgs::z_Twist>(const z_geometry_msgs::z_Twist& msg) {
     nlohmann::json j = {
         {msg.linear.x, msg.linear.y, msg.linear.z},
         {msg.angular.x, msg.angular.y, msg.angular.z}
@@ -99,7 +99,7 @@ inline std::vector<uint8_t> serialize_msg_pc<z_geometry_msgs::z_Twist>(const z_g
 }
 
 template <>
-inline std::vector<uint8_t> serialize_msg_pc<z_geometry_msgs::z_Wrench>(const z_geometry_msgs::z_Wrench& msg) {
+inline std::vector<uint8_t> serialize_msg<z_geometry_msgs::z_Wrench>(const z_geometry_msgs::z_Wrench& msg) {
     nlohmann::json j = {
         {msg.force.x, msg.force.y, msg.force.z},
         {msg.torque.x, msg.torque.y, msg.torque.z}
@@ -108,7 +108,7 @@ inline std::vector<uint8_t> serialize_msg_pc<z_geometry_msgs::z_Wrench>(const z_
 }
 
 template <>
-inline std::vector<uint8_t> serialize_msg_pc<z_geometry_msgs::z_Transform>(const z_geometry_msgs::z_Transform& msg) {
+inline std::vector<uint8_t> serialize_msg<z_geometry_msgs::z_Transform>(const z_geometry_msgs::z_Transform& msg) {
     nlohmann::json j = {
         {msg.translation.x, msg.translation.y, msg.translation.z},
         {msg.rotation.x, msg.rotation.y, msg.rotation.z, msg.rotation.w}
@@ -117,7 +117,7 @@ inline std::vector<uint8_t> serialize_msg_pc<z_geometry_msgs::z_Transform>(const
 }
 
 template <>
-inline std::vector<uint8_t> serialize_msg_pc<z_geometry_msgs::z_Pose2D>(const z_geometry_msgs::z_Pose2D& msg) {
+inline std::vector<uint8_t> serialize_msg<z_geometry_msgs::z_Pose2D>(const z_geometry_msgs::z_Pose2D& msg) {
     nlohmann::json j = {msg.x, msg.y, msg.theta};
     return nlohmann::json::to_msgpack(j);
 }
@@ -125,7 +125,7 @@ inline std::vector<uint8_t> serialize_msg_pc<z_geometry_msgs::z_Pose2D>(const z_
 // --- Deserialization Specializations ---
 
 template <>
-inline void deserialize_msg_pc<z_geometry_msgs::z_Vector3>(const std::vector<uint8_t>& buffer, z_geometry_msgs::z_Vector3& msg) {
+inline void deserialize_msg<z_geometry_msgs::z_Vector3>(const std::vector<uint8_t>& buffer, z_geometry_msgs::z_Vector3& msg) {
     nlohmann::json j = nlohmann::json::from_msgpack(buffer);
     msg.x = j[0].get<double>();
     msg.y = j[1].get<double>();
@@ -133,7 +133,7 @@ inline void deserialize_msg_pc<z_geometry_msgs::z_Vector3>(const std::vector<uin
 }
 
 template <>
-inline void deserialize_msg_pc<z_geometry_msgs::z_Point>(const std::vector<uint8_t>& buffer, z_geometry_msgs::z_Point& msg) {
+inline void deserialize_msg<z_geometry_msgs::z_Point>(const std::vector<uint8_t>& buffer, z_geometry_msgs::z_Point& msg) {
     nlohmann::json j = nlohmann::json::from_msgpack(buffer);
     msg.x = j[0].get<double>();
     msg.y = j[1].get<double>();
@@ -141,7 +141,7 @@ inline void deserialize_msg_pc<z_geometry_msgs::z_Point>(const std::vector<uint8
 }
 
 template <>
-inline void deserialize_msg_pc<z_geometry_msgs::z_Quaternion>(const std::vector<uint8_t>& buffer, z_geometry_msgs::z_Quaternion& msg) {
+inline void deserialize_msg<z_geometry_msgs::z_Quaternion>(const std::vector<uint8_t>& buffer, z_geometry_msgs::z_Quaternion& msg) {
     nlohmann::json j = nlohmann::json::from_msgpack(buffer);
     msg.x = j[0].get<double>();
     msg.y = j[1].get<double>();
@@ -150,7 +150,7 @@ inline void deserialize_msg_pc<z_geometry_msgs::z_Quaternion>(const std::vector<
 }
 
 template <>
-inline void deserialize_msg_pc<z_geometry_msgs::z_Pose>(const std::vector<uint8_t>& buffer, z_geometry_msgs::z_Pose& msg) {
+inline void deserialize_msg<z_geometry_msgs::z_Pose>(const std::vector<uint8_t>& buffer, z_geometry_msgs::z_Pose& msg) {
     nlohmann::json j = nlohmann::json::from_msgpack(buffer);
     msg.position.x = j[0][0].get<double>();
     msg.position.y = j[0][1].get<double>();
@@ -163,7 +163,7 @@ inline void deserialize_msg_pc<z_geometry_msgs::z_Pose>(const std::vector<uint8_
 }
 
 template <>
-inline void deserialize_msg_pc<z_geometry_msgs::z_Twist>(const std::vector<uint8_t>& buffer, z_geometry_msgs::z_Twist& msg) {
+inline void deserialize_msg<z_geometry_msgs::z_Twist>(const std::vector<uint8_t>& buffer, z_geometry_msgs::z_Twist& msg) {
     nlohmann::json j = nlohmann::json::from_msgpack(buffer);
     msg.linear.x = j[0][0].get<double>();
     msg.linear.y = j[0][1].get<double>();
@@ -175,7 +175,7 @@ inline void deserialize_msg_pc<z_geometry_msgs::z_Twist>(const std::vector<uint8
 }
 
 template <>
-inline void deserialize_msg_pc<z_geometry_msgs::z_Wrench>(const std::vector<uint8_t>& buffer, z_geometry_msgs::z_Wrench& msg) {
+inline void deserialize_msg<z_geometry_msgs::z_Wrench>(const std::vector<uint8_t>& buffer, z_geometry_msgs::z_Wrench& msg) {
     nlohmann::json j = nlohmann::json::from_msgpack(buffer);
     msg.force.x = j[0][0].get<double>();
     msg.force.y = j[0][1].get<double>();
@@ -187,7 +187,7 @@ inline void deserialize_msg_pc<z_geometry_msgs::z_Wrench>(const std::vector<uint
 }
 
 template <>
-inline void deserialize_msg_pc<z_geometry_msgs::z_Transform>(const std::vector<uint8_t>& buffer, z_geometry_msgs::z_Transform& msg) {
+inline void deserialize_msg<z_geometry_msgs::z_Transform>(const std::vector<uint8_t>& buffer, z_geometry_msgs::z_Transform& msg) {
     nlohmann::json j = nlohmann::json::from_msgpack(buffer);
     msg.translation.x = j[0][0].get<double>();
     msg.translation.y = j[0][1].get<double>();
@@ -200,7 +200,7 @@ inline void deserialize_msg_pc<z_geometry_msgs::z_Transform>(const std::vector<u
 }
 
 template <>
-inline void deserialize_msg_pc<z_geometry_msgs::z_Pose2D>(const std::vector<uint8_t>& buffer, z_geometry_msgs::z_Pose2D& msg) {
+inline void deserialize_msg<z_geometry_msgs::z_Pose2D>(const std::vector<uint8_t>& buffer, z_geometry_msgs::z_Pose2D& msg) {
     nlohmann::json j = nlohmann::json::from_msgpack(buffer);
     msg.x = j[0].get<double>();
     msg.y = j[1].get<double>();
@@ -236,33 +236,33 @@ namespace z_geometry_msgs {
 } // namespace z_geometry_msgs (extension)
 
 // Serialization for new stamped types (PC C++)
-template <> inline std::vector<uint8_t> serialize_msg_pc<z_geometry_msgs::z_PoseStamped>(const z_geometry_msgs::z_PoseStamped& msg) {
+template <> inline std::vector<uint8_t> serialize_msg<z_geometry_msgs::z_PoseStamped>(const z_geometry_msgs::z_PoseStamped& msg) {
     nlohmann::json j;
     j["header"] = {{"stamp", {{"sec", msg.stamp.sec}, {"nanosec", msg.stamp.nanosec}}}, {"frame_id", msg.frame_id}};
     j["pose"] = {{"position", {{"x", msg.pose.position.x}, {"y", msg.pose.position.y}, {"z", msg.pose.position.z}}},
                  {"orientation", {{"x", msg.pose.orientation.x}, {"y", msg.pose.orientation.y}, {"z", msg.pose.orientation.z}, {"w", msg.pose.orientation.w}}}};
     auto b = nlohmann::json::to_msgpack(j); return {b.begin(), b.end()};
 }
-template <> inline void deserialize_msg_pc<z_geometry_msgs::z_PoseStamped>(const std::vector<uint8_t>& buf, z_geometry_msgs::z_PoseStamped& msg) {
+template <> inline void deserialize_msg<z_geometry_msgs::z_PoseStamped>(const std::vector<uint8_t>& buf, z_geometry_msgs::z_PoseStamped& msg) {
     auto j = nlohmann::json::from_msgpack(buf);
     msg.stamp.sec = j["header"]["stamp"]["sec"]; msg.stamp.nanosec = j["header"]["stamp"]["nanosec"]; msg.frame_id = j["header"]["frame_id"].get<std::string>();
     msg.pose.position.x = j["pose"]["position"]["x"]; msg.pose.position.y = j["pose"]["position"]["y"]; msg.pose.position.z = j["pose"]["position"]["z"];
     msg.pose.orientation.x = j["pose"]["orientation"]["x"]; msg.pose.orientation.y = j["pose"]["orientation"]["y"]; msg.pose.orientation.z = j["pose"]["orientation"]["z"]; msg.pose.orientation.w = j["pose"]["orientation"]["w"];
 }
-template <> inline std::vector<uint8_t> serialize_msg_pc<z_geometry_msgs::z_TwistStamped>(const z_geometry_msgs::z_TwistStamped& msg) {
+template <> inline std::vector<uint8_t> serialize_msg<z_geometry_msgs::z_TwistStamped>(const z_geometry_msgs::z_TwistStamped& msg) {
     nlohmann::json j;
     j["header"] = {{"stamp", {{"sec", msg.stamp.sec}, {"nanosec", msg.stamp.nanosec}}}, {"frame_id", msg.frame_id}};
     j["twist"] = {{"linear", {{"x", msg.twist.linear.x}, {"y", msg.twist.linear.y}, {"z", msg.twist.linear.z}}},
                   {"angular", {{"x", msg.twist.angular.x}, {"y", msg.twist.angular.y}, {"z", msg.twist.angular.z}}}};
     auto b = nlohmann::json::to_msgpack(j); return {b.begin(), b.end()};
 }
-template <> inline void deserialize_msg_pc<z_geometry_msgs::z_TwistStamped>(const std::vector<uint8_t>& buf, z_geometry_msgs::z_TwistStamped& msg) {
+template <> inline void deserialize_msg<z_geometry_msgs::z_TwistStamped>(const std::vector<uint8_t>& buf, z_geometry_msgs::z_TwistStamped& msg) {
     auto j = nlohmann::json::from_msgpack(buf);
     msg.stamp.sec = j["header"]["stamp"]["sec"]; msg.stamp.nanosec = j["header"]["stamp"]["nanosec"]; msg.frame_id = j["header"]["frame_id"].get<std::string>();
     msg.twist.linear.x = j["twist"]["linear"]["x"]; msg.twist.linear.y = j["twist"]["linear"]["y"]; msg.twist.linear.z = j["twist"]["linear"]["z"];
     msg.twist.angular.x = j["twist"]["angular"]["x"]; msg.twist.angular.y = j["twist"]["angular"]["y"]; msg.twist.angular.z = j["twist"]["angular"]["z"];
 }
-template <> inline std::vector<uint8_t> serialize_msg_pc<z_geometry_msgs::z_TransformStamped>(const z_geometry_msgs::z_TransformStamped& msg) {
+template <> inline std::vector<uint8_t> serialize_msg<z_geometry_msgs::z_TransformStamped>(const z_geometry_msgs::z_TransformStamped& msg) {
     nlohmann::json j;
     j["header"] = {{"stamp", {{"sec", msg.stamp.sec}, {"nanosec", msg.stamp.nanosec}}}, {"frame_id", msg.frame_id}};
     j["child_frame_id"] = msg.child_frame_id;
@@ -270,7 +270,7 @@ template <> inline std::vector<uint8_t> serialize_msg_pc<z_geometry_msgs::z_Tran
                       {"rotation", {{"x", msg.transform.rotation.x}, {"y", msg.transform.rotation.y}, {"z", msg.transform.rotation.z}, {"w", msg.transform.rotation.w}}}};
     auto b = nlohmann::json::to_msgpack(j); return {b.begin(), b.end()};
 }
-template <> inline void deserialize_msg_pc<z_geometry_msgs::z_TransformStamped>(const std::vector<uint8_t>& buf, z_geometry_msgs::z_TransformStamped& msg) {
+template <> inline void deserialize_msg<z_geometry_msgs::z_TransformStamped>(const std::vector<uint8_t>& buf, z_geometry_msgs::z_TransformStamped& msg) {
     auto j = nlohmann::json::from_msgpack(buf);
     msg.stamp.sec = j["header"]["stamp"]["sec"]; msg.stamp.nanosec = j["header"]["stamp"]["nanosec"]; msg.frame_id = j["header"]["frame_id"].get<std::string>();
     msg.child_frame_id = j["child_frame_id"].get<std::string>();

@@ -60,10 +60,10 @@ struct SystemDefaultsQoS : public QoS {
 
 
 template <typename T>
-std::vector<uint8_t> serialize_msg_pc(const T& msg);
+std::vector<uint8_t> serialize_msg(const T& msg);
 
 template <typename T>
-void deserialize_msg_pc(const std::vector<uint8_t>& buffer, T& msg);
+void deserialize_msg(const std::vector<uint8_t>& buffer, T& msg);
 
 // --- ROS 2 Time / Clock Abstraction for PC ---
 struct ZenohTime {
@@ -151,7 +151,7 @@ public:
     }
 
     bool publish(const MsgType& msg) {
-        std::vector<uint8_t> buffer = serialize_msg_pc<MsgType>(msg);
+        std::vector<uint8_t> buffer = serialize_msg<MsgType>(msg);
 
         z_publisher_put_options_t options;
         z_publisher_put_options_default(&options);
@@ -207,7 +207,7 @@ public:
                     std::vector<uint8_t> buffer(data, data + len);
 
                     MsgType msg;
-                    deserialize_msg_pc<MsgType>(buffer, msg);
+                    deserialize_msg<MsgType>(buffer, msg);
                     self->callback(msg);
 
                     z_slice_drop(z_slice_move(&slice));
@@ -276,13 +276,13 @@ public:
 
                     typename SrvType::Request req;
                     if (!buffer.empty()) {
-                        deserialize_msg_pc<typename SrvType::Request>(buffer, req);
+                        deserialize_msg<typename SrvType::Request>(buffer, req);
                     }
 
                     typename SrvType::Response res;
                     self->callback(req, res);
 
-                    std::vector<uint8_t> reply_buf = serialize_msg_pc<typename SrvType::Response>(res);
+                    std::vector<uint8_t> reply_buf = serialize_msg<typename SrvType::Response>(res);
 
                     z_query_reply_options_t options;
                     z_query_reply_options_default(&options);
@@ -345,7 +345,7 @@ public:
             return false;
         }
 
-        std::vector<uint8_t> req_buf = serialize_msg_pc<typename SrvType::Request>(req);
+        std::vector<uint8_t> req_buf = serialize_msg<typename SrvType::Request>(req);
 
         z_view_keyexpr_t keyexpr;
         z_view_keyexpr_from_str(&keyexpr, service_name);
@@ -396,7 +396,7 @@ public:
         }
 
         if (ctx.received && !ctx.reply_data.empty()) {
-            deserialize_msg_pc<typename SrvType::Response>(ctx.reply_data, res);
+            deserialize_msg<typename SrvType::Response>(ctx.reply_data, res);
             return true;
         }
 

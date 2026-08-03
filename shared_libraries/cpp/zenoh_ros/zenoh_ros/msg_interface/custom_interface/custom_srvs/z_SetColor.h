@@ -22,7 +22,7 @@ struct z_SetColor {
 
 // --- Service Request Serializer ---
 template <>
-inline std::vector<uint8_t> serialize_msg_pc<custom_srvs::z_SetColor::Request>(
+inline std::vector<uint8_t> serialize_msg<custom_srvs::z_SetColor::Request>(
     const custom_srvs::z_SetColor::Request& msg) {
     nlohmann::json j;
     j["r"] = msg.r;
@@ -33,7 +33,7 @@ inline std::vector<uint8_t> serialize_msg_pc<custom_srvs::z_SetColor::Request>(
 
 // --- Service Request Deserializer ---
 template <>
-inline void deserialize_msg_pc<custom_srvs::z_SetColor::Request>(
+inline void deserialize_msg<custom_srvs::z_SetColor::Request>(
     const std::vector<uint8_t>& buffer, custom_srvs::z_SetColor::Request& msg) {
     nlohmann::json j = nlohmann::json::from_msgpack(buffer);
     msg.r = j["r"].get<int32_t>();
@@ -43,7 +43,7 @@ inline void deserialize_msg_pc<custom_srvs::z_SetColor::Request>(
 
 // --- Service Response Serializer ---
 template <>
-inline std::vector<uint8_t> serialize_msg_pc<custom_srvs::z_SetColor::Response>(
+inline std::vector<uint8_t> serialize_msg<custom_srvs::z_SetColor::Response>(
     const custom_srvs::z_SetColor::Response& msg) {
     nlohmann::json j;
     j["success"] = msg.success;
@@ -53,7 +53,7 @@ inline std::vector<uint8_t> serialize_msg_pc<custom_srvs::z_SetColor::Response>(
 
 // --- Service Response Deserializer ---
 template <>
-inline void deserialize_msg_pc<custom_srvs::z_SetColor::Response>(
+inline void deserialize_msg<custom_srvs::z_SetColor::Response>(
     const std::vector<uint8_t>& buffer, custom_srvs::z_SetColor::Response& msg) {
     nlohmann::json j = nlohmann::json::from_msgpack(buffer);
     msg.success = j["success"].get<bool>();

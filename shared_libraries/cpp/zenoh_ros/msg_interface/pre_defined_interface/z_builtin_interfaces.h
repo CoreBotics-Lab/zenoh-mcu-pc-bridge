@@ -7,10 +7,10 @@
 
 // Forward declarations of serialization templates
 template <typename T>
-std::vector<uint8_t> serialize_msg_pc(const T& msg);
+std::vector<uint8_t> serialize_msg(const T& msg);
 
 template <typename T>
-void deserialize_msg_pc(const std::vector<uint8_t>& buffer, T& msg);
+void deserialize_msg(const std::vector<uint8_t>& buffer, T& msg);
 
 // =============================================================================
 // builtin_interfaces — PC C++ (nlohmann/json + MessagePack)
@@ -46,7 +46,7 @@ namespace builtin_interfaces {
 
 // --- Duration Serialization ---
 template <>
-inline std::vector<uint8_t> serialize_msg_pc<builtin_interfaces::z_Duration>(
+inline std::vector<uint8_t> serialize_msg<builtin_interfaces::z_Duration>(
     const builtin_interfaces::z_Duration& msg) {
     nlohmann::json j;
     j["sec"]     = msg.sec;
@@ -54,7 +54,7 @@ inline std::vector<uint8_t> serialize_msg_pc<builtin_interfaces::z_Duration>(
     return nlohmann::json::to_msgpack(j);
 }
 template <>
-inline void deserialize_msg_pc<builtin_interfaces::z_Duration>(
+inline void deserialize_msg<builtin_interfaces::z_Duration>(
     const std::vector<uint8_t>& buffer, builtin_interfaces::z_Duration& msg) {
     nlohmann::json j = nlohmann::json::from_msgpack(buffer);
     msg.sec     = j["sec"].get<int32_t>();
@@ -63,7 +63,7 @@ inline void deserialize_msg_pc<builtin_interfaces::z_Duration>(
 
 // --- Time Serialization ---
 template <>
-inline std::vector<uint8_t> serialize_msg_pc<builtin_interfaces::z_Time>(
+inline std::vector<uint8_t> serialize_msg<builtin_interfaces::z_Time>(
     const builtin_interfaces::z_Time& msg) {
     nlohmann::json j;
     j["sec"]     = msg.sec;
@@ -71,7 +71,7 @@ inline std::vector<uint8_t> serialize_msg_pc<builtin_interfaces::z_Time>(
     return nlohmann::json::to_msgpack(j);
 }
 template <>
-inline void deserialize_msg_pc<builtin_interfaces::z_Time>(
+inline void deserialize_msg<builtin_interfaces::z_Time>(
     const std::vector<uint8_t>& buffer, builtin_interfaces::z_Time& msg) {
     nlohmann::json j = nlohmann::json::from_msgpack(buffer);
     msg.sec     = j["sec"].get<int32_t>();

@@ -8,10 +8,10 @@
 
 // Forward declarations of serialization templates
 template <typename T>
-std::vector<uint8_t> serialize_msg_pc(const T& msg);
+std::vector<uint8_t> serialize_msg(const T& msg);
 
 template <typename T>
-void deserialize_msg_pc(const std::vector<uint8_t>& buffer, T& msg);
+void deserialize_msg(const std::vector<uint8_t>& buffer, T& msg);
 
 // --- Helper macro to define primitive message types and their serialization traits ---
 #define DEFINE_Z_STD_MSG_PRIMITIVE_PC(TypeName, Type) \
@@ -21,13 +21,13 @@ void deserialize_msg_pc(const std::vector<uint8_t>& buffer, T& msg);
         }; \
     } \
     template <> \
-    inline std::vector<uint8_t> serialize_msg_pc<z_std_msgs::TypeName>(const z_std_msgs::TypeName& msg) { \
+    inline std::vector<uint8_t> serialize_msg<z_std_msgs::TypeName>(const z_std_msgs::TypeName& msg) { \
         nlohmann::json j = nlohmann::json::array(); \
         j.push_back(msg.data); \
         return nlohmann::json::to_msgpack(j); \
     } \
     template <> \
-    inline void deserialize_msg_pc<z_std_msgs::TypeName>(const std::vector<uint8_t>& buffer, z_std_msgs::TypeName& msg) { \
+    inline void deserialize_msg<z_std_msgs::TypeName>(const std::vector<uint8_t>& buffer, z_std_msgs::TypeName& msg) { \
         nlohmann::json j = nlohmann::json::from_msgpack(buffer); \
         msg.data = j[0].get<Type>(); \
     }
@@ -40,12 +40,12 @@ void deserialize_msg_pc(const std::vector<uint8_t>& buffer, T& msg);
         }; \
     } \
     template <> \
-    inline std::vector<uint8_t> serialize_msg_pc<z_std_msgs::TypeName>(const z_std_msgs::TypeName& msg) { \
+    inline std::vector<uint8_t> serialize_msg<z_std_msgs::TypeName>(const z_std_msgs::TypeName& msg) { \
         nlohmann::json j = msg.data; \
         return nlohmann::json::to_msgpack(j); \
     } \
     template <> \
-    inline void deserialize_msg_pc<z_std_msgs::TypeName>(const std::vector<uint8_t>& buffer, z_std_msgs::TypeName& msg) { \
+    inline void deserialize_msg<z_std_msgs::TypeName>(const std::vector<uint8_t>& buffer, z_std_msgs::TypeName& msg) { \
         nlohmann::json j = nlohmann::json::from_msgpack(buffer); \
         msg.data = j.get<std::vector<Type>>(); \
     }
@@ -89,19 +89,19 @@ namespace z_std_msgs {
     };
 }
 template <>
-inline std::vector<uint8_t> serialize_msg_pc<z_std_msgs::z_String>(const z_std_msgs::z_String& msg) {
+inline std::vector<uint8_t> serialize_msg<z_std_msgs::z_String>(const z_std_msgs::z_String& msg) {
     nlohmann::json j = nlohmann::json::array();
     j.push_back(msg.data);
     return nlohmann::json::to_msgpack(j);
 }
 template <>
-inline void deserialize_msg_pc<z_std_msgs::z_String>(const std::vector<uint8_t>& buffer, z_std_msgs::z_String& msg) {
+inline void deserialize_msg<z_std_msgs::z_String>(const std::vector<uint8_t>& buffer, z_std_msgs::z_String& msg) {
     nlohmann::json j = nlohmann::json::from_msgpack(buffer);
     msg.data = j[0].get<std::string>();
 }
 
 template <>
-inline std::vector<uint8_t> serialize_msg_pc<z_std_msgs::z_Header>(const z_std_msgs::z_Header& msg) {
+inline std::vector<uint8_t> serialize_msg<z_std_msgs::z_Header>(const z_std_msgs::z_Header& msg) {
     nlohmann::json j;
     j["stamp"]["sec"] = msg.stamp.sec;
     j["stamp"]["nanosec"] = msg.stamp.nanosec;
@@ -109,7 +109,7 @@ inline std::vector<uint8_t> serialize_msg_pc<z_std_msgs::z_Header>(const z_std_m
     return nlohmann::json::to_msgpack(j);
 }
 template <>
-inline void deserialize_msg_pc<z_std_msgs::z_Header>(const std::vector<uint8_t>& buffer, z_std_msgs::z_Header& msg) {
+inline void deserialize_msg<z_std_msgs::z_Header>(const std::vector<uint8_t>& buffer, z_std_msgs::z_Header& msg) {
     nlohmann::json j = nlohmann::json::from_msgpack(buffer);
     msg.stamp.sec = j["stamp"]["sec"].get<int32_t>();
     msg.stamp.nanosec = j["stamp"]["nanosec"].get<uint32_t>();
@@ -121,12 +121,12 @@ namespace z_std_msgs {
     struct z_Empty {};
 }
 template <>
-inline std::vector<uint8_t> serialize_msg_pc<z_std_msgs::z_Empty>(const z_std_msgs::z_Empty& msg) {
+inline std::vector<uint8_t> serialize_msg<z_std_msgs::z_Empty>(const z_std_msgs::z_Empty& msg) {
     nlohmann::json j = nlohmann::json::array();
     return nlohmann::json::to_msgpack(j);
 }
 template <>
-inline void deserialize_msg_pc<z_std_msgs::z_Empty>(const std::vector<uint8_t>& buffer, z_std_msgs::z_Empty& msg) {
+inline void deserialize_msg<z_std_msgs::z_Empty>(const std::vector<uint8_t>& buffer, z_std_msgs::z_Empty& msg) {
     (void)buffer; (void)msg;
 }
 
@@ -137,21 +137,21 @@ namespace z_std_msgs {
     };
 }
 template <>
-inline std::vector<uint8_t> serialize_msg_pc<z_std_msgs::z_Raw>(const z_std_msgs::z_Raw& msg) {
+inline std::vector<uint8_t> serialize_msg<z_std_msgs::z_Raw>(const z_std_msgs::z_Raw& msg) {
     return msg.data;
 }
 template <>
-inline void deserialize_msg_pc<z_std_msgs::z_Raw>(const std::vector<uint8_t>& buffer, z_std_msgs::z_Raw& msg) {
+inline void deserialize_msg<z_std_msgs::z_Raw>(const std::vector<uint8_t>& buffer, z_std_msgs::z_Raw& msg) {
     msg.data = buffer;
 }
 
 // --- Specializations for nlohmann::json ---
 template <>
-inline std::vector<uint8_t> serialize_msg_pc<nlohmann::json>(const nlohmann::json& msg) {
+inline std::vector<uint8_t> serialize_msg<nlohmann::json>(const nlohmann::json& msg) {
     return nlohmann::json::to_msgpack(msg);
 }
 template <>
-inline void deserialize_msg_pc<nlohmann::json>(const std::vector<uint8_t>& buffer, nlohmann::json& msg) {
+inline void deserialize_msg<nlohmann::json>(const std::vector<uint8_t>& buffer, nlohmann::json& msg) {
     msg = nlohmann::json::from_msgpack(buffer);
 }
 

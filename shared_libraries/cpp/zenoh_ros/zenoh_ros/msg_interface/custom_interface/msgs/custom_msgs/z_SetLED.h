@@ -17,7 +17,7 @@ struct z_SetLED {
 
 // --- Topic Serialization Override ---
 template <>
-inline std::vector<uint8_t> serialize_msg_pc<custom_msgs::z_SetLED>(
+inline std::vector<uint8_t> serialize_msg<custom_msgs::z_SetLED>(
     const custom_msgs::z_SetLED& msg) {
     nlohmann::json j;
     j["r"] = msg.r;
@@ -30,7 +30,7 @@ inline std::vector<uint8_t> serialize_msg_pc<custom_msgs::z_SetLED>(
 
 // --- Topic Deserialization Override ---
 template <>
-inline void deserialize_msg_pc<custom_msgs::z_SetLED>(
+inline void deserialize_msg<custom_msgs::z_SetLED>(
     const std::vector<uint8_t>& buffer, custom_msgs::z_SetLED& msg) {
     nlohmann::json j = nlohmann::json::from_msgpack(buffer);
     msg.r = j["r"].get<uint8_t>();

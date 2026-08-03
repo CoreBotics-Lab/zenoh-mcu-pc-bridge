@@ -21,26 +21,26 @@ struct z_SetLEDColor {
 
 // --- Service Request Serializer ---
 template <>
-inline std::vector<uint8_t> serialize_msg_pc<custom_srvs::z_SetLEDColor::Request>(
+inline std::vector<uint8_t> serialize_msg<custom_srvs::z_SetLEDColor::Request>(
     const custom_srvs::z_SetLEDColor::Request& msg) {
     nlohmann::json j;
-      std::vector<uint8_t> led_data_buf = serialize_msg_pc(msg.led_data);
+      std::vector<uint8_t> led_data_buf = serialize_msg(msg.led_data);
   j["led_data"] = nlohmann::json::from_msgpack(led_data_buf);
     return nlohmann::json::to_msgpack(j);
 }
 
 // --- Service Request Deserializer ---
 template <>
-inline void deserialize_msg_pc<custom_srvs::z_SetLEDColor::Request>(
+inline void deserialize_msg<custom_srvs::z_SetLEDColor::Request>(
     const std::vector<uint8_t>& buffer, custom_srvs::z_SetLEDColor::Request& msg) {
     nlohmann::json j = nlohmann::json::from_msgpack(buffer);
       std::vector<uint8_t> led_data_buf = nlohmann::json::to_msgpack(j["led_data"]);
-  deserialize_msg_pc(led_data_buf, msg.led_data);
+  deserialize_msg(led_data_buf, msg.led_data);
 }
 
 // --- Service Response Serializer ---
 template <>
-inline std::vector<uint8_t> serialize_msg_pc<custom_srvs::z_SetLEDColor::Response>(
+inline std::vector<uint8_t> serialize_msg<custom_srvs::z_SetLEDColor::Response>(
     const custom_srvs::z_SetLEDColor::Response& msg) {
     nlohmann::json j;
     j["success"] = msg.success;
@@ -50,7 +50,7 @@ inline std::vector<uint8_t> serialize_msg_pc<custom_srvs::z_SetLEDColor::Respons
 
 // --- Service Response Deserializer ---
 template <>
-inline void deserialize_msg_pc<custom_srvs::z_SetLEDColor::Response>(
+inline void deserialize_msg<custom_srvs::z_SetLEDColor::Response>(
     const std::vector<uint8_t>& buffer, custom_srvs::z_SetLEDColor::Response& msg) {
     nlohmann::json j = nlohmann::json::from_msgpack(buffer);
     msg.success = j["success"].get<bool>();

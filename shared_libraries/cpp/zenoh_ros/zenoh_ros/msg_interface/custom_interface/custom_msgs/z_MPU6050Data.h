@@ -19,7 +19,7 @@ struct z_MPU6050Data {
 
 // --- Topic Serialization Override ---
 template <>
-inline std::vector<uint8_t> serialize_msg_pc<custom_msgs::z_MPU6050Data>(
+inline std::vector<uint8_t> serialize_msg<custom_msgs::z_MPU6050Data>(
     const custom_msgs::z_MPU6050Data& msg) {
     nlohmann::json j;
     j["accel_x"] = msg.accel_x;
@@ -34,7 +34,7 @@ inline std::vector<uint8_t> serialize_msg_pc<custom_msgs::z_MPU6050Data>(
 
 // --- Topic Deserialization Override ---
 template <>
-inline void deserialize_msg_pc<custom_msgs::z_MPU6050Data>(
+inline void deserialize_msg<custom_msgs::z_MPU6050Data>(
     const std::vector<uint8_t>& buffer, custom_msgs::z_MPU6050Data& msg) {
     nlohmann::json j = nlohmann::json::from_msgpack(buffer);
     msg.accel_x = j["accel_x"].get<float>();

@@ -1,5 +1,5 @@
-#ifndef Z_SENSOR_MSGS_PC_H
-#define Z_SENSOR_MSGS_PC_H
+#ifndef Z_SENSOR_MSGS_H
+#define Z_SENSOR_MSGS_H
 
 #include <nlohmann/json.hpp>
 #include <vector>
@@ -10,10 +10,10 @@
 
 // Forward declarations
 template <typename T>
-std::vector<uint8_t> serialize_msg_pc(const T& msg);
+std::vector<uint8_t> serialize_msg(const T& msg);
 
 template <typename T>
-void deserialize_msg_pc(const std::vector<uint8_t>& buffer, T& msg);
+void deserialize_msg(const std::vector<uint8_t>& buffer, T& msg);
 
 namespace z_sensor_msgs {
 
@@ -73,7 +73,7 @@ namespace z_sensor_msgs {
 // --- Serialization Specializations ---
 
 template <>
-inline std::vector<uint8_t> serialize_msg_pc<z_sensor_msgs::z_Imu>(const z_sensor_msgs::z_Imu& msg) {
+inline std::vector<uint8_t> serialize_msg<z_sensor_msgs::z_Imu>(const z_sensor_msgs::z_Imu& msg) {
     nlohmann::json j;
     j["header"] = {{"stamp", {{"sec", msg.header.stamp.sec}, {"nanosec", msg.header.stamp.nanosec}}}, {"frame_id", msg.header.frame_id}};
     j["orientation"] = {{"x", msg.orientation.x}, {"y", msg.orientation.y}, {"z", msg.orientation.z}, {"w", msg.orientation.w}};
@@ -83,7 +83,7 @@ inline std::vector<uint8_t> serialize_msg_pc<z_sensor_msgs::z_Imu>(const z_senso
 }
 
 template <>
-inline void deserialize_msg_pc<z_sensor_msgs::z_Imu>(const std::vector<uint8_t>& buffer, z_sensor_msgs::z_Imu& msg) {
+inline void deserialize_msg<z_sensor_msgs::z_Imu>(const std::vector<uint8_t>& buffer, z_sensor_msgs::z_Imu& msg) {
     nlohmann::json j = nlohmann::json::from_msgpack(buffer);
     msg.header.stamp.sec = j["header"]["stamp"]["sec"].get<int32_t>();
     msg.header.stamp.nanosec = j["header"]["stamp"]["nanosec"].get<uint32_t>();
@@ -104,7 +104,7 @@ inline void deserialize_msg_pc<z_sensor_msgs::z_Imu>(const std::vector<uint8_t>&
 }
 
 template <>
-inline std::vector<uint8_t> serialize_msg_pc<z_sensor_msgs::z_Temperature>(const z_sensor_msgs::z_Temperature& msg) {
+inline std::vector<uint8_t> serialize_msg<z_sensor_msgs::z_Temperature>(const z_sensor_msgs::z_Temperature& msg) {
     nlohmann::json j;
     j["header"] = {{"stamp", {{"sec", msg.header.stamp.sec}, {"nanosec", msg.header.stamp.nanosec}}}, {"frame_id", msg.header.frame_id}};
     j["temperature"] = msg.temperature;
@@ -113,7 +113,7 @@ inline std::vector<uint8_t> serialize_msg_pc<z_sensor_msgs::z_Temperature>(const
 }
 
 template <>
-inline void deserialize_msg_pc<z_sensor_msgs::z_Temperature>(const std::vector<uint8_t>& buffer, z_sensor_msgs::z_Temperature& msg) {
+inline void deserialize_msg<z_sensor_msgs::z_Temperature>(const std::vector<uint8_t>& buffer, z_sensor_msgs::z_Temperature& msg) {
     nlohmann::json j = nlohmann::json::from_msgpack(buffer);
     msg.header.stamp.sec = j["header"]["stamp"]["sec"].get<int32_t>();
     msg.header.stamp.nanosec = j["header"]["stamp"]["nanosec"].get<uint32_t>();
@@ -123,7 +123,7 @@ inline void deserialize_msg_pc<z_sensor_msgs::z_Temperature>(const std::vector<u
 }
 
 template <>
-inline std::vector<uint8_t> serialize_msg_pc<z_sensor_msgs::z_Range>(const z_sensor_msgs::z_Range& msg) {
+inline std::vector<uint8_t> serialize_msg<z_sensor_msgs::z_Range>(const z_sensor_msgs::z_Range& msg) {
     nlohmann::json j;
     j["header"] = {{"stamp", {{"sec", msg.header.stamp.sec}, {"nanosec", msg.header.stamp.nanosec}}}, {"frame_id", msg.header.frame_id}};
     j["radiation_type"] = msg.radiation_type;
@@ -135,7 +135,7 @@ inline std::vector<uint8_t> serialize_msg_pc<z_sensor_msgs::z_Range>(const z_sen
 }
 
 template <>
-inline void deserialize_msg_pc<z_sensor_msgs::z_Range>(const std::vector<uint8_t>& buffer, z_sensor_msgs::z_Range& msg) {
+inline void deserialize_msg<z_sensor_msgs::z_Range>(const std::vector<uint8_t>& buffer, z_sensor_msgs::z_Range& msg) {
     nlohmann::json j = nlohmann::json::from_msgpack(buffer);
     msg.header.stamp.sec = j["header"]["stamp"]["sec"].get<int32_t>();
     msg.header.stamp.nanosec = j["header"]["stamp"]["nanosec"].get<uint32_t>();
@@ -183,14 +183,14 @@ namespace z_sensor_msgs {
 }
 
 template <>
-inline std::vector<uint8_t> serialize_msg_pc<z_sensor_msgs::z_JointState>(const z_sensor_msgs::z_JointState& msg) {
+inline std::vector<uint8_t> serialize_msg<z_sensor_msgs::z_JointState>(const z_sensor_msgs::z_JointState& msg) {
     nlohmann::json j;
     j["header"] = {{"stamp", {{"sec", msg.header.stamp.sec}, {"nanosec", msg.header.stamp.nanosec}}}, {"frame_id", msg.header.frame_id}};
     j["name"] = msg.name; j["position"] = msg.position; j["velocity"] = msg.velocity; j["effort"] = msg.effort;
     return nlohmann::json::to_msgpack(j);
 }
 template <>
-inline void deserialize_msg_pc<z_sensor_msgs::z_JointState>(const std::vector<uint8_t>& buffer, z_sensor_msgs::z_JointState& msg) {
+inline void deserialize_msg<z_sensor_msgs::z_JointState>(const std::vector<uint8_t>& buffer, z_sensor_msgs::z_JointState& msg) {
     nlohmann::json j = nlohmann::json::from_msgpack(buffer);
     msg.header.stamp.sec = j["header"]["stamp"]["sec"].get<int32_t>();
     msg.header.stamp.nanosec = j["header"]["stamp"]["nanosec"].get<uint32_t>();
@@ -202,14 +202,14 @@ inline void deserialize_msg_pc<z_sensor_msgs::z_JointState>(const std::vector<ui
 }
 
 template <>
-inline std::vector<uint8_t> serialize_msg_pc<z_sensor_msgs::z_RelativeHumidity>(const z_sensor_msgs::z_RelativeHumidity& msg) {
+inline std::vector<uint8_t> serialize_msg<z_sensor_msgs::z_RelativeHumidity>(const z_sensor_msgs::z_RelativeHumidity& msg) {
     nlohmann::json j;
     j["header"] = {{"stamp", {{"sec", msg.header.stamp.sec}, {"nanosec", msg.header.stamp.nanosec}}}, {"frame_id", msg.header.frame_id}};
     j["relative_humidity"] = msg.relative_humidity; j["variance"] = msg.variance;
     return nlohmann::json::to_msgpack(j);
 }
 template <>
-inline void deserialize_msg_pc<z_sensor_msgs::z_RelativeHumidity>(const std::vector<uint8_t>& buffer, z_sensor_msgs::z_RelativeHumidity& msg) {
+inline void deserialize_msg<z_sensor_msgs::z_RelativeHumidity>(const std::vector<uint8_t>& buffer, z_sensor_msgs::z_RelativeHumidity& msg) {
     nlohmann::json j = nlohmann::json::from_msgpack(buffer);
     msg.header.stamp.sec = j["header"]["stamp"]["sec"].get<int32_t>();
     msg.header.stamp.nanosec = j["header"]["stamp"]["nanosec"].get<uint32_t>();
@@ -219,14 +219,14 @@ inline void deserialize_msg_pc<z_sensor_msgs::z_RelativeHumidity>(const std::vec
 }
 
 template <>
-inline std::vector<uint8_t> serialize_msg_pc<z_sensor_msgs::z_BatteryState>(const z_sensor_msgs::z_BatteryState& msg) {
+inline std::vector<uint8_t> serialize_msg<z_sensor_msgs::z_BatteryState>(const z_sensor_msgs::z_BatteryState& msg) {
     nlohmann::json j;
     j["header"] = {{"stamp", {{"sec", msg.header.stamp.sec}, {"nanosec", msg.header.stamp.nanosec}}}, {"frame_id", msg.header.frame_id}};
     j["voltage"] = msg.voltage; j["percentage"] = msg.percentage; j["power_supply_status"] = msg.power_supply_status; j["present"] = msg.present;
     return nlohmann::json::to_msgpack(j);
 }
 template <>
-inline void deserialize_msg_pc<z_sensor_msgs::z_BatteryState>(const std::vector<uint8_t>& buffer, z_sensor_msgs::z_BatteryState& msg) {
+inline void deserialize_msg<z_sensor_msgs::z_BatteryState>(const std::vector<uint8_t>& buffer, z_sensor_msgs::z_BatteryState& msg) {
     nlohmann::json j = nlohmann::json::from_msgpack(buffer);
     msg.header.stamp.sec = j["header"]["stamp"]["sec"].get<int32_t>();
     msg.header.stamp.nanosec = j["header"]["stamp"]["nanosec"].get<uint32_t>();
@@ -238,7 +238,7 @@ inline void deserialize_msg_pc<z_sensor_msgs::z_BatteryState>(const std::vector<
 }
 
 template <>
-inline std::vector<uint8_t> serialize_msg_pc<z_sensor_msgs::z_NavSatFix>(const z_sensor_msgs::z_NavSatFix& msg) {
+inline std::vector<uint8_t> serialize_msg<z_sensor_msgs::z_NavSatFix>(const z_sensor_msgs::z_NavSatFix& msg) {
     nlohmann::json j;
     j["header"] = {{"stamp", {{"sec", msg.header.stamp.sec}, {"nanosec", msg.header.stamp.nanosec}}}, {"frame_id", msg.header.frame_id}};
     j["status"] = {{"status", msg.status.status}, {"service", msg.status.service}};
@@ -246,7 +246,7 @@ inline std::vector<uint8_t> serialize_msg_pc<z_sensor_msgs::z_NavSatFix>(const z
     return nlohmann::json::to_msgpack(j);
 }
 template <>
-inline void deserialize_msg_pc<z_sensor_msgs::z_NavSatFix>(const std::vector<uint8_t>& buffer, z_sensor_msgs::z_NavSatFix& msg) {
+inline void deserialize_msg<z_sensor_msgs::z_NavSatFix>(const std::vector<uint8_t>& buffer, z_sensor_msgs::z_NavSatFix& msg) {
     nlohmann::json j = nlohmann::json::from_msgpack(buffer);
     msg.header.stamp.sec = j["header"]["stamp"]["sec"].get<int32_t>();
     msg.header.stamp.nanosec = j["header"]["stamp"]["nanosec"].get<uint32_t>();
@@ -259,16 +259,16 @@ inline void deserialize_msg_pc<z_sensor_msgs::z_NavSatFix>(const std::vector<uin
 }
 
 template <>
-inline std::vector<uint8_t> serialize_msg_pc<z_sensor_msgs::z_JoyFeedback>(const z_sensor_msgs::z_JoyFeedback& msg) {
+inline std::vector<uint8_t> serialize_msg<z_sensor_msgs::z_JoyFeedback>(const z_sensor_msgs::z_JoyFeedback& msg) {
     nlohmann::json j; j["type"] = msg.type; j["id"] = msg.id; j["intensity"] = msg.intensity;
     return nlohmann::json::to_msgpack(j);
 }
 template <>
-inline void deserialize_msg_pc<z_sensor_msgs::z_JoyFeedback>(const std::vector<uint8_t>& buffer, z_sensor_msgs::z_JoyFeedback& msg) {
+inline void deserialize_msg<z_sensor_msgs::z_JoyFeedback>(const std::vector<uint8_t>& buffer, z_sensor_msgs::z_JoyFeedback& msg) {
     nlohmann::json j = nlohmann::json::from_msgpack(buffer);
     msg.type = j["type"].get<uint8_t>();
     msg.id = j["id"].get<uint8_t>();
     msg.intensity = j["intensity"].get<float>();
 }
 
-#endif // Z_SENSOR_MSGS_PC_H
+#endif // Z_SENSOR_MSGS_H
