@@ -14,6 +14,7 @@
 #include <cstring>
 #include <vector>
 #include <mutex>
+#include <condition_variable>
 
 // Global flag to handle clean shutdown via Ctrl+C
 inline volatile sig_atomic_t shutdown_requested = 0;
@@ -210,7 +211,7 @@ public:
                     deserialize_msg<MsgType>(buffer, msg);
                     self->callback(msg);
 
-                    z_slice_drop(z_slice_move(&slice));
+                    // slice cleanup handled by zenoh-c sample lifecycle
                 }
             },
             NULL,
@@ -271,7 +272,7 @@ public:
                         const uint8_t* data = z_slice_data(z_slice_loan(&slice));
                         size_t len = z_slice_len(z_slice_loan(&slice));
                         buffer.assign(data, data + len);
-                        z_slice_drop(z_slice_move(&slice));
+                        // slice cleanup handled by zenoh-c sample lifecycle
                     }
 
                     typename SrvType::Request req;
@@ -359,16 +360,19 @@ public:
         options.payload = z_bytes_move(&req_bytes);
 
         struct ReplyContext {
+            std::mutex mtx;
+            std::condition_variable cv;
             std::vector<uint8_t> reply_data;
             bool received = false;
-        } ctx;
+        };
+        auto ctx = std::make_shared<ReplyContext>();
 
         z_owned_closure_reply_t closure;
         z_closure_reply(
             &closure,
             [](z_loaned_reply_t* reply, void* context) {
-                ReplyContext* c = (ReplyContext*)context;
-                if (c && z_reply_is_ok(reply)) {
+                auto c = static_cast<std::shared_ptr<ReplyContext>*>(context);
+                if (c && *c && z_reply_is_ok(reply)) {
                     const z_loaned_sample_t* sample = z_reply_ok(reply);
                     const z_loaned_bytes_t* payload = z_sample_payload(sample);
                     if (payload) {
@@ -376,14 +380,17 @@ public:
                         z_bytes_to_slice(payload, &slice);
                         const uint8_t* data = z_slice_data(z_slice_loan(&slice));
                         size_t len = z_slice_len(z_slice_loan(&slice));
-                        c->reply_data.assign(data, data + len);
-                        c->received = true;
-                        z_slice_drop(z_slice_move(&slice));
+                        std::lock_guard<std::mutex> lock((*c)->mtx);
+                        (*c)->reply_data.assign(data, data + len);
+                        (*c)->received = true;
+                        (*c)->cv.notify_one();
                     }
                 }
             },
-            NULL,
-            &ctx
+            [](void* context) {
+                delete static_cast<std::shared_ptr<ReplyContext>*>(context);
+            },
+            new std::shared_ptr<ReplyContext>(ctx)
         );
 
         ZenohSessionMutexPC::lock();
@@ -395,9 +402,12 @@ public:
             return false;
         }
 
-        if (ctx.received && !ctx.reply_data.empty()) {
-            deserialize_msg<typename SrvType::Response>(ctx.reply_data, res);
-            return true;
+        std::unique_lock<std::mutex> lock(ctx->mtx);
+        if (ctx->cv.wait_for(lock, std::chrono::milliseconds(timeout_ms), [&]() { return ctx->received; })) {
+            if (!ctx->reply_data.empty()) {
+                deserialize_msg<typename SrvType::Response>(ctx->reply_data, res);
+                return true;
+            }
         }
 
         std::cerr << "[ZenohClient PC] ERROR: Service call to '" << service_name << "' timed out or returned empty!\n";

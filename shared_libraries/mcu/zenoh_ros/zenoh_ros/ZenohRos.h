@@ -308,6 +308,7 @@ public:
                     z_query_reply_options_default(&options);
 
                     z_owned_bytes_t reply_bytes;
+                    z_bytes_copy_from_buf(&reply_bytes, res_buf, res_len);
                     const z_loaned_keyexpr_t* q_key = z_query_keyexpr(query);
 
                     ZenohSessionMutex::lock();

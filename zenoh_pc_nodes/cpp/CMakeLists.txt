@@ -94,3 +94,8 @@ endif()
 add_executable(interface_test_validator src/interface_test_validator.cpp)
 target_include_directories(interface_test_validator PRIVATE ../../shared_libraries/cpp/zenoh_ros)
 target_link_libraries(interface_test_validator PRIVATE ${ZENOHC_LIB})
+
+# Custom Nested Validator Target
+add_executable(custom_nested_validator src/custom_nested_validator.cpp)
+target_include_directories(custom_nested_validator PRIVATE ../../shared_libraries/cpp/zenoh_ros)
+target_link_libraries(custom_nested_validator PRIVATE ${ZENOHC_LIB})

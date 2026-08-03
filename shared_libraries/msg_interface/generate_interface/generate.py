@@ -234,7 +234,7 @@ def get_python_type(raw_type):
     if '/' in raw_type:
         parts = raw_type.split('/')
         pkg, name = parts[0], parts[-1]
-        return f'{pkg}.z_{name}'
+        return f"z_{name}"
     return 'Any'
 
 def get_python_default(raw_type):
@@ -263,7 +263,7 @@ _PRE_DEFINED_INCLUDE_MCU = {
     'nav_msgs':           'msg_interface/pre_defined_interface/z_nav_msgs.h',
 }
 _PRE_DEFINED_INCLUDE_PC = {
-    'geometry_msgs':      'msg_interface/pre_defined_interface/z_geometry_msgs_pc.h',
+    'geometry_msgs':      'msg_interface/pre_defined_interface/z_geometry_msgs.h',
     'builtin_interfaces': 'msg_interface/pre_defined_interface/z_builtin_interfaces.h',
     'std_msgs':           'msg_interface/pre_defined_interface/z_std_msgs.h',
     'sensor_msgs':        'msg_interface/pre_defined_interface/z_sensor_msgs.h',
@@ -378,25 +378,25 @@ def generate_cpp_field_serialization(f_type, f_name, doc_var, msg_var):
         return f'{doc_var}["{f_name}"] = {msg_var}.{f_name};'
 
     if 'Vector3' in f_type or 'Point' in f_type:
-        return (f'  JsonArray {f_name}_arr = {doc_var}.createNestedArray("{f_name}");\n'
+        return (f'  JsonArray {f_name}_arr = {doc_var}["{f_name}"].to<JsonArray>();\n'
                 f'  {f_name}_arr.add({msg_var}.{f_name}.x);\n'
                 f'  {f_name}_arr.add({msg_var}.{f_name}.y);\n'
                 f'  {f_name}_arr.add({msg_var}.{f_name}.z);')
 
     if 'Quaternion' in f_type:
-        return (f'  JsonArray {f_name}_arr = {doc_var}.createNestedArray("{f_name}");\n'
+        return (f'  JsonArray {f_name}_arr = {doc_var}["{f_name}"].to<JsonArray>();\n'
                 f'  {f_name}_arr.add({msg_var}.{f_name}.x);\n'
                 f'  {f_name}_arr.add({msg_var}.{f_name}.y);\n'
                 f'  {f_name}_arr.add({msg_var}.{f_name}.z);\n'
                 f'  {f_name}_arr.add({msg_var}.{f_name}.w);')
 
     if 'Twist' in f_type:
-        return (f'  JsonArray {f_name}_arr = {doc_var}.createNestedArray("{f_name}");\n'
-                f'  JsonArray {f_name}_lin = {f_name}_arr.createNestedArray();\n'
+        return (f'  JsonArray {f_name}_arr = {doc_var}["{f_name}"].to<JsonArray>();\n'
+                f'  JsonArray {f_name}_lin = {f_name}_arr.add<JsonArray>();\n'
                 f'  {f_name}_lin.add({msg_var}.{f_name}.linear.x);\n'
                 f'  {f_name}_lin.add({msg_var}.{f_name}.linear.y);\n'
                 f'  {f_name}_lin.add({msg_var}.{f_name}.linear.z);\n'
-                f'  JsonArray {f_name}_ang = {f_name}_arr.createNestedArray();\n'
+                f'  JsonArray {f_name}_ang = {f_name}_arr.add<JsonArray>();\n'
                 f'  {f_name}_ang.add({msg_var}.{f_name}.angular.x);\n'
                 f'  {f_name}_ang.add({msg_var}.{f_name}.angular.y);\n'
                 f'  {f_name}_ang.add({msg_var}.{f_name}.angular.z);')
