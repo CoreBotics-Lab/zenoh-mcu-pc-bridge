@@ -1,4 +1,5 @@
-// Forwarding header — do not edit directly.
-// Actual implementation: zenoh_ros/msg_interface/pre_defined_interface/z_sensor_msgs.h
-#pragma once
-#include <zenoh_ros/msg_interface/pre_defined_interface/z_sensor_msgs.h>
+#ifndef PC_SENSOR_MSGS_Z_JOY_H
+#define PC_SENSOR_MSGS_Z_JOY_H
+#include "../msg_interface/pre_defined_interface/z_sensor_msgs_pc.h"
+using z_Joy = sensor_msgs::z_Joy;
+#endif

@@ -1,6 +1,5 @@
 import msgpack
 from typing import Any, List, Optional, cast
-
 class z_SetLED:
     def __init__(self, r: int = 0, g: int = 0, b: int = 0, brightness: int = 0, led_num: int = 0) -> None:
         self.r = r

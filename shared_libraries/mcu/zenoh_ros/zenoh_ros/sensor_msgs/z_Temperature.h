@@ -2,5 +2,4 @@
 #define SENSOR_MSGS_Z_TEMPERATURE_H
 #include "../../msg_interface/pre_defined_interface/z_sensor_msgs.h"
 using z_Temperature = z_sensor_msgs::z_Temperature;
-using z_Header = z_std_msgs::z_Header;
 #endif

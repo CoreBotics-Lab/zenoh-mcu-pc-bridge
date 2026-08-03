@@ -1,4 +1,5 @@
-// Forwarding header — do not edit directly.
-// Actual implementation: zenoh_ros/msg_interface/pre_defined_interface/z_sensor_msgs.h
-#pragma once
-#include <zenoh_ros/msg_interface/pre_defined_interface/z_sensor_msgs.h>
+#ifndef SENSOR_MSGS_Z_FLUIDPRESSURE_H
+#define SENSOR_MSGS_Z_FLUIDPRESSURE_H
+#include "../../msg_interface/pre_defined_interface/z_sensor_msgs.h"
+using z_FluidPressure = z_sensor_msgs::z_FluidPressure;
+#endif
