@@ -379,7 +379,8 @@ public:
             uint8_t res_buf[MaxBufSize];
             size_t res_len = 0;
             bool received = false;
-        } ctx;
+        };
+        ReplyContext* ctx = new ReplyContext();
 
         z_owned_closure_reply_t closure;
         z_closure_reply(
@@ -402,8 +403,10 @@ public:
                     }
                 }
             },
-            NULL,
-            &ctx
+            [](void* context) {
+                delete (ReplyContext*)context;
+            },
+            ctx
         );
 
         ZenohSessionMutex::lock();
@@ -415,8 +418,8 @@ public:
             return false;
         }
 
-        if (ctx.received && ctx.res_len > 0) {
-            deserialize_msg<typename SrvType::Response>(ctx.res_buf, ctx.res_len, res);
+        if (ctx->received && ctx->res_len > 0) {
+            deserialize_msg<typename SrvType::Response>(ctx->res_buf, ctx->res_len, res);
             return true;
         }
 
