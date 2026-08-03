@@ -425,7 +425,7 @@ def generate_cpp_field_serialization(f_type, f_name, doc_var, msg_var):
 
     # Generic custom nested message type (MCU): use serialize_msg / deserialize_msg via temporary buffer
     if '/' in f_type:
-        return (f'  uint8_t {f_name}_buf[256];\n'
+        return (f'  static uint8_t {f_name}_buf[512];\n'
                 f'  size_t {f_name}_len = serialize_msg({msg_var}.{f_name}, {f_name}_buf, sizeof({f_name}_buf));\n'
                 f'  JsonDocument {f_name}_sub_doc;\n'
                 f'  deserializeMsgPack({f_name}_sub_doc, {f_name}_buf, {f_name}_len);\n'
@@ -476,7 +476,7 @@ def generate_cpp_field_deserialization(f_type, f_name, doc_var, msg_var):
 
     # Generic custom nested message type (MCU)
     if '/' in f_type:
-        return (f'  uint8_t {f_name}_buf[256];\n'
+        return (f'  static uint8_t {f_name}_buf[512];\n'
                 f'  size_t {f_name}_len = serializeMsgPack({doc_var}["{f_name}"], {f_name}_buf, sizeof({f_name}_buf));\n'
                 f'  deserialize_msg({f_name}_buf, {f_name}_len, {msg_var}.{f_name});')
 
@@ -600,6 +600,8 @@ def _get_nested_sub(f_name):
     return f'(data.get(b"{f_name}", data.get("{f_name}", {{}})) or {{}})'
 
 def generate_python_deserialize_field(f_type, f_name):
+    if f_type in ['string', 'String']:
+        return f'(lambda v: v.decode("utf-8") if isinstance(v, bytes) else str(v))(data.get(b"{f_name}", data.get("{f_name}", "")))'
     if f_type in TYPE_MAP_PYTHON:
         py_type = get_python_type(f_type)
         default_val = get_python_default(f_type)

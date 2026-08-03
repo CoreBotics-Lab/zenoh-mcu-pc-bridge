@@ -99,3 +99,8 @@ target_link_libraries(interface_test_validator PRIVATE ${ZENOHC_LIB})
 add_executable(custom_nested_validator src/custom_nested_validator.cpp)
 target_include_directories(custom_nested_validator PRIVATE ../../shared_libraries/cpp/zenoh_ros)
 target_link_libraries(custom_nested_validator PRIVATE ${ZENOHC_LIB})
+
+# Rigorous Nested Validator Target
+add_executable(rigorous_nested_validator src/rigorous_nested_validator.cpp)
+target_include_directories(rigorous_nested_validator PRIVATE ../../shared_libraries/cpp/zenoh_ros)
+target_link_libraries(rigorous_nested_validator PRIVATE ${ZENOHC_LIB})

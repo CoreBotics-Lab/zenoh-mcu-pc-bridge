@@ -1,16 +1,13 @@
 /**
- * Custom Nested Interface & Service Test Firmware
- * =================================================
- * Includes direct custom headers:
- *   #include <zenoh_ros/custom_msgs/z_RobotDiagnostic.h>
- *   #include <zenoh_ros/custom_srvs/z_ConfigureRobot.h>
+ * Rigorous Multi-Level Custom Interface Firmware
+ * ===============================================
  */
 
 #include <Arduino.h>
 #include <zenoh_ros/ZenohRos.h>
 
-#include <zenoh_ros/custom_msgs/z_RobotDiagnostic.h>
-#include <zenoh_ros/custom_srvs/z_ConfigureRobot.h>
+#include <zenoh_ros/custom_msgs/z_ComplexRobotState.h>
+#include <zenoh_ros/custom_srvs/z_FullSystemControl.h>
 
 #include "credential.h"
 
@@ -22,72 +19,84 @@ ZenohConfig cfg = {
     .wifi_mode = WIFI_STA
 };
 
-class CustomNestedNode : public ZenohNode {
+class ComplexSystemNode : public ZenohNode {
 public:
-    CustomNestedNode() : ZenohNode("custom_nested_node") {
+    ComplexSystemNode() : ZenohNode("complex_system_node") {
         Serial.printf("[Node] %s started\n", z_get_name());
 
-        // Publisher for nested custom message
-        pub_diag_ = z_create_publisher<z_RobotDiagnostic>("robot/diagnostics", 5);
+        pub_state_ = z_create_publisher<z_ComplexRobotState>("system/state", 5);
 
-        // Service server for nested custom service
-        srv_config_ = z_create_service<z_ConfigureRobot>("robot/configure",
-            [this](const z_ConfigureRobot::Request& req, z_ConfigureRobot::Response& res) {
-                Serial.printf("[Service] Request received for Motor ID: %d, Speed: %.1f\n",
-                              req.target_status.motor_id, req.target_status.speed);
-                
-                res.success = true;
-                res.status_message = "Motor " + std::to_string(req.target_status.motor_id) + " configured OK!";
+        srv_control_ = z_create_service<z_FullSystemControl>("system/control",
+            [this](const z_FullSystemControl::Request& req, z_FullSystemControl::Response& res) {
+                Serial.printf("[Service] Request received! Target mode: %s, Cmd: %d\n",
+                              req.target_state.robot_mode.c_str(), req.command_code);
+
+                res.current_telemetry.header.stamp.sec = 1700000000;
+                res.current_telemetry.header.frame_id = "sensor_link";
+                res.current_telemetry.accel.x = 0.05f;
+                res.current_telemetry.accel.y = 0.01f;
+                res.current_telemetry.accel.z = 9.81f;
+                res.current_telemetry.orientation.w = 1.0f;
+                res.current_telemetry.sensor_id = 99;
+                res.current_telemetry.temp = 37.8f;
+                res.current_telemetry.status_ok = true;
+
+                res.ack = true;
+                res.status_details = "Command " + std::to_string(req.command_code) + " Executed OK!";
             }
         );
 
-        // Timer to publish nested custom diagnostic message every 1 second
-        timer_ = z_create_timer(1000, [this]() { publish_diagnostics(); });
+        timer_ = z_create_timer(1000, [this]() { publish_state(); });
     }
 
 private:
-    ZenohPublisher<z_RobotDiagnostic>* pub_diag_ = nullptr;
-    ZenohService<z_ConfigureRobot>* srv_config_ = nullptr;
+    ZenohPublisher<z_ComplexRobotState>* pub_state_ = nullptr;
+    ZenohService<z_FullSystemControl>* srv_control_ = nullptr;
     ZenohTimer* timer_ = nullptr;
-    uint32_t seq_ = 0;
+    uint64_t cycle_ = 0;
 
-    void publish_diagnostics() {
-        z_RobotDiagnostic msg;
-        msg.header.stamp.sec = 1690000000 + seq_;
-        msg.header.stamp.nanosec = 500000;
-        msg.header.frame_id = "base_link";
+    void publish_state() {
+        z_ComplexRobotState state;
+        state.header.stamp.sec = 1700000000 + (uint32_t)cycle_;
+        state.header.stamp.nanosec = 123456;
+        state.header.frame_id = "map";
 
-        msg.velocity.x = 1.2;
-        msg.velocity.y = -0.5;
-        msg.velocity.z = 0.0;
+        state.pose.position.x = 2.5;
+        state.pose.position.y = 3.8;
+        state.pose.position.z = 0.1;
+        state.pose.orientation.w = 1.0;
 
-        msg.left_motor.motor_id = 1;
-        msg.left_motor.speed = 100.5f;
-        msg.left_motor.temperature = 42.1f;
-        msg.left_motor.is_active = true;
+        state.telemetry.header.stamp.sec = state.header.stamp.sec;
+        state.telemetry.header.frame_id = "imu_link";
+        state.telemetry.accel.x = 0.1f;
+        state.telemetry.accel.y = -0.2f;
+        state.telemetry.accel.z = 9.80f;
+        state.telemetry.orientation.x = 0.0f;
+        state.telemetry.orientation.y = 0.0f;
+        state.telemetry.orientation.z = 0.0f;
+        state.telemetry.orientation.w = 1.0f;
+        state.telemetry.sensor_id = 42;
+        state.telemetry.temp = 36.5f;
+        state.telemetry.status_ok = true;
 
-        msg.right_motor.motor_id = 2;
-        msg.right_motor.speed = 98.2f;
-        msg.right_motor.temperature = 44.3f;
-        msg.right_motor.is_active = true;
+        state.robot_mode = "AUTONOMOUS_NAV";
+        state.cycle_count = ++cycle_;
 
-        msg.robot_name = "ZenohBot_01";
-
-        pub_diag_->publish(msg);
-        Serial.printf("[Pub] RobotDiagnostics #%u published OK!\n", ++seq_);
+        pub_state_->publish(state);
+        Serial.printf("[Pub] ComplexRobotState cycle #%llu published!\n", cycle_);
     }
 };
 
-CustomNestedNode* node_instance = nullptr;
+ComplexSystemNode* node_instance = nullptr;
 
 void setup() {
     Serial.begin(115200);
     z_delay(2000);
     Serial.println("\n==========================================");
-    Serial.println("  Custom Nested Msg & Srv Test Firmware");
+    Serial.println("  Rigorous Multi-Level Custom Test Firmware");
     Serial.println("==========================================");
     if (ZenohNode::init(cfg)) {
-        node_instance = new CustomNestedNode();
+        node_instance = new ComplexSystemNode();
     } else {
         Serial.println("[CRITICAL] Zenoh init failed!");
         while(1) { z_delay(1000); }
