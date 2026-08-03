@@ -27,3 +27,6 @@ __pycache__/
 # Credentials / Private files
 credential.h
 **/credential.h
+
+# Session Summaries & Local Notes
+conversation_summary.md

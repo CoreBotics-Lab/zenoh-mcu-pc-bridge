@@ -1,14 +1,8 @@
 /**
  * echo.cpp — Shared C++ CLI Echo Tool for zenoh_ros
  *
- * Subscribes to any topic (e.g. 'ws2812b_service_server/log', 'robot/mpu6050')
- * and prints live structured payloads with colour formatting.
- *
- * Payload decoding priority:
- *   1. Plain text log strings  → coloured text output
- *   2. MessagePack binary      → pretty-printed JSON (standalone decoder, no deps)
- *   3. Printable ASCII         → raw text
- *   4. Unknown binary          → "[binary payload: N bytes]"
+ * Subscribes to any topic (e.g. 'test/temperature', 'test/pose')
+ * and prints live structured payloads with color formatting.
  */
 
 #include <iostream>
@@ -30,8 +24,6 @@ void echo_signal_handler(int signum) {
 }
 
 // ─── Standalone MessagePack → JSON converter ────────────────────────────────
-// Implements the complete MessagePack spec.  No external libraries required.
-
 struct MsgpackReader {
     const uint8_t* buf;
     size_t         len;
@@ -79,7 +71,6 @@ struct MsgpackReader {
     }
 };
 
-// Forward declaration
 static std::string msgpack_to_json(MsgpackReader& r, int indent, int depth);
 
 static std::string json_indent(int indent, int depth) {
@@ -143,28 +134,25 @@ static std::string parse_map(MsgpackReader& r, uint32_t n, int indent, int depth
 
     std::string out = "{" + nl;
     for (uint32_t i = 0; i < n; ++i) {
-        // Key
         std::string key;
         uint8_t kb = r.buf[r.pos];
-        if ((kb & 0xe0) == 0xa0) {          // fixstr
+        if ((kb & 0xe0) == 0xa0) {
             r.pos++;
             key = json_string(r.read_str(kb & 0x1f));
-        } else if (kb == 0xd9) {            // str8
+        } else if (kb == 0xd9) {
             r.pos++;
             key = json_string(r.read_str(r.read_u8()));
-        } else if (kb == 0xda) {            // str16
+        } else if (kb == 0xda) {
             r.pos++;
             key = json_string(r.read_str(r.read_u16()));
-        } else if (kb == 0xdb) {            // str32
+        } else if (kb == 0xdb) {
             r.pos++;
             key = json_string(r.read_str(r.read_u32()));
         } else {
-            // Non-string key: parse and wrap in quotes
             std::string v = msgpack_to_json(r, -1, 0);
             key = "\"" + v + "\"";
         }
 
-        // Value
         std::string val = msgpack_to_json(r, indent, depth + 1);
 
         out += inner + key + colon + val;
@@ -179,11 +167,11 @@ static std::string msgpack_to_json(MsgpackReader& r, int indent, int depth) {
 
     uint8_t b = r.read_u8();
 
-    if (b <= 0x7f)          return std::to_string(b);                     // positive fixint
-    if ((b & 0xf0) == 0x80) return parse_map(r, b & 0x0f, indent, depth); // fixmap
-    if ((b & 0xf0) == 0x90) return parse_array(r, b & 0x0f, indent, depth);// fixarray
-    if ((b & 0xe0) == 0xa0) return json_string(r.read_str(b & 0x1f));     // fixstr
-    if (b >= 0xe0)          return std::to_string(static_cast<int8_t>(b)); // negative fixint
+    if (b <= 0x7f)          return std::to_string(b);
+    if ((b & 0xf0) == 0x80) return parse_map(r, b & 0x0f, indent, depth);
+    if ((b & 0xf0) == 0x90) return parse_array(r, b & 0x0f, indent, depth);
+    if ((b & 0xe0) == 0xa0) return json_string(r.read_str(b & 0x1f));
+    if (b >= 0xe0)          return std::to_string(static_cast<int8_t>(b));
 
     switch (b) {
         case 0xc0: return "null";
@@ -207,7 +195,6 @@ static std::string msgpack_to_json(MsgpackReader& r, int indent, int depth) {
         case 0xd2: return std::to_string(static_cast<int32_t>(r.read_u32()));
         case 0xd3: return std::to_string(static_cast<int64_t>(r.read_u64()));
 
-        // fixext
         case 0xd4: { r.skip(2);  return "\"<ext1>\""; }
         case 0xd5: { r.skip(3);  return "\"<ext2>\""; }
         case 0xd6: { r.skip(5);  return "\"<ext4>\""; }
@@ -224,41 +211,21 @@ static std::string msgpack_to_json(MsgpackReader& r, int indent, int depth) {
         case 0xde: return parse_map(r, r.read_u16(), indent, depth);
         case 0xdf: return parse_map(r, r.read_u32(), indent, depth);
 
-        case 0xc7: { uint8_t  n = r.read_u8();  r.read_u8(); r.skip(n); return "\"<ext>\""; }
-        case 0xc8: { uint16_t n = r.read_u16(); r.read_u8(); r.skip(n); return "\"<ext>\""; }
-        case 0xc9: { uint32_t n = r.read_u32(); r.read_u8(); r.skip(n); return "\"<ext>\""; }
-
         default:
             throw std::runtime_error("msgpack: unknown type byte");
     }
 }
 
-/**
- * Try to decode data[offset..len] as a single top-level MessagePack value.
- * Returns JSON string on success, empty on failure.
- * Only accepts map or array at root level (structured message check).
- */
 static std::string try_msgpack_decode(const uint8_t* data, size_t len, size_t offset, int indent) {
     if (offset >= len) return "";
-    uint8_t first = data[offset];
-    // Only try if the root looks like a map or array (structured data)
-    bool looks_structured = ((first & 0xf0) == 0x80) || ((first & 0xf0) == 0x90)
-                         || (first == 0xde) || (first == 0xdf)
-                         || (first == 0xdc) || (first == 0xdd);
-    if (!looks_structured) return "";
-
     MsgpackReader r{data, len, offset};
     try {
         std::string json = msgpack_to_json(r, indent, 0);
-        // Accept if we consumed at least 80% of the remaining bytes
-        size_t remaining = len - offset;
-        if (r.pos - offset >= remaining * 8 / 10)
+        if (r.pos == len || r.pos >= (len - offset) * 8 / 10)
             return json;
     } catch (...) {}
     return "";
 }
-
-// ─── Zenoh sample callback ───────────────────────────────────────────────────
 
 void echo_sample_callback(z_loaned_sample_t* sample, void* arg) {
     (void)arg;
@@ -269,13 +236,11 @@ void echo_sample_callback(z_loaned_sample_t* sample, void* arg) {
         z_owned_slice_t slice;
         z_bytes_to_slice(payload, &slice);
         size_t len = z_slice_len(z_slice_loan(&slice));
-        // Copy into std::string immediately; raw pointer becomes invalid after drop
         std::string text(reinterpret_cast<const char*>(z_slice_data(z_slice_loan(&slice))), len);
         z_slice_drop(z_slice_move(&slice));
-        // Use text's buffer for binary decoding (owns the data, always valid)
         const uint8_t* data = reinterpret_cast<const uint8_t*>(text.data());
 
-        // 1. Plain-text log string: "[SEVERITY] [name]: message"
+        // 1. Plain-text log string
         if (text.size() > 2 && text[0] == '[') {
             const char* color = "\033[37m";
             if      (text.rfind("[DEBUG]", 0) == 0) color = "\033[36m";
@@ -287,16 +252,13 @@ void echo_sample_callback(z_loaned_sample_t* sample, void* arg) {
             return;
         }
 
-        // 2. Standalone MessagePack decoder
-        //    Try offset 0, then scan 1..16 (handles small framing prefixes)
-        {
-            std::string json = try_msgpack_decode(data, len, 0, 2);
-            if (!json.empty()) { std::cout << json << "\n"; return; }
+        // 2. Try MessagePack decoding
+        std::string json = try_msgpack_decode(data, len, 0, 2);
+        if (!json.empty()) { std::cout << "\033[32m" << json << "\033[0m\n"; return; }
 
-            for (size_t off = 1; off <= 16 && off < len; ++off) {
-                json = try_msgpack_decode(data, len, off, 2);
-                if (!json.empty()) { std::cout << json << "\n"; return; }
-            }
+        for (size_t off = 1; off <= 16 && off < len; ++off) {
+            json = try_msgpack_decode(data, len, off, 2);
+            if (!json.empty()) { std::cout << "\033[32m" << json << "\033[0m\n"; return; }
         }
 
         // 3. Printable ASCII fallback
@@ -316,18 +278,15 @@ void echo_sample_callback(z_loaned_sample_t* sample, void* arg) {
     }
 }
 
-// ─── main ────────────────────────────────────────────────────────────────────
-
 int main(int argc, char** argv) {
     if (argc < 2) {
         std::cout << "Usage: echo <topic_name> [host_ip]\n";
-        std::cout << "Example: echo ws2812b_service_server/log\n";
-        std::cout << "Example: echo robot/mpu6050\n";
+        std::cout << "Example: echo test/temperature 10.42.0.50\n";
         return 1;
     }
 
     std::string topic = argv[1];
-    const char* host  = (argc > 2) ? argv[2] : nullptr;
+    const char* host  = (argc > 2) ? argv[2] : "10.42.0.50";
 
     signal(SIGINT,  echo_signal_handler);
     signal(SIGTERM, echo_signal_handler);
@@ -339,10 +298,11 @@ int main(int argc, char** argv) {
     z_owned_config_t config;
     z_config_default(&config);
 
-    std::string target_host = (host && std::string(host).length() > 0) ? host : "192.168.4.1";
-    std::string endpoint = std::string("[\"tcp/") + target_host + ":7447\"]";
+    // Standard client configuration for zenoh_ros (zenoh-c)
+    zc_config_insert_json5(z_config_loan_mut(&config), Z_CONFIG_MODE_KEY, "\"peer\"");
+    std::string endpoint = std::string("[\"tcp/") + host + ":7447\"]";
     zc_config_insert_json5(z_config_loan_mut(&config), Z_CONFIG_CONNECT_KEY, endpoint.c_str());
-    std::cout << "[echo] Connecting to endpoint: " << target_host << ":7447...\n";
+    std::cout << "[echo] Connecting to endpoint: " << host << ":7447...\n";
 
     z_owned_session_t session;
     if (z_open(&session, z_config_move(&config), NULL) < 0) {
