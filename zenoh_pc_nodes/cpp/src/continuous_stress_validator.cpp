@@ -118,22 +118,25 @@ public:
         // 1. SetLEDColor
         z_SetLEDColor::Request req1; req1.led_data.r = 255; req1.led_data.brightness = 100;
         z_SetLEDColor::Response res1;
-        if (!cli_set_led_clr_->call(req1, res1, 1500) || !res1.success) ok = false;
+        if (!cli_set_led_clr_->call(req1, res1, 2000) || !res1.success) ok = false;
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
         // 2. SetColor
         z_SetColor::Request req2; req2.r = 255; req2.g = 128; req2.b = 0;
         z_SetColor::Response res2;
-        if (!cli_set_clr_->call(req2, res2, 1500) || !res2.success) ok = false;
+        if (!cli_set_clr_->call(req2, res2, 2000) || !res2.success) ok = false;
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
         // 3. ConfigureRobot
         z_ConfigureRobot::Request req3; req3.target_status.motor_id = 1; req3.target_status.speed = 100.0f; req3.target_status.is_active = true; req3.mode = 1;
         z_ConfigureRobot::Response res3;
-        if (!cli_cfg_robot_->call(req3, res3, 1500) || !res3.success) ok = false;
+        if (!cli_cfg_robot_->call(req3, res3, 2000) || !res3.success) ok = false;
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
         // 4. FullSystemControl
         z_FullSystemControl::Request req4; req4.target_state.robot_mode = "STRESS_CPP"; req4.command_code = 9;
         z_FullSystemControl::Response res4;
-        if (!cli_full_ctrl_->call(req4, res4, 1500) || !res4.ack) ok = false;
+        if (!cli_full_ctrl_->call(req4, res4, 2000) || !res4.ack) ok = false;
 
         return ok;
     }

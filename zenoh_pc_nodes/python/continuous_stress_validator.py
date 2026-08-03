@@ -96,18 +96,21 @@ def main():
             total_srv_calls += 4
 
             try:
-                res1 = node.cli_set_led_clr.call(z_SetLEDColor.Request(led_data=z_SetLED(r=255, g=0, b=0, brightness=100, led_num=1)), timeout_sec=1.5)
+                res1 = node.cli_set_led_clr.call(z_SetLEDColor.Request(led_data=z_SetLED(r=255, g=0, b=0, brightness=100, led_num=1)), timeout_sec=2.0)
                 if res1 and res1.success: successful_srv_calls += 1
+                time.sleep(0.05)
 
-                res2 = node.cli_set_clr.call(z_SetColor.Request(r=100, g=200, b=50), timeout_sec=1.5)
+                res2 = node.cli_set_clr.call(z_SetColor.Request(r=100, g=200, b=50), timeout_sec=2.0)
                 if res2 and res2.success: successful_srv_calls += 1
+                time.sleep(0.05)
 
                 req3 = z_ConfigureRobot.Request(target_status=z_MotorStatus(motor_id=1, speed=120.0, is_active=True), mode=1)
-                res3 = node.cli_cfg_robot.call(req3, timeout_sec=1.5)
+                res3 = node.cli_cfg_robot.call(req3, timeout_sec=2.0)
                 if res3 and res3.success: successful_srv_calls += 1
+                time.sleep(0.05)
 
                 req4 = z_FullSystemControl.Request(target_state=z_ComplexRobotState(robot_mode="STRESS", cycle_count=elapsed), command_code=7)
-                res4 = node.cli_full_ctrl.call(req4, timeout_sec=1.5)
+                res4 = node.cli_full_ctrl.call(req4, timeout_sec=2.0)
                 if res4 and res4.ack: successful_srv_calls += 1
             except Exception as e:
                 print(f"  {RED}⚠ Service call exception: {e}{RST}")

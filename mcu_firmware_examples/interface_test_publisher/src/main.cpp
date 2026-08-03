@@ -1,11 +1,12 @@
 /**
- * All-In-One Comprehensive Interface Test Firmware
- * =================================================
- * Publishes: 27 Standard ROS 2 msgs + 7 Custom msgs
- * Serves   : 4 Custom services
+ * All-In-One Master Test Firmware (Dynamic Memory Stress Test)
+ * =============================================================
+ * Publishes changing dynamic data on 34 topics every 1 second.
+ * Serves 4 custom services with dynamic response payloads.
  */
 
 #include <Arduino.h>
+#include <math.h>
 #include <zenoh_ros/ZenohRos.h>
 
 // Standard ROS 2 Includes
@@ -106,33 +107,33 @@ public:
 
         // Custom Services
         srv_set_led_clr_ = z_create_service<z_SetLEDColor>("srv_custom/set_led_color",
-            [](const z_SetLEDColor::Request& req, z_SetLEDColor::Response& res) {
+            [this](const z_SetLEDColor::Request& req, z_SetLEDColor::Response& res) {
                 res.success = (req.led_data.r > 0 || req.led_data.brightness > 0);
-                res.message = "SetLEDColor OK";
+                res.message = "SetLEDColor OK Count " + std::to_string(count_);
             }
         );
 
         srv_set_clr_ = z_create_service<z_SetColor>("srv_custom/set_color",
-            [](const z_SetColor::Request& req, z_SetColor::Response& res) {
+            [this](const z_SetColor::Request& req, z_SetColor::Response& res) {
                 res.success = (req.r > 0 || req.g > 0 || req.b > 0);
-                res.message = "SetColor OK";
+                res.message = "SetColor OK Count " + std::to_string(count_);
             }
         );
 
         srv_cfg_robot_ = z_create_service<z_ConfigureRobot>("srv_custom/configure_robot",
-            [](const z_ConfigureRobot::Request& req, z_ConfigureRobot::Response& res) {
+            [this](const z_ConfigureRobot::Request& req, z_ConfigureRobot::Response& res) {
                 res.success = true;
-                res.status_message = "Motor " + std::to_string(req.target_status.motor_id) + " Configured";
+                res.status_message = "Motor " + std::to_string(req.target_status.motor_id) + " Configured Count " + std::to_string(count_);
             }
         );
 
         srv_full_ctrl_ = z_create_service<z_FullSystemControl>("srv_custom/full_system_control",
-            [](const z_FullSystemControl::Request& req, z_FullSystemControl::Response& res) {
-                res.current_telemetry.sensor_id = 99;
-                res.current_telemetry.temp = 38.2f;
+            [this](const z_FullSystemControl::Request& req, z_FullSystemControl::Response& res) {
+                res.current_telemetry.sensor_id = (int32_t)(count_ % 100);
+                res.current_telemetry.temp = 35.0f + (float)(count_ % 10);
                 res.current_telemetry.status_ok = true;
                 res.ack = true;
-                res.status_details = "FullSystemControl Code " + std::to_string(req.command_code) + " OK";
+                res.status_details = "FullSystemControl Code " + std::to_string(req.command_code) + " OK Count " + std::to_string(count_);
             }
         );
 
@@ -140,7 +141,6 @@ public:
     }
 
 private:
-    // Standard Publishers
     ZenohPublisher<z_Bool>* pub_bool_;
     ZenohPublisher<z_Int8>* pub_int8_;
     ZenohPublisher<z_UInt8>* pub_uint8_;
@@ -190,73 +190,79 @@ private:
     void publish_all() {
         count_++;
 
-        z_Bool msg_bool; msg_bool.data = true; pub_bool_->publish(msg_bool);
-        z_Int8 msg_int8; msg_int8.data = -42; pub_int8_->publish(msg_int8);
-        z_UInt8 msg_uint8; msg_uint8.data = 200; pub_uint8_->publish(msg_uint8);
-        z_Int16 msg_int16; msg_int16.data = -1234; pub_int16_->publish(msg_int16);
-        z_UInt16 msg_uint16; msg_uint16.data = 54321; pub_uint16_->publish(msg_uint16);
-        z_Int32 msg_int32; msg_int32.data = -987654; pub_int32_->publish(msg_int32);
-        z_UInt32 msg_uint32; msg_uint32.data = 3141592; pub_uint32_->publish(msg_uint32);
-        z_Int64 msg_int64; msg_int64.data = -9876543210LL; pub_int64_->publish(msg_int64);
-        z_UInt64 msg_uint64; msg_uint64.data = 18446744073709551615ULL; pub_uint64_->publish(msg_uint64);
-        z_Float32 msg_float32; msg_float32.data = 3.14159f; pub_float32_->publish(msg_float32);
-        z_Float64 msg_float64; msg_float64.data = 2.718281828459; pub_float64_->publish(msg_float64);
-        z_String msg_string; msg_string.data = "zenoh_ros_test_OK"; pub_string_->publish(msg_string);
+        z_Bool msg_bool; msg_bool.data = (count_ % 2 == 0); pub_bool_->publish(msg_bool);
+        z_Int8 msg_int8; msg_int8.data = (int8_t)(-50 + (count_ % 100)); pub_int8_->publish(msg_int8);
+        z_UInt8 msg_uint8; msg_uint8.data = (uint8_t)((count_ * 13) % 255); pub_uint8_->publish(msg_uint8);
+        z_Int16 msg_int16; msg_int16.data = (int16_t)(-2000 + (count_ % 4000)); pub_int16_->publish(msg_int16);
+        z_UInt16 msg_uint16; msg_uint16.data = (uint16_t)((count_ * 100) % 65000); pub_uint16_->publish(msg_uint16);
+        z_Int32 msg_int32; msg_int32.data = (int32_t)(-100000 + count_ * 100); pub_int32_->publish(msg_int32);
+        z_UInt32 msg_uint32; msg_uint32.data = (uint32_t)(3141592 + count_); pub_uint32_->publish(msg_uint32);
+        z_Int64 msg_int64; msg_int64.data = (int64_t)(-9876543210LL + count_); pub_int64_->publish(msg_int64);
+        z_UInt64 msg_uint64; msg_uint64.data = (uint64_t)(18446744073709551600ULL + count_); pub_uint64_->publish(msg_uint64);
+        z_Float32 msg_float32; msg_float32.data = 3.14159f + (float)(count_ % 100) * 0.01f; pub_float32_->publish(msg_float32);
+        z_Float64 msg_float64; msg_float64.data = 2.718281828459 + (double)count_ * 0.001; pub_float64_->publish(msg_float64);
+
+        z_String msg_string;
+        msg_string.data = "dyn_string_cycle_" + std::to_string(count_);
+        pub_string_->publish(msg_string);
 
         z_Header msg_header;
-        msg_header.stamp.sec = 1234567;
-        msg_header.stamp.nanosec = 890;
-        msg_header.frame_id = "test_frame";
+        msg_header.stamp.sec = millis() / 1000;
+        msg_header.stamp.nanosec = (millis() % 1000) * 1000000;
+        msg_header.frame_id = "frame_" + std::to_string(count_);
         pub_header_->publish(msg_header);
 
         z_Int32MultiArray msg_i32arr;
-        msg_i32arr.data = {10, 20, 30, 40, 50};
+        msg_i32arr.data = { (int32_t)count_, (int32_t)(count_ * 2), (int32_t)(count_ * 3) };
         pub_i32arr_->publish(msg_i32arr);
 
         z_Float64MultiArray msg_f64arr;
-        msg_f64arr.data = {1.1, 2.2, 3.3, 4.4, 5.5};
+        msg_f64arr.data = { (double)count_ * 0.1, (double)count_ * 0.2, (double)count_ * 0.3 };
         pub_f64arr_->publish(msg_f64arr);
 
         z_Imu msg_imu;
-        msg_imu.linear_acceleration.x = 0.01; msg_imu.linear_acceleration.y = 0.02; msg_imu.linear_acceleration.z = 9.81;
+        msg_imu.linear_acceleration.x = sin(count_ * 0.1);
+        msg_imu.linear_acceleration.y = cos(count_ * 0.1);
+        msg_imu.linear_acceleration.z = 9.81;
         pub_imu_->publish(msg_imu);
 
-        z_Temperature msg_temp; msg_temp.temperature = 36.6f; pub_temp_->publish(msg_temp);
-        z_Range msg_range; msg_range.range = 1.234f; pub_range_->publish(msg_range);
-        z_RelativeHumidity msg_hum; msg_hum.relative_humidity = 0.65f; pub_hum_->publish(msg_hum);
-        z_BatteryState msg_bat; msg_bat.voltage = 12.4f; pub_bat_->publish(msg_bat);
-        z_NavSatFix msg_gps; msg_gps.latitude = 24.8607; msg_gps.longitude = 67.0011; pub_gps_->publish(msg_gps);
-        z_JoyFeedback msg_joy; msg_joy.id = 3; msg_joy.intensity = 0.8f; pub_joy_->publish(msg_joy);
+        z_Temperature msg_temp; msg_temp.temperature = 25.0f + (float)(count_ % 20); pub_temp_->publish(msg_temp);
+        z_Range msg_range; msg_range.range = 1.0f + (float)(count_ % 10) * 0.1f; pub_range_->publish(msg_range);
+        z_RelativeHumidity msg_hum; msg_hum.relative_humidity = 0.5f + (float)(count_ % 50) * 0.01f; pub_hum_->publish(msg_hum);
+        z_BatteryState msg_bat; msg_bat.voltage = 11.0f + (float)(count_ % 30) * 0.1f; pub_bat_->publish(msg_bat);
+        z_NavSatFix msg_gps; msg_gps.latitude = 24.8607 + count_ * 0.0001; msg_gps.longitude = 67.0011 + count_ * 0.0001; pub_gps_->publish(msg_gps);
+        z_JoyFeedback msg_joy; msg_joy.id = count_ % 4; msg_joy.intensity = (float)(count_ % 10) * 0.1f; pub_joy_->publish(msg_joy);
 
         z_JointState msg_joint;
-        msg_joint.name = {"joint1", "joint2", "joint3"};
-        msg_joint.position = {0.1, 0.2, 0.3};
+        msg_joint.name = {"joint1_" + std::to_string(count_), "joint2_" + std::to_string(count_)};
+        msg_joint.position = { (double)(count_ % 10) * 0.1, (double)(count_ % 20) * 0.1 };
         pub_joint_->publish(msg_joint);
 
-        z_Vector3 msg_vec3; msg_vec3.x = 1.0; msg_vec3.y = 2.0; msg_vec3.z = 3.0; pub_vec3_->publish(msg_vec3);
-        z_Quaternion msg_quat; msg_quat.x = 0.0; msg_quat.y = 0.0; msg_quat.z = 0.707; msg_quat.w = 0.707; pub_quat_->publish(msg_quat);
-        z_Pose msg_pose; msg_pose.position.x = 1.0; msg_pose.orientation.w = 1.0; pub_pose_->publish(msg_pose);
-        z_Twist msg_twist; msg_twist.linear.x = 1.5; msg_twist.angular.z = 0.5; pub_twist_->publish(msg_twist);
+        z_Vector3 msg_vec3; msg_vec3.x = count_ * 0.1; msg_vec3.y = count_ * 0.2; msg_vec3.z = count_ * 0.3; pub_vec3_->publish(msg_vec3);
+        z_Quaternion msg_quat; msg_quat.x = sin(count_ * 0.05); msg_quat.y = 0.0; msg_quat.z = 0.0; msg_quat.w = cos(count_ * 0.05); pub_quat_->publish(msg_quat);
+        z_Pose msg_pose; msg_pose.position.x = count_ * 0.5; msg_pose.orientation.w = 1.0; pub_pose_->publish(msg_pose);
+        z_Twist msg_twist; msg_twist.linear.x = 1.0 + (count_ % 5) * 0.1; msg_twist.angular.z = 0.1 * (count_ % 10); pub_twist_->publish(msg_twist);
 
         // Custom Msgs
-        z_SetLED msg_led; msg_led.r = 255; msg_led.brightness = 100; pub_set_led_->publish(msg_led);
-        z_MPU6050Data msg_mpu; msg_mpu.accel_x = 0.1f; msg_mpu.accel_y = 0.2f; msg_mpu.accel_z = 9.81f; pub_mpu_->publish(msg_mpu);
-        z_RobotState msg_rst; msg_rst.name = "ZenohBot"; msg_rst.position.x = 1.0; msg_rst.velocity.linear.x = 0.5; pub_robot_st_->publish(msg_rst);
-        z_MotorStatus msg_mot; msg_mot.motor_id = 1; msg_mot.speed = 150.0f; msg_mot.is_active = true; pub_motor_st_->publish(msg_mot);
+        z_SetLED msg_led; msg_led.r = (count_ * 10) % 255; msg_led.brightness = count_ % 100; pub_set_led_->publish(msg_led);
+        z_MPU6050Data msg_mpu; msg_mpu.accel_x = sin(count_ * 0.1f); msg_mpu.accel_y = cos(count_ * 0.1f); msg_mpu.accel_z = 9.81f; pub_mpu_->publish(msg_mpu);
+        z_RobotState msg_rst; msg_rst.name = "ZenohBot_Cycle_" + std::to_string(count_); msg_rst.position.x = count_ * 0.1; msg_rst.velocity.linear.x = 0.5; pub_robot_st_->publish(msg_rst);
+        z_MotorStatus msg_mot; msg_mot.motor_id = (count_ % 4) + 1; msg_mot.speed = 100.0f + (count_ % 200); msg_mot.is_active = (count_ % 2 == 0); pub_motor_st_->publish(msg_mot);
 
         z_SensorTelemetry msg_telem;
-        msg_telem.sensor_id = 42; msg_telem.temp = 36.5f; msg_telem.status_ok = true;
+        msg_telem.sensor_id = count_ % 50; msg_telem.temp = 30.0f + (float)(count_ % 20); msg_telem.status_ok = true;
         pub_telemetry_->publish(msg_telem);
 
         z_RobotDiagnostic msg_diag;
-        msg_diag.robot_name = "ZenohBot"; msg_diag.left_motor.motor_id = 1; msg_diag.right_motor.motor_id = 2;
+        msg_diag.robot_name = "ZenohBot_V" + std::to_string(count_); msg_diag.left_motor.motor_id = 1; msg_diag.right_motor.motor_id = 2;
         pub_robot_diag_->publish(msg_diag);
 
         z_ComplexRobotState msg_cmplx;
-        msg_cmplx.robot_mode = "MASTER_TEST"; msg_cmplx.cycle_count = count_;
+        msg_cmplx.robot_mode = (count_ % 2 == 0) ? "NAVIGATING" : "CHARGING";
+        msg_cmplx.cycle_count = count_;
         pub_cmplx_st_->publish(msg_cmplx);
 
-        Serial.printf("[Pub] All 34 interfaces published! Count: %u\n", count_);
+        Serial.printf("[Pub] All 34 dynamic topics published! Cycle: %u\n", count_);
     }
 };
 
@@ -266,7 +272,7 @@ void setup() {
     Serial.begin(115200);
     z_delay(2000);
     Serial.println("\n==========================================");
-    Serial.println("  ALL-IN-ONE MASTER INTERFACE TEST FIRMWARE");
+    Serial.println("  DYNAMIC DATA MEMORY STRESS FIRMWARE");
     Serial.println("==========================================");
     if (ZenohNode::init(cfg)) {
         node_instance = new MasterTestNode();
