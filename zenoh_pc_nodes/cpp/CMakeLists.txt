@@ -94,3 +94,8 @@ endif()
 add_executable(master_interface_validator src/master_interface_validator.cpp)
 target_include_directories(master_interface_validator PRIVATE ../../shared_libraries/cpp/zenoh_ros)
 target_link_libraries(master_interface_validator PRIVATE ${ZENOHC_LIB})
+
+# Continuous Stress Validator Target
+add_executable(continuous_stress_validator src/continuous_stress_validator.cpp)
+target_include_directories(continuous_stress_validator PRIVATE ../../shared_libraries/cpp/zenoh_ros)
+target_link_libraries(continuous_stress_validator PRIVATE ${ZENOHC_LIB})
