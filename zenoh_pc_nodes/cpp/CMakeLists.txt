@@ -89,3 +89,8 @@ if(EXISTS "${LOCAL_3RDPARTY_DIR}/zenoh-c")
     endif()
     set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 endif()
+
+# Interface Test Validator
+add_executable(interface_test_validator src/interface_test_validator.cpp)
+target_include_directories(interface_test_validator PRIVATE ../../shared_libraries/cpp/zenoh_ros)
+target_link_libraries(interface_test_validator PRIVATE ${ZENOHC_LIB})

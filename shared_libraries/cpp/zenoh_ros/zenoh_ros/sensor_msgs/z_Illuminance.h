@@ -1,5 +1,5 @@
 #ifndef PC_SENSOR_MSGS_Z_ILLUMINANCE_H
 #define PC_SENSOR_MSGS_Z_ILLUMINANCE_H
-#include "../msg_interface/pre_defined_interface/z_sensor_msgs_pc.h"
-using z_Illuminance = sensor_msgs::z_Illuminance;
+#include "../../msg_interface/pre_defined_interface/z_sensor_msgs_pc.h"
+using z_Illuminance = z_sensor_msgs::z_Illuminance;
 #endif
