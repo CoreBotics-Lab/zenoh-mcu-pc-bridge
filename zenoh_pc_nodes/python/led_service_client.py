@@ -12,15 +12,14 @@ from zenoh_ros.custom_srvs import z_SetLEDColor
 class LEDServiceClientNode(ZenohNode):
     def __init__(self, service_name: str = "set_led_color") -> None:
         super().__init__("led_client_python")
-        self.logger = get_logger("led_client_python")
 
-        self.logger.info("==================================================")
-        self.logger.info("    Zenoh ROS 2 Service Client (Random RGB LED)   ")
-        self.logger.info("==================================================")
+        self.get_logger().info("==================================================")
+        self.get_logger().info("    Zenoh ROS 2 Service Client (Random RGB LED)   ")
+        self.get_logger().info("==================================================")
 
         self.service_name = service_name
         self.client = self.z_create_client(z_SetLEDColor, self.service_name)
-        self.logger.info("Service client initialized on '%s'...", self.service_name)
+        self.get_logger().info("Service client initialized on '%s'...", self.service_name)
 
         self.current_led = 0
 
@@ -44,19 +43,19 @@ class LEDServiceClientNode(ZenohNode):
             req.led_data.b = b
             req.led_data.brightness = brightness
 
-            self.logger.info("[Service Request] Set LED #%d -> RGB(%d, %d, %d) Brightness=%d", led_num, r, g, b, brightness)
+            self.get_logger().info("[Service Request] Set LED #%d -> RGB(%d, %d, %d) Brightness=%d", led_num, r, g, b, brightness)
 
             # Call service asynchronously with ROS 2 Future pattern inside try/except block
             future = self.client.call_async(req)
             res = future.result(timeout_sec=3.0)
 
             if res and hasattr(res, 'success') and res.success:
-                self.logger.info("[Service Response] Success=%s | Message='%s'\n", res.success, res.message)
+                self.get_logger().info("[Service Response] Success=%s | Message='%s'\n", res.success, res.message)
                 self.current_led = (self.current_led + 1) % 16
             else:
-                self.logger.warn("[Service Response] Call returned empty or failed response!\n")
+                self.get_logger().warn("[Service Response] Call returned empty or failed response!\n")
         except Exception as e:
-            self.logger.warn("[Service Response] Service call timed out or failed: %s\n", e)
+            self.get_logger().warn("[Service Response] Service call timed out or failed: %s\n", e)
 
 
 def main() -> None:

@@ -265,6 +265,12 @@ class ZenohNode:
         self.timers = []
         self.services = []
         self.clients = []
+        from .logging import get_logger
+        self._logger = get_logger(node_name)
+
+    def get_logger(self):
+        """Return the ROS 2 logger instance for this node."""
+        return self._logger
 
     def get_clock(self) -> ZenohClock:
         return self.node_clock
