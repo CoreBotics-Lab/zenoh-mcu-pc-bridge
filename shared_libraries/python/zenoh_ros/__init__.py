@@ -8,7 +8,8 @@ from .node import (
     Durability,
     ZenohPublisher,
     ZenohSubscription,
-    ZenohTimer
+    ZenohTimer,
+    BaudRate
 )
 from .logging import (
     ZenohLogger,

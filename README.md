@@ -349,3 +349,49 @@ shared_libraries/tools/build/echo ws2812b_service_server/log
 
 - MCU Server Example: [`mcu_firmware_examples/RGB_ZenohRosSrv/src/main.cpp`](file:///home/syed-abdul-hayi/Corebotics%20Lab/zenoh_ws/mcu_firmware_examples/RGB_ZenohRosSrv/src/main.cpp)
 - PC Python Client Example: [`zenoh_pc_nodes/python/led_service_client.py`](file:///home/syed-abdul-hayi/Corebotics%20Lab/zenoh_ws/zenoh_pc_nodes/python/led_service_client.py)
+
+
+---
+
+## 🔌 Serial UART & USB CDC Transport Support
+
+In addition to Wi-Fi (SoftAP & STA modes), `zenoh_ros` natively supports direct Serial UART and Native USB CDC communications.
+
+### Transport Modes & Preset Speeds
+
+| Transport Mode Enum | Description | Preset Baud Rate Enum | Throughput / Bandwidth |
+| :--- | :--- | :--- | :--- |
+| `ZENOH_TRANSPORT_UART_DEFAULT` **(Default)** | Standard UART0 over built-in USB/UART flashing port (`Serial`) | `ZenohBaudRate::UART_STANDARD` (`115200`) | `~11.5 KB/s` (Low-frequency single-topic nodes) |
+| `ZENOH_TRANSPORT_UART_USB_CDC` | Native USB CDC Serial (`USBSerial` / USB OTG PHY) | `ZenohBaudRate::USB_STANDARD` (`3000000`) | `~300 KB/s - 1.2 MB/s` (High-rate binary streaming) |
+| `ZENOH_TRANSPORT_UART_HW` | Hardware UART on custom RX/TX pins (`Serial1`) | `ZenohBaudRate::UART_HIGH_SPEED` (`921600`) | `~92 KB/s` (Multi-topic telemetry) |
+| `ZENOH_TRANSPORT_WIFI` | Wireless TCP/UDP connection | N/A | `~2.5 MB/s - 5.0 MB/s` |
+
+> [!WARNING]
+> **Serial Bandwidth Note**: Streaming 30+ dynamic topics simultaneously at high rates over standard `115,200 baud` UART can saturate the serial bus buffer. For multi-topic nodes, use `UART_HIGH_SPEED` (`921,600 baud`) or `USB_STANDARD` (`3,000,000 baud`).
+
+### Usage Examples
+
+- **MCU (C++)**:
+  ```cpp
+  // Default UART0 over USB flashing port
+  ZenohConfig cfg;
+  cfg.transport_mode = ZenohTransportMode::ZENOH_TRANSPORT_UART_DEFAULT;
+  cfg.baudrate = (uint32_t)ZenohBaudRate::UART_HIGH_SPEED;
+  ZenohNode::init(cfg);
+  
+  // Custom Hardware UART pins (RX=12, TX=13)
+  ZenohConfig hw_cfg;
+  hw_cfg.transport_mode = ZenohTransportMode::ZENOH_TRANSPORT_UART_HW;
+  hw_cfg.uart_pins = { .rx = 12, .tx = 13 };
+  hw_cfg.baudrate = (uint32_t)ZenohBaudRate::UART_HIGH_SPEED;
+  ZenohNode::init(hw_cfg);
+  ```
+
+- **PC (Python)**:
+  ```python
+  from zenoh_ros import ZenohNode, ZenohConfig, BaudRate
+
+  # Auto-detect MCU serial port (/dev/ttyACM0 or /dev/ttyUSB0 on Linux / COM3 on Windows)
+  config = ZenohConfig(transport="serial", uart_port="auto", baudrate=BaudRate.UART_HIGH_SPEED)
+  ZenohNode.init(config)
+  ```

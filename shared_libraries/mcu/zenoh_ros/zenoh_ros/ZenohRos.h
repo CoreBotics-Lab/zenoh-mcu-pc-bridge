@@ -9,15 +9,53 @@
 #include <functional>
 #include <vector>
 
-// Configuration structure for the Zenoh node and Wi-Fi SoftAP
+/**
+ * @brief Preset baudrate speeds for Serial UART and USB CDC transport modes.
+ *
+ * PERFORMANCE WARNING NOTES:
+ * - UART_STANDARD (115,200 baud): Throughput ~11.5 KB/s. Ideal for low-frequency single-topic nodes.
+ *   (Note: Streaming 30+ dynamic topics simultaneously at high rates will saturate the serial bus buffer).
+ * - UART_HIGH_SPEED (921,600 baud): Throughput ~92 KB/s. Recommended for multi-topic setups without heavy binary payloads.
+ * - USB_STANDARD (3,000,000 baud): Throughput ~300 KB/s. High-rate binary payloads over native USB CDC.
+ * - USB_HIGH_SPEED (12,000,000 baud): Throughput ~1.2 MB/s. Ultra-high rate streaming over USB CDC OTG.
+ */
+enum class ZenohBaudRate : uint32_t {
+    UART_STANDARD   = 115200,    ///< Standard UART speed (11.5 KB/s max throughput)
+    UART_HIGH_SPEED = 921600,    ///< High-Speed UART speed (92 KB/s max throughput - Recommended for multi-topic)
+    USB_STANDARD    = 3000000,   ///< Native USB CDC Standard speed (300 KB/s max throughput)
+    USB_HIGH_SPEED  = 12000000   ///< Native USB CDC High speed (1.2 MB/s max throughput)
+};
+
+/**
+ * @brief Transport mode for Zenoh communication link between MCU and PC.
+ */
+enum class ZenohTransportMode {
+    ZENOH_TRANSPORT_UART_DEFAULT = 0, ///< Default: UART0 over built-in USB/UART flashing port (Serial)
+    ZENOH_TRANSPORT_UART_USB_CDC = 1, ///< Native USB CDC Serial (USBSerial / Native USB OTG PHY)
+    ZENOH_TRANSPORT_UART_HW      = 2, ///< Hardware UART on custom pins (.uart_pins = { .rx = 12, .tx = 13 })
+    ZENOH_TRANSPORT_WIFI         = 3  ///< Wireless TCP/UDP connection (SoftAP or STA)
+};
+
+struct UARTPins {
+    int8_t rx = -1;
+    int8_t tx = -1;
+};
+
+// Configuration structure for the Zenoh node
 struct ZenohConfig {
-    const char* ssid;
-    const char* password;
-    uint16_t port;
-    const char* local_ip; // Optional: custom static IP for SoftAP (defaults to 192.168.4.1)
-    const char* gateway;  // Optional: gateway IP for SoftAP (defaults to local_ip)
-    const char* subnet;   // Optional: subnet mask for SoftAP (defaults to 255.255.255.0)
-    WiFiMode_t wifi_mode; // Optional: Wi-Fi mode (WIFI_STA or WIFI_AP, defaults to WIFI_AP)
+    // --- Transport Selection ---
+    ZenohTransportMode transport_mode = ZenohTransportMode::ZENOH_TRANSPORT_UART_DEFAULT;
+    uint32_t baudrate = (uint32_t)ZenohBaudRate::UART_STANDARD;
+    UARTPins uart_pins; // Custom RX/TX pins for ZENOH_TRANSPORT_UART_HW
+
+    // --- Wi-Fi Parameters (used when transport_mode == ZENOH_TRANSPORT_WIFI) ---
+    const char* ssid = nullptr;
+    const char* password = nullptr;
+    uint16_t port = 7447;
+    const char* local_ip = nullptr; // Optional: custom static IP for SoftAP/STA
+    const char* gateway = nullptr;  // Optional: gateway IP
+    const char* subnet = nullptr;   // Optional: subnet mask
+    WiFiMode_t wifi_mode = WIFI_AP; // Wi-Fi mode (WIFI_STA or WIFI_AP)
 };
 
 // --- ROS2-style QoS settings ---

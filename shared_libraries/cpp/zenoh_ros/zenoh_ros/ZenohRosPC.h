@@ -450,11 +450,26 @@ public:
     }
 };
 
+/**
+ * @brief Preset baudrate speeds for Serial UART and USB CDC transport modes on PC.
+ */
+enum class ZenohBaudRate : uint32_t {
+    UART_STANDARD   = 115200,    ///< Standard UART speed (11.5 KB/s max throughput)
+    UART_HIGH_SPEED = 921600,    ///< High-Speed UART speed (92 KB/s max throughput)
+    USB_STANDARD    = 3000000,   ///< Native USB CDC Standard speed (300 KB/s max throughput)
+    USB_HIGH_SPEED  = 12000000   ///< Native USB CDC High speed (1.2 MB/s max throughput)
+};
+
 // Configuration structure for the Zenoh node on PC
 struct ZenohConfig {
+    std::string transport = "serial";  ///< "serial" (Default) or "wifi"
+    std::string uart_port = "auto";    ///< "auto" (Auto-detect), "/dev/ttyACM0", "/dev/ttyUSB0", "COM3"
+    uint32_t baudrate = 115200;       ///< 115200, 921600, 3000000, 12000000
+    
+    // Wi-Fi Parameters
     std::string host = "192.168.4.1";
     uint16_t port = 7447;
-    std::string connect_endpoint = ""; // If specified, overrides host/port
+    std::string connect_endpoint = ""; // If specified, overrides host/port/serial
 };
 
 // Main Zenoh Node Class for PC

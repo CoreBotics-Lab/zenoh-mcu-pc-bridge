@@ -1,3 +1,38 @@
+import glob
+from enum import IntEnum
+
+class BaudRate(IntEnum):
+    """
+    Preset baudrate speeds for Serial UART and USB CDC transport modes.
+
+    PERFORMANCE WARNING NOTES:
+    - UART_STANDARD (115,200 baud): Throughput ~11.5 KB/s. Ideal for low-frequency single-topic nodes.
+    - UART_HIGH_SPEED (921,600 baud): Throughput ~92 KB/s. Recommended for multi-topic setups without heavy binary payloads.
+    - USB_STANDARD (3,000,000 baud): Throughput ~300 KB/s. High-rate binary payloads over native USB CDC.
+    - USB_HIGH_SPEED (12,000,000 baud): Throughput ~1.2 MB/s. Ultra-high rate streaming over USB CDC OTG.
+    """
+    UART_STANDARD   = 115200
+    UART_HIGH_SPEED = 921600
+    USB_STANDARD    = 3000000
+    USB_HIGH_SPEED  = 12000000
+
+
+def auto_detect_mcu_serial_port() -> str:
+    """Auto-detect active MCU serial port on Linux or Windows."""
+    if sys.platform.startswith("win"):
+        try:
+            import serial.tools.list_ports
+            ports = list(serial.tools.list_ports.comports())
+            if ports:
+                return ports[0].device
+        except Exception:
+            pass
+        return "COM3"
+    else:
+        candidates = sorted(glob.glob("/dev/ttyACM*") + glob.glob("/dev/ttyUSB*"))
+        if candidates:
+            return candidates[0]
+        return "/dev/ttyACM0"
 import zenoh
 import msgpack
 import threading
@@ -245,7 +280,18 @@ class ZenohClient:
 
 
 class ZenohConfig:
-    def __init__(self, host: str = "192.168.4.1", port: int = 7447, connect_endpoint: str = "") -> None:
+    def __init__(
+        self,
+        transport: str = "serial",
+        uart_port: str = "auto",
+        baudrate: int = BaudRate.UART_STANDARD,
+        host: str = "192.168.4.1",
+        port: int = 7447,
+        connect_endpoint: str = ""
+    ) -> None:
+        self.transport = transport
+        self.uart_port = uart_port
+        self.baudrate = baudrate
         self.host = host
         self.port = port
         self.connect_endpoint = connect_endpoint
@@ -308,6 +354,12 @@ class ZenohNode:
             endpoints = []
             if config.connect_endpoint:
                 endpoints = [config.connect_endpoint]
+            elif config.transport.lower() == "serial":
+                port_name = config.uart_port
+                if port_name.lower() == "auto":
+                    port_name = auto_detect_mcu_serial_port()
+                    print(f"[Zenoh] Auto-detected MCU serial port: {port_name}")
+                endpoints = [f"serial/{port_name}#baudrate={config.baudrate}"]
             elif config.host:
                 endpoints = [f"tcp/{config.host}:{config.port}"]
 
