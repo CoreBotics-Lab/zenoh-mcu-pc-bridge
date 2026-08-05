@@ -9,7 +9,7 @@ import numpy as np
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../shared_libraries/python')))
 
 from zenoh_ros import ZenohNode, ZenohConfig
-from zenoh_ros.custom_msgs import z_MPU6050Data
+from zenoh_ros.sensor_msgs import z_Imu
 
 # Attempt to import pygame
 try:
@@ -31,15 +31,15 @@ latest_msg = None
 class MPUSubscriberNode(ZenohNode):
     def __init__(self) -> None:
         super().__init__("flight_sim_subscriber")
-        print(f"[Node] {self.z_get_name()} started")
+        self.get_logger().info("Node has been started")
         self.sub = self.z_create_subscription(
-            z_MPU6050Data,
+            z_Imu,
             "robot/mpu6050",
             self.listener_callback,
             10
         )
 
-    def listener_callback(self, msg: z_MPU6050Data) -> None:
+    def listener_callback(self, msg: z_Imu) -> None:
         global current_roll, current_pitch, current_yaw, last_time, latest_msg
         latest_msg = msg
 
@@ -50,16 +50,18 @@ class MPUSubscriberNode(ZenohNode):
         last_time = now
 
         # 1. Accelerometer Pitch and Roll estimation (in radians)
-        acc_x, acc_y, acc_z = msg.accel_x, msg.accel_y, msg.accel_z
+        acc_x = msg.linear_acceleration.x
+        acc_y = msg.linear_acceleration.y
+        acc_z = msg.linear_acceleration.z
         
         # Standard MPU6050 pitch & roll from gravity vector
         roll_acc = math.atan2(acc_y, acc_z)
         pitch_acc = math.atan2(-acc_x, math.sqrt(acc_y * acc_y + acc_z * acc_z))
 
         # 2. Convert Gyro values from rad/s to deg/s
-        gyro_x_deg = math.degrees(msg.gyro_x)  # Roll rate
-        gyro_y_deg = math.degrees(msg.gyro_y)   # Pitch rate
-        gyro_z_deg = math.degrees(msg.gyro_z)   # Yaw rate
+        gyro_x_deg = math.degrees(msg.angular_velocity.x)  # Roll rate
+        gyro_y_deg = math.degrees(msg.angular_velocity.y)  # Pitch rate
+        gyro_z_deg = math.degrees(msg.angular_velocity.z)  # Yaw rate
 
         # 3. Complementary Filter (96% Gyro + 4% Accelerometer)
         current_roll = 0.96 * (current_roll + gyro_x_deg * dt) + 0.04 * math.degrees(roll_acc)
@@ -253,7 +255,7 @@ def main():
     title_font = pygame.font.SysFont("monospace", 20, bold=True)
 
     running = True
-    print("[Flight Sim] 3D Renderer started. Press ESC or close window to exit.")
+    node.get_logger().info("3D Renderer started. Press ESC or close window to exit.")
 
     while running:
         # Handle Pygame Events
@@ -312,8 +314,8 @@ def main():
         ]
         if latest_msg:
             lines.extend([
-                f"Accel: ({latest_msg.accel_x:5.1f}, {latest_msg.accel_y:5.1f}, {latest_msg.accel_z:5.1f}) m/s²",
-                f"Gyro : ({latest_msg.gyro_x:5.1f}, {latest_msg.gyro_y:5.1f}, {latest_msg.gyro_z:5.1f}) rad/s"
+                f"Accel: ({latest_msg.linear_acceleration.x:5.1f}, {latest_msg.linear_acceleration.y:5.1f}, {latest_msg.linear_acceleration.z:5.1f}) m/s²",
+                f"Gyro : ({latest_msg.angular_velocity.x:5.1f}, {latest_msg.angular_velocity.y:5.1f}, {latest_msg.angular_velocity.z:5.1f}) rad/s"
             ])
         else:
             lines.append("Status: Waiting for Zenoh stream...")
@@ -331,8 +333,8 @@ def main():
     # Clean Pygame & Zenoh Shutdown
     pygame.quit()
     if node:
-        node.z_destroy()
-    print("[Flight Sim] Closed successfully.")
+        node.get_logger().info("Closed successfully.")
+    ZenohNode.shutdown()
 
 
 if __name__ == '__main__':
@@ -341,5 +343,4 @@ if __name__ == '__main__':
     try:
         main()
     except (KeyboardInterrupt, SystemExit):
-        print("\n[Flight Sim] Closed.")
         sys.exit(0)

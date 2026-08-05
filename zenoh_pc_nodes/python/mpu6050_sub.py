@@ -11,7 +11,7 @@ from zenoh_ros.sensor_msgs import z_Imu
 class MPU6050SubscriberNode(ZenohNode):
     def __init__(self) -> None:
         super().__init__("mpu6050_subscriber")
-        print(f"[Node] {self.z_get_name()} has been started")
+        self.get_logger().info("Node has been started")
 
         # Create subscription to topic "robot/mpu6050" with standard ROS 2 z_Imu type
         self.sub = self.z_create_subscription(
@@ -22,7 +22,7 @@ class MPU6050SubscriberNode(ZenohNode):
         )
 
     def listener_callback(self, msg: z_Imu) -> None:
-        print(
+        self.get_logger().info(
             f"[IMU RECV] [stamp: {msg.header.stamp.sec}.{msg.header.stamp.nanosec:09d}] "
             f"Accel: ({msg.linear_acceleration.x:6.2f}, {msg.linear_acceleration.y:6.2f}, {msg.linear_acceleration.z:6.2f}) m/s² | "
             f"Gyro: ({msg.angular_velocity.x:6.2f}, {msg.angular_velocity.y:6.2f}, {msg.angular_velocity.z:6.2f}) rad/s"
@@ -40,16 +40,17 @@ def main() -> None:
         node_instance.z_spin()
 
     except KeyboardInterrupt:
-        print("\n[CTRL+C] Interrupted by user.")
+        if node_instance:
+            node_instance.get_logger().info("Shutdown requested via KeyboardInterrupt.")
 
     except Exception as e:
-        print(f"Critical Error: {e}")
+        if node_instance:
+            node_instance.get_logger().error(f"Critical Error: {e}")
 
     finally:
-        if node_instance is not None:
-            print("Destroying the Zenoh Node...")
-            node_instance.z_destroy()
+        ZenohNode.shutdown()
 
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
