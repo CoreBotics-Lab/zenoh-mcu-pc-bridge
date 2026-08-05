@@ -8,6 +8,7 @@
 #include <ArduinoJson.h>
 #include <functional>
 #include <vector>
+#include "z_logger.h"
 
 /**
  * @brief Preset baudrate speeds for Serial UART and USB CDC transport modes.
@@ -521,9 +522,16 @@ private:
     std::vector<std::function<void()>> cleanup_callbacks;
     ZenohClock node_clock;
     std::vector<std::pair<String, String>> parameters;
+    ZLogger logger_;
 
 public:
-    ZenohNode(const char* name) : node_name(name) {}
+    ZenohNode(const char* name) : node_name(name), logger_(name) {
+        logger_.z_attach(this);
+    }
+
+    ZLogger& get_logger() {
+        return logger_;
+    }
 
     ~ZenohNode() {
         for (auto& cleanup : cleanup_callbacks) {

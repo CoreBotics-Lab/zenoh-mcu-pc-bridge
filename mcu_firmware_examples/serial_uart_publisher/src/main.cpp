@@ -13,14 +13,14 @@ using namespace z_std_msgs;
 // Configuration Struct for UART0 (Default USB flashing port at High Speed 921600 baud)
 ZenohConfig cfg = {
     .communication_mode = ZenohCommunicationMode::ZENOH_COMM_UART_DEFAULT,
-    .baudrate       = (uint32_t)ZenohBaudRate::UART_HIGH_SPEED
+    .baudrate           = (uint32_t)ZenohBaudRate::UART_HIGH_SPEED
 };
 
 class SerialUARTPublisherNode : public ZenohNode {
 public:
     SerialUARTPublisherNode() 
         : ZenohNode("serial_uart_mcu_node"), cnt_(0) {
-        Serial.printf("[Node] %s initialized on Serial UART!\n", this->z_get_name());
+        ZLOG_INFO(this->get_logger(), "Node %s initialized on Serial UART!", this->z_get_name());
         
         // 1. Create typed publishers
         pub_count_ = this->z_create_publisher<z_Int32>("serial/counter", 10);
@@ -49,8 +49,8 @@ private:
             temp_msg_.data = 25.0 + (random(0, 100) / 10.0);
             pub_temp_->publish(temp_msg_);
 
-            Serial.printf("[%s] Published Counter: %d | Temperature: %.2f °C\n",
-                          this->z_get_name(), count_msg_.data, temp_msg_.data);
+            ZLOG_INFO(this->get_logger(), "Published Counter: %d | Temperature: %.2f °C",
+                      count_msg_.data, temp_msg_.data);
         }
     }
 };
