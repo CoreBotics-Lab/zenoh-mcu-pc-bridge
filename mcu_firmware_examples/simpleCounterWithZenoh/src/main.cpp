@@ -27,7 +27,7 @@ class Counter_publisher_node_class : public ZenohNode {
 public:
     Counter_publisher_node_class() 
         : ZenohNode("counter_publisher"), cnt_(random(255, 1024)) {
-        Serial.printf("[Node] %s has been started (starting counter at: %d)\n", this->z_get_name(), cnt_);
+        ZLOG_INFO(this->get_logger(), "Node %s started at counter: %d", this->z_get_name(), cnt_);
         
         // 1. Create a typed publisher with custom queue depth (exactly like in ROS 2)
         publisher_ = this->z_create_publisher<z_Int32>("robot/sim_counter", 10);
@@ -57,7 +57,7 @@ private:
             msg.data = this->cnt_;
             this->publisher_->publish(msg);
             
-            Serial.printf("[%s] Publishing: %d\n", this->z_get_name(), msg.data);
+            ZLOG_INFO(this->get_logger(), "Publishing: %d", msg.data);
         }
     }
 };
