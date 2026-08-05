@@ -389,11 +389,11 @@ class ZenohNode:
         return self.parameters.get(name, default_val)
 
     @classmethod
-    def init(cls, config: Optional[ZenohConfig] = None) -> None:
+    def init(cls, config: Optional[ZenohConfig] = None) -> bool:
         with cls._lock:
             if cls._session is not None:
                 cls._session_refcount += 1
-                return
+                return True
 
             if config is None:
                 config = ZenohConfig()
@@ -451,6 +451,8 @@ class ZenohNode:
                 _set_zenoh_session(cls._session)
             except Exception:
                 pass
+
+            return cls._session is not None
 
     @classmethod
     def shutdown(cls) -> None:
