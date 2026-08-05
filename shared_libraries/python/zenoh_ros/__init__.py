@@ -1,3 +1,7 @@
+from .z_std_msgs import (
+    z_Int32, z_Int64, z_Float32, z_Float64, z_String, z_Bool,
+    z_Int32MultiArray, z_Float32MultiArray, z_ByteMultiArray
+)
 from .node import (
     ZenohNode,
     ZenohConfig,

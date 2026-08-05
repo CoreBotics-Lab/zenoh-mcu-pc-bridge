@@ -5,13 +5,7 @@ import os
 # Ensure the shared zenoh_ros package can be imported
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../shared_libraries/python')))
 
-from zenoh_ros import (
-    ZenohNode,
-    ZenohConfig,
-    ZenohCommunicationMode,
-    ZenohBaudRate
-)
-from zenoh_ros.z_std_msgs import z_Int32, z_Float32
+from zenoh_ros import ZenohNode, z_Int32, z_Float32
 
 class SerialUARTListenerNode(ZenohNode):
     def __init__(self) -> None:
@@ -45,13 +39,12 @@ class SerialUARTListenerNode(ZenohNode):
 
 
 def main() -> None:
-    # Auto-detect connected MCU serial port (/dev/ttyACM0, /dev/ttyUSB0, or COM*) over Native USB CDC at USB_HIGH_SPEED (12 Mbps)
-    config = ZenohConfig(
-        communication_mode=ZenohCommunicationMode.ZENOH_COMM_UART_USB_CDC,
+    # Initialize Zenoh Node directly with parameters on ZenohNode (no extra config imports required)
+    ZenohNode.init(
+        communication_mode=ZenohNode.ZENOH_COMM_UART_USB_CDC,
         uart_port="auto",
-        baudrate=ZenohBaudRate.USB_HIGH_SPEED
+        baudrate=ZenohNode.USB_HIGH_SPEED
     )
-    ZenohNode.init(config)
 
     node_instance = None
     try:

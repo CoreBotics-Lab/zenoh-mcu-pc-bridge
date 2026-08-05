@@ -329,6 +329,25 @@ class ZenohConfig:
 
 
 class ZenohNode:
+    ZenohConfig = ZenohConfig
+    Config = ZenohConfig
+    ZenohCommunicationMode = ZenohCommunicationMode
+    CommunicationMode = ZenohCommunicationMode
+    ZenohBaudRate = ZenohBaudRate
+    BaudRate = ZenohBaudRate
+
+    ZENOH_COMM_UART_DEFAULT = ZenohCommunicationMode.ZENOH_COMM_UART_DEFAULT
+    ZENOH_COMM_UART_USB_CDC = ZenohCommunicationMode.ZENOH_COMM_UART_USB_CDC
+    ZENOH_COMM_UART_HW      = ZenohCommunicationMode.ZENOH_COMM_UART_HW
+    ZENOH_COMM_WIFI         = ZenohCommunicationMode.ZENOH_COMM_WIFI
+
+    UART_STANDARD   = ZenohBaudRate.UART_STANDARD
+    UART_HIGH_SPEED = ZenohBaudRate.UART_HIGH_SPEED
+    USB_STANDARD    = ZenohBaudRate.USB_STANDARD
+    USB_HIGH_SPEED  = ZenohBaudRate.USB_HIGH_SPEED
+
+    SERIAL = "serial"
+    WIFI   = "wifi"
     _session: ClassVar[Optional[zenoh.Session]] = None
     _session_refcount = 0
     _lock = threading.RLock()
