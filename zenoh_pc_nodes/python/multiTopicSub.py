@@ -38,7 +38,9 @@ class MultiTopicSubscriberNode(ZenohNode):
 
 def main() -> None:
     # Initialize with default AP network settings (IP: 192.168.4.1, Port: 7447)
-    ZenohNode.init(host="192.168.4.1", port=7447)
+    cfg = ZenohConfig(host="192.168.4.1", port=7447)
+    if not ZenohNode.init(cfg):
+        return
     node_instance = None
     try:
         node_instance = MultiTopicSubscriberNode()

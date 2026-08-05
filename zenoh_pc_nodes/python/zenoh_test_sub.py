@@ -27,7 +27,9 @@ class CounterSubscriberNode(ZenohNode):
 
 
 def main() -> None:
-    ZenohNode.init(host="10.42.0.50", port=7447)
+    cfg = ZenohConfig(host="10.42.0.50", port=7447)
+    if not ZenohNode.init(cfg):
+        return
     node_instance = None
     try:
         node_instance = CounterSubscriberNode()
