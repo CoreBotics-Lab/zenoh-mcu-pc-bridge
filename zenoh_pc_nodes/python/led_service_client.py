@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import sys
 import os
+import time
 import random
 
 # Ensure the shared zenoh_ros package can be imported
@@ -22,12 +23,26 @@ class LEDServiceClientNode(ZenohNode):
         self.get_logger().info("Service client initialized on '%s'...", self.service_name)
 
         self.current_led = 0
+        self._first_time = True
 
         # Create ROS 2 timer triggering callback every 1000ms (1.0s)
         self.timer = self.z_create_timer(1000, self.timer_callback)
 
     def timer_callback(self) -> None:
         try:
+            if self._first_time:
+                self.get_logger().info("Resetting all 16 LEDs off on startup...")
+                for i in range(16):
+                    reset_req = z_SetLEDColor.Request()
+                    reset_req.led_data.led_num = i
+                    reset_req.led_data.r = 0
+                    reset_req.led_data.g = 0
+                    reset_req.led_data.b = 0
+                    reset_req.led_data.brightness = 0
+                    self.client.call_async(reset_req)
+                self._first_time = False
+                time.sleep(0.2)
+
             led_num = self.current_led
 
             r = random.randint(0, 255)
