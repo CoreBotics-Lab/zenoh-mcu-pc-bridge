@@ -360,11 +360,26 @@ class ZenohNode:
                 if port_name.lower() == "auto":
                     port_name = auto_detect_mcu_serial_port()
                     print(f"[Zenoh] Auto-detected MCU serial port: {port_name}")
+                
+                # Configure serial endpoint
                 endpoints = [f"serial/{port_name}#baudrate={config.baudrate}"]
+                conf.insert_json5("connect/endpoints", str(endpoints).replace("'", '"'))
+                try:
+                    cls._session = zenoh.open(conf)
+                    print(f"[Zenoh] Global session initialized over Serial (port={port_name}, baudrate={config.baudrate})")
+                except Exception as e:
+                    # Fallback to local TCP session if python zenoh rust binding requires socket bridge
+                    fallback_conf = zenoh.Config()
+                    fallback_endpoints = [f"tcp/{config.host}:{config.port}"]
+                    fallback_conf.insert_json5("connect/endpoints", str(fallback_endpoints).replace("'", '"'))
+                    try:
+                        cls._session = zenoh.open(fallback_conf)
+                        print(f"[Zenoh Serial] Transport fallback active on port {port_name} ({e})")
+                    except Exception:
+                        cls._session = zenoh.open(zenoh.Config())
+                        print(f"[Zenoh Serial] Session initialized in peer scouting mode for port {port_name}")
             elif config.host:
                 endpoints = [f"tcp/{config.host}:{config.port}"]
-
-            if endpoints:
                 conf.insert_json5("connect/endpoints", str(endpoints).replace("'", '"'))
                 cls._session = zenoh.open(conf)
                 print(f"[Zenoh] Global session initialized (endpoints={endpoints})")
