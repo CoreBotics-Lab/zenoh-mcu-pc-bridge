@@ -29,12 +29,22 @@ enum class ZenohBaudRate : uint32_t {
 /**
  * @brief Transport mode for Zenoh communication link between MCU and PC.
  */
-enum class ZenohTransportMode {
-    ZENOH_TRANSPORT_UART_DEFAULT = 0, ///< Default: UART0 over built-in USB/UART flashing port (Serial)
-    ZENOH_TRANSPORT_UART_USB_CDC = 1, ///< Native USB CDC Serial (USBSerial / Native USB OTG PHY)
-    ZENOH_TRANSPORT_UART_HW      = 2, ///< Hardware UART on custom pins (.uart_pins = { .rx = 12, .tx = 13 })
-    ZENOH_TRANSPORT_WIFI         = 3  ///< Wireless TCP/UDP connection (SoftAP or STA)
+/**
+ * @brief Communication mode for Zenoh connection link between MCU and PC.
+ */
+enum class ZenohCommunicationMode {
+    ZENOH_COMM_UART_DEFAULT = 0, ///< Default: UART0 over built-in USB/UART flashing port (Serial)
+    ZENOH_COMM_UART_USB_CDC = 1, ///< Native USB CDC Serial (USBSerial / Native USB OTG PHY)
+    ZENOH_COMM_UART_HW      = 2, ///< Hardware UART on custom pins (.uart_pins = { .rx = 12, .tx = 13 })
+    ZENOH_COMM_WIFI         = 3  ///< Wireless TCP/UDP connection (SoftAP or STA)
 };
+
+// Aliases for backward compatibility
+using ZenohTransportMode = ZenohCommunicationMode;
+#define ZENOH_TRANSPORT_UART_DEFAULT ZenohCommunicationMode::ZENOH_COMM_UART_DEFAULT
+#define ZENOH_TRANSPORT_UART_USB_CDC ZenohCommunicationMode::ZENOH_COMM_UART_USB_CDC
+#define ZENOH_TRANSPORT_UART_HW      ZenohCommunicationMode::ZENOH_COMM_UART_HW
+#define ZENOH_TRANSPORT_WIFI         ZenohCommunicationMode::ZENOH_COMM_WIFI
 
 struct UARTPins {
     int8_t rx;
@@ -51,9 +61,9 @@ struct ZenohConfig {
     const char* subnet;   // Optional: subnet mask
     WiFiMode_t wifi_mode; // Wi-Fi mode (WIFI_STA or WIFI_AP)
 
-    ZenohTransportMode transport_mode;
+    ZenohCommunicationMode communication_mode;
     uint32_t baudrate;
-    UARTPins uart_pins; // Custom RX/TX pins for ZENOH_TRANSPORT_UART_HW
+    UARTPins uart_pins; // Custom RX/TX pins for ZENOH_COMM_UART_HW
 };
 
 // --- ROS2-style QoS settings ---

@@ -59,7 +59,8 @@ ZenohConfig cfg = {
     .password  = WIFI_PASSWORD,
     .port      = 7447,
     .local_ip  = "10.42.0.50",
-    .wifi_mode = WIFI_STA
+    .wifi_mode = WIFI_STA,
+    .communication_mode = ZenohCommunicationMode::ZENOH_COMM_WIFI
 };
 
 class MasterTestNode : public ZenohNode {

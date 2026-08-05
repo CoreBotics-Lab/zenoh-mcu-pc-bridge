@@ -12,7 +12,7 @@ using namespace z_std_msgs;
 
 // Configuration Struct for UART0 (Default USB flashing port at High Speed 921600 baud)
 ZenohConfig cfg = {
-    .transport_mode = ZenohTransportMode::ZENOH_TRANSPORT_UART_DEFAULT,
+    .communication_mode = ZenohCommunicationMode::ZENOH_COMM_UART_DEFAULT,
     .baudrate       = (uint32_t)ZenohBaudRate::UART_HIGH_SPEED
 };
 
