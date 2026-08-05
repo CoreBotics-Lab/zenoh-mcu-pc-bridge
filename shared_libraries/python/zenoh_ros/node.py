@@ -1,6 +1,23 @@
 import sys
 import glob
-from enum import IntEnum
+from enum import Enum, IntEnum
+
+class CommunicationMode(str, Enum):
+    SERIAL = "serial"
+    WIFI = "wifi"
+    UART_DEFAULT = "serial"
+    UART_USB_CDC = "serial"
+    UART_HW = "serial"
+
+# Top-level baudrate presets
+UART_STANDARD = 115200
+UART_HIGH_SPEED = 921600
+USB_STANDARD = 3000000
+USB_HIGH_SPEED = 12000000
+
+# Top-level communication mode presets
+SERIAL = "serial"
+WIFI = "wifi"
 
 class BaudRate(IntEnum):
     """
@@ -283,14 +300,18 @@ class ZenohClient:
 class ZenohConfig:
     def __init__(
         self,
-        transport: str = "serial",
+        communication_mode: str = SERIAL,
         uart_port: str = "auto",
-        baudrate: int = BaudRate.UART_STANDARD,
+        baudrate: int = UART_STANDARD,
         host: str = "192.168.4.1",
         port: int = 7447,
-        connect_endpoint: str = ""
+        connect_endpoint: str = "",
+        transport: Optional[str] = None
     ) -> None:
-        self.transport = transport
+        if transport is not None:
+            communication_mode = transport
+        self.communication_mode = communication_mode
+        self.transport = communication_mode
         self.uart_port = uart_port
         self.baudrate = baudrate
         self.host = host
@@ -355,7 +376,7 @@ class ZenohNode:
             endpoints = []
             if config.connect_endpoint:
                 endpoints = [config.connect_endpoint]
-            elif config.transport.lower() == "serial":
+            elif (config.communication_mode or config.transport).lower() == "serial":
                 port_name = config.uart_port
                 if port_name.lower() == "auto":
                     port_name = auto_detect_mcu_serial_port()
