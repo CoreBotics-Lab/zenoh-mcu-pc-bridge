@@ -1,6 +1,5 @@
 #include <zenoh_ros/ZenohRosPC.h>
 #include <zenoh_ros/custom_msgs/z_SetLED.h>
-#include <iostream>
 #include <cstdlib>
 #include <ctime>
 
@@ -9,7 +8,7 @@ const int NUM_LEDS = 16;
 class WS2812BPublisherNode : public ZenohNode {
 public:
     WS2812BPublisherNode() : ZenohNode("ws2812b_publisher"), j_(0), r_(50), g_(0), b_(100) {
-        std::cout << "[Node] " << this->z_get_name() << " has been started\n";
+        ZLOG_INFO(this->get_logger(), "Node has been started");
 
         // Seed random
         std::srand(std::time(nullptr));
@@ -22,7 +21,6 @@ public:
             this->timer_callback();
         });
     }
-
 
 private:
     ZenohPublisher<z_SetLED>* pub_ = nullptr;
@@ -40,6 +38,7 @@ private:
 
         if (pub_) {
             pub_->publish(msg);
+            ZLOG_DEBUG(this->get_logger(), "Published LED[%d] r=%d g=%d b=%d", j_, r_, g_, b_);
         }
 
         j_++;
@@ -49,6 +48,7 @@ private:
             r_ = std::rand() % 151;
             g_ = std::rand() % 151;
             b_ = std::rand() % 151;
+            ZLOG_INFO(this->get_logger(), "New color cycle — r=%d g=%d b=%d", r_, g_, b_);
         }
     }
 };

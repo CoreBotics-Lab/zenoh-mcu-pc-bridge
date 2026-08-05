@@ -1,12 +1,11 @@
 #include <zenoh_ros/ZenohRosPC.h>
 #include <zenoh_ros/std_msgs/z_Int32.h>
 #include <zenoh_ros/std_msgs/z_String.h>
-#include <iostream>
 
 class MultiTopicSubscriberNode : public ZenohNode {
 public:
     MultiTopicSubscriberNode() : ZenohNode("multi_topic_subscriber") {
-        std::cout << "[Node] " << this->z_get_name() << " has been started\n";
+        ZLOG_INFO(this->get_logger(), "Node has been started");
 
         // Create subscription to robot/sim_counter (Int32)
         counter_sub_ = this->z_create_subscription<z_Int32>(
@@ -27,17 +26,16 @@ public:
         );
     }
 
-
 private:
     ZenohSubscription<z_Int32>* counter_sub_ = nullptr;
     ZenohSubscription<z_String>* string_sub_ = nullptr;
 
     void counter_listener_callback(const z_Int32& msg) {
-        std::cout << "[RECV COUNTER] sim_counter: " << msg.data << "\n";
+        ZLOG_INFO(this->get_logger(), "[RECV COUNTER] sim_counter: %d", msg.data);
     }
 
     void string_listener_callback(const z_String& msg) {
-        std::cout << "[RECV STRING] hello_string: " << msg.data << "\n";
+        ZLOG_INFO(this->get_logger(), "[RECV STRING] hello_string: %s", msg.data.c_str());
     }
 };
 

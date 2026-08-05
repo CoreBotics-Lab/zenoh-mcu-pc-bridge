@@ -1,11 +1,10 @@
 #include <zenoh_ros/ZenohRosPC.h>
 #include <zenoh_ros/std_msgs/z_Int32.h>
-#include <iostream>
 
 class CounterSubscriberNode : public ZenohNode {
 public:
     CounterSubscriberNode() : ZenohNode("counter_subscriber") {
-        std::cout << "[Node] " << this->z_get_name() << " has been started\n";
+        ZLOG_INFO(this->get_logger(), "Node has been started");
 
         // Create subscription to standard ROS 2 message type (Int32) and depth 10
         sub_ = this->z_create_subscription<z_Int32>(
@@ -17,12 +16,11 @@ public:
         );
     }
 
-
 private:
     ZenohSubscription<z_Int32>* sub_ = nullptr;
 
     void listener_callback(const z_Int32& msg) {
-        std::cout << "[RECV FROM MCU] sim_counter: " << msg.data << "\n";
+        ZLOG_INFO(this->get_logger(), "[RECV FROM MCU] sim_counter: %d", msg.data);
     }
 };
 
