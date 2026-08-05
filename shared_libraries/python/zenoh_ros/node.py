@@ -272,6 +272,14 @@ class ZenohNode:
         """Return the ROS 2 logger instance for this node."""
         return self._logger
 
+    def z_delay(self, ms: int) -> None:
+        """Delay execution for the specified duration in milliseconds."""
+        time.sleep(ms / 1000.0)
+
+    def z_sleep_ms(self, ms: int) -> None:
+        """Alias for z_delay."""
+        time.sleep(ms / 1000.0)
+
     def get_clock(self) -> ZenohClock:
         return self.node_clock
 
