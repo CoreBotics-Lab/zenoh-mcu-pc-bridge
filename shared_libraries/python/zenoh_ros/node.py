@@ -2,24 +2,16 @@ import sys
 import glob
 from enum import Enum, IntEnum
 
-class CommunicationMode(str, Enum):
-    SERIAL = "serial"
-    WIFI = "wifi"
-    UART_DEFAULT = "serial"
-    UART_USB_CDC = "serial"
-    UART_HW = "serial"
+class ZenohCommunicationMode(str, Enum):
+    ZENOH_COMM_UART_DEFAULT = "serial"
+    ZENOH_COMM_UART_USB_CDC = "serial"
+    ZENOH_COMM_UART_HW      = "serial"
+    ZENOH_COMM_WIFI         = "wifi"
 
-# Top-level baudrate presets
-UART_STANDARD = 115200
-UART_HIGH_SPEED = 921600
-USB_STANDARD = 3000000
-USB_HIGH_SPEED = 12000000
+# Backward compatibility alias
+CommunicationMode = ZenohCommunicationMode
 
-# Top-level communication mode presets
-SERIAL = "serial"
-WIFI = "wifi"
-
-class BaudRate(IntEnum):
+class ZenohBaudRate(IntEnum):
     """
     Preset baudrate speeds for Serial UART and USB CDC transport modes.
 
@@ -33,6 +25,23 @@ class BaudRate(IntEnum):
     UART_HIGH_SPEED = 921600
     USB_STANDARD    = 3000000
     USB_HIGH_SPEED  = 12000000
+
+# Backward compatibility alias
+BaudRate = ZenohBaudRate
+
+# Top-level exports matching C++ enum names directly
+ZENOH_COMM_UART_DEFAULT = ZenohCommunicationMode.ZENOH_COMM_UART_DEFAULT
+ZENOH_COMM_UART_USB_CDC = ZenohCommunicationMode.ZENOH_COMM_UART_USB_CDC
+ZENOH_COMM_UART_HW      = ZenohCommunicationMode.ZENOH_COMM_UART_HW
+ZENOH_COMM_WIFI         = ZenohCommunicationMode.ZENOH_COMM_WIFI
+
+UART_STANDARD   = ZenohBaudRate.UART_STANDARD
+UART_HIGH_SPEED = ZenohBaudRate.UART_HIGH_SPEED
+USB_STANDARD    = ZenohBaudRate.USB_STANDARD
+USB_HIGH_SPEED  = ZenohBaudRate.USB_HIGH_SPEED
+
+SERIAL = "serial"
+WIFI   = "wifi" 
 
 
 def auto_detect_mcu_serial_port() -> str:
@@ -300,7 +309,7 @@ class ZenohClient:
 class ZenohConfig:
     def __init__(
         self,
-        communication_mode: str = SERIAL,
+        communication_mode: Union[str, ZenohCommunicationMode] = ZENOH_COMM_UART_DEFAULT,
         uart_port: str = "auto",
         baudrate: int = UART_STANDARD,
         host: str = "192.168.4.1",
