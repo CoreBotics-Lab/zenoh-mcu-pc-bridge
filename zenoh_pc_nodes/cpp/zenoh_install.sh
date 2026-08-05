@@ -2,69 +2,11 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$SCRIPT_DIR"
+SHARED_CPP_INSTALL="$(cd "${SCRIPT_DIR}/../../shared_libraries/cpp" && pwd)/zenoh_install.sh"
 
-THIRDPARTY_DIR="../../shared_libraries/cpp/3rdparty"
-
-echo "=== Setting up local 3rdparty dependencies (Modular Setup) ==="
-mkdir -p "${THIRDPARTY_DIR}/nlohmann"
-
-# 1. Download nlohmann/json.hpp
-if [ ! -f "${THIRDPARTY_DIR}/nlohmann/json.hpp" ]; then
-    echo "Downloading nlohmann/json.hpp..."
-    curl -L -o "${THIRDPARTY_DIR}/nlohmann/json.hpp" "https://github.com/nlohmann/json/releases/download/v3.11.3/json.hpp"
+if [ -f "$SHARED_CPP_INSTALL" ]; then
+    exec "$SHARED_CPP_INSTALL" "$@"
 else
-    echo "nlohmann/json.hpp already exists."
+    echo "Error: Could not find $SHARED_CPP_INSTALL"
+    exit 1
 fi
-
-# 2. Download and extract zenoh-c standalone library
-if [ ! -d "${THIRDPARTY_DIR}/zenoh-c" ]; then
-    echo "Detecting system OS and architecture..."
-    OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
-    ARCH="$(uname -m)"
-
-    # Map architecture
-    if [ "$ARCH" = "x86_64" ]; then
-        RUST_ARCH="x86_64"
-    elif [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then
-        RUST_ARCH="aarch64"
-    else
-        echo "Error: Unsupported architecture $ARCH"
-        exit 1
-    fi
-
-    # Map OS
-    if [ "$OS" = "linux" ]; then
-        PACKAGE_OS="unknown-linux-gnu-standalone"
-    elif [ "$OS" = "darwin" ]; then
-        PACKAGE_OS="apple-darwin-standalone"
-    else
-        echo "Error: Unsupported OS $OS"
-        exit 1
-    fi
-
-    ZIP_NAME="zenoh-c-1.9.0-${RUST_ARCH}-${PACKAGE_OS}.zip"
-    URL="https://github.com/eclipse-zenoh/zenoh-c/releases/download/1.9.0/${ZIP_NAME}"
-
-    echo "Downloading zenoh-c standalone package from:"
-    echo "  $URL"
-
-    mkdir -p "${THIRDPARTY_DIR}/zenoh-c"
-    curl -L -o "${THIRDPARTY_DIR}/zenoh_tmp.zip" "$URL"
-    
-    echo "Extracting zenoh-c package..."
-    unzip -q "${THIRDPARTY_DIR}/zenoh_tmp.zip" -d "${THIRDPARTY_DIR}/zenoh-c"
-    rm "${THIRDPARTY_DIR}/zenoh_tmp.zip"
-else
-    echo "${THIRDPARTY_DIR}/zenoh-c directory already exists."
-fi
-
-echo "=== Building C++ subscriber node ==="
-mkdir -p build
-cd build
-cmake ..
-make
-
-echo "=== Setup complete! ==="
-echo "You can now run the subscriber node with:"
-echo "  ./build/zenoh_test_sub"
