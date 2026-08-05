@@ -44,7 +44,7 @@ bool mpu_detected = false;
 class MPU6050_Publisher_Node : public ZenohNode {
 public:
     MPU6050_Publisher_Node() : ZenohNode("mpu6050_publisher") {
-        ZLOG_INFO(this->get_logger(), "[Node] %s has been started", this->z_get_name());
+        ZLOG_INFO(this->get_logger(), "Node %s has been started", this->z_get_name());
         
         // 1. Create a typed publisher with standard ROS 2 z_Imu message interface
         publisher_ = this->z_create_publisher<z_Imu>("robot/mpu6050", 10);
@@ -56,7 +56,7 @@ public:
     }
 
 private:
-        ZenohPublisher<z_Imu>* publisher_ = nullptr;
+    ZenohPublisher<z_Imu>* publisher_ = nullptr;
     ZenohTimer* timer_ = nullptr;
     z_Imu msg_;
 
@@ -109,54 +109,52 @@ MPU6050_Publisher_Node* node_instance = nullptr;
 void init_i2c() {
     Wire.begin(I2C_SDA_PIN, I2C_SCL_PIN);
     Wire.setClock(400000);
-    Serial.printf("[I2C] Wire initialized on SDA: GPIO %d, SCL: GPIO %d\n", I2C_SDA_PIN, I2C_SCL_PIN);
+    ZLOG_INFO(z_get_logger("hardware"), "Wire initialized on SDA: GPIO %d, SCL: GPIO %d", I2C_SDA_PIN, I2C_SCL_PIN);
 }
 
 void init_mpu() {
     mpu.initialize();
 
     if (!mpu.testConnection()) {
-        Serial.println("[MPU6050] Address 0x68 failed. Trying alternate address 0x69...");
+        ZLOG_WARN(z_get_logger("mpu6050"), "Address 0x68 failed. Trying alternate address 0x69...");
         mpu_alt.initialize();
         if (mpu_alt.testConnection()) {
             mpu_use_alt = true;
             mpu_detected = true;
-            Serial.println("[MPU6050] Connected successfully at address 0x69!");
+            ZLOG_INFO(z_get_logger("mpu6050"), "Connected successfully at address 0x69!");
             return;
         }
     } else {
         mpu_detected = true;
-        Serial.println("[MPU6050] Connected successfully at address 0x68!");
+        ZLOG_INFO(z_get_logger("mpu6050"), "Connected successfully at address 0x68!");
         return;
     }
 
     mpu_detected = false;
-    Serial.println("[MPU6050] ERROR: MPU6050 testConnection failed!");
+    ZLOG_ERROR(z_get_logger("mpu6050"), "ERROR: MPU6050 testConnection failed!");
 }
 
 void setup() {
     Serial.begin(115200);
     z_delay(2000);
 
-    Serial.println("\n==========================================");
-    Serial.println("  ESP32-S3 MPU6050 Zenoh SoftAP Publisher");
-    Serial.println("==========================================");
+    ZLOG_INFO(z_get_logger("system"), "==========================================");
+    ZLOG_INFO(z_get_logger("system"), "  ESP32-S3 MPU6050 Zenoh SoftAP Publisher");
+    ZLOG_INFO(z_get_logger("system"), "==========================================");
 
     init_i2c();
     init_mpu();
 
     // 1. Initialize global Zenoh client context
-    Serial.println("[System] Initializing the Zenoh Client...");
+    ZLOG_INFO(z_get_logger("system"), "Initializing the Zenoh Client...");
     if (ZenohNode::init(cfg)) {
         // 2. Spin up Node instance
-        Serial.println("[System] Starting the Zenoh Node...");
+        ZLOG_INFO(z_get_logger("system"), "Starting the Zenoh Node...");
         node_instance = new MPU6050_Publisher_Node();
     } else {
-        Serial.println("[System] CRITICAL Error: Zenoh Client initialization failed!");
+        ZLOG_ERROR(z_get_logger("system"), "CRITICAL Error: Zenoh Client initialization failed!");
         while (1) { z_delay(1000); }
     }
-
-    Serial.println("==========================================\n");
 }
 
 void loop() {

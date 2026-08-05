@@ -73,8 +73,22 @@ class MasterPythonValidator(ZenohNode):
         self.cli_cfg_robot = self.z_create_client(z_ConfigureRobot, "srv_custom/configure_robot")
         self.cli_full_ctrl = self.z_create_client(z_FullSystemControl, "srv_custom/full_system_control")
 
+from zenoh_ros import ZenohNode, ZenohConfig, ZenohCommunicationMode
+
 def main():
-    cfg = ZenohConfig(host="10.42.0.50", port=7447)
+    if len(sys.argv) > 1:
+        host_ip = sys.argv[1]
+        cfg = ZenohConfig(
+            communication_mode=ZenohCommunicationMode.ZENOH_COMM_WIFI,
+            host=host_ip,
+            port=7447
+        )
+    else:
+        cfg = ZenohConfig(
+            communication_mode=ZenohCommunicationMode.ZENOH_COMM_UART_USB_CDC,
+            uart_port="auto"
+        )
+
     if not ZenohNode.init(cfg):
         return
     node = MasterPythonValidator()
@@ -85,49 +99,53 @@ def main():
     start = time.time()
     srv_tested = False
 
-    while time.time() - start < 20:
-        time.sleep(0.2)
+    try:
+        while time.time() - start < 25:
+            time.sleep(0.2)
 
-        if len(passed_topics) >= 30 and not srv_tested:
-            srv_tested = True
-            print(f"\n{YLW}Testing 4 Custom Services live...{RST}")
+            if len(passed_topics) >= 30 and not srv_tested:
+                srv_tested = True
+                print(f"\n{YLW}Testing 4 Custom Services live...{RST}")
 
-            # 1. SetLEDColor
-            res1 = node.cli_set_led_clr.call(z_SetLEDColor.Request(led_data=z_SetLED(r=255, g=0, b=0, brightness=100, led_num=1)), timeout_sec=2.0)
-            if res1 and res1.success:
-                services_tested.add("srv_custom/set_led_color")
-                print(f"  {GRN}✓ PASS{RST} Service 'srv_custom/set_led_color'")
+                # 1. SetLEDColor
+                res1 = node.cli_set_led_clr.call(z_SetLEDColor.Request(led_data=z_SetLED(r=255, g=0, b=0, brightness=100, led_num=1)), timeout_sec=2.0)
+                if res1 and res1.success:
+                    services_tested.add("srv_custom/set_led_color")
+                    print(f"  {GRN}✓ PASS{RST} Service 'srv_custom/set_led_color'")
 
-            # 2. SetColor
-            res2 = node.cli_set_clr.call(z_SetColor.Request(r=255, g=128, b=0), timeout_sec=2.0)
-            if res2 and res2.success:
-                services_tested.add("srv_custom/set_color")
-                print(f"  {GRN}✓ PASS{RST} Service 'srv_custom/set_color'")
+                # 2. SetColor
+                res2 = node.cli_set_clr.call(z_SetColor.Request(r=255, g=128, b=0), timeout_sec=2.0)
+                if res2 and res2.success:
+                    services_tested.add("srv_custom/set_color")
+                    print(f"  {GRN}✓ PASS{RST} Service 'srv_custom/set_color'")
 
-            # 3. ConfigureRobot
-            req3 = z_ConfigureRobot.Request(target_status=z_MotorStatus(motor_id=1, speed=100.0, is_active=True), mode=1)
-            res3 = node.cli_cfg_robot.call(req3, timeout_sec=2.0)
-            if res3 and res3.success:
-                services_tested.add("srv_custom/configure_robot")
-                print(f"  {GRN}✓ PASS{RST} Service 'srv_custom/configure_robot'")
+                # 3. ConfigureRobot
+                req3 = z_ConfigureRobot.Request(target_status=z_MotorStatus(motor_id=1, speed=100.0, is_active=True), mode=1)
+                res3 = node.cli_cfg_robot.call(req3, timeout_sec=2.0)
+                if res3 and res3.success:
+                    services_tested.add("srv_custom/configure_robot")
+                    print(f"  {GRN}✓ PASS{RST} Service 'srv_custom/configure_robot'")
 
-            # 4. FullSystemControl
-            req4 = z_FullSystemControl.Request(target_state=z_ComplexRobotState(robot_mode="TEST", cycle_count=1), command_code=5)
-            res4 = node.cli_full_ctrl.call(req4, timeout_sec=2.0)
-            if res4 and res4.ack:
-                services_tested.add("srv_custom/full_system_control")
-                print(f"  {GRN}✓ PASS{RST} Service 'srv_custom/full_system_control'")
+                # 4. FullSystemControl
+                req4 = z_FullSystemControl.Request(target_state=z_ComplexRobotState(robot_mode="TEST", cycle_count=1), command_code=5)
+                res4 = node.cli_full_ctrl.call(req4, timeout_sec=2.0)
+                if res4 and res4.ack:
+                    services_tested.add("srv_custom/full_system_control")
+                    print(f"  {GRN}✓ PASS{RST} Service 'srv_custom/full_system_control'")
 
+            if len(passed_topics) == 34 and len(services_tested) == 4:
+                break
+    except KeyboardInterrupt:
+        pass
+    finally:
+        print(f"\n{BOLD}{'═'*54}")
+        print(f"  RESULTS: {len(passed_topics)}/34 Topics Passed | {len(services_tested)}/4 Services Passed")
         if len(passed_topics) == 34 and len(services_tested) == 4:
-            break
-
-    print(f"\n{BOLD}{'═'*54}")
-    print(f"  RESULTS: {len(passed_topics)}/34 Topics Passed | {len(services_tested)}/4 Services Passed")
-    if len(passed_topics) == 34 and len(services_tested) == 4:
-        print(f"  {GRN}{BOLD}✓ ALL PRE-DEFINED & CUSTOM INTERFACES VERIFIED 100%!{RST}")
-    else:
-        print(f"  {RED}{BOLD}⚠  PARTIAL FAILURE (Topics: {len(passed_topics)}/34, Services: {len(services_tested)}/4){RST}")
-    ZenohNode.shutdown()
+            print(f"  {GRN}{BOLD}✓ ALL PRE-DEFINED & CUSTOM INTERFACES VERIFIED 100%!{RST}")
+        else:
+            print(f"  {RED}{BOLD}⚠  PARTIAL FAILURE (Topics: {len(passed_topics)}/34, Services: {len(services_tested)}/4){RST}")
+        print(f"{'═'*54}{RST}\n")
+        ZenohNode.shutdown()
 
 if __name__ == "__main__":
     main()

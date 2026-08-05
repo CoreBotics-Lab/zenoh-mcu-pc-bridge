@@ -17,7 +17,7 @@ class Counter_publisher_node_class : public ZenohNode {
 public:
     Counter_publisher_node_class() 
         : ZenohNode("counter_publisher"), cnt_(0) {
-        Serial.printf("[Node] %s has been started\n", this->z_get_name());
+        ZLOG_INFO(this->get_logger(), "Node %s has been started", this->z_get_name());
         
         // 1. Create typed publishers (exactly like in ROS 2)
         publisher_ = this->z_create_publisher<z_Int32>("robot/sim_counter", 10);
@@ -39,7 +39,7 @@ private:
     ZenohTimer* timer_;
     ZenohTimer* string_timer_;
     
-    // Pre-allocated message structure (exactly like String::SharedPtr msg in ROS 2)
+    // Pre-allocated message structure
     z_Int32 msg; 
 
     void callback_timer() {
@@ -49,7 +49,7 @@ private:
             msg.data = this->cnt_;
             this->publisher_->publish(msg);
             
-            Serial.printf("[%s] Publishing Counter: %d\n", this->z_get_name(), msg.data);
+            ZLOG_INFO(this->get_logger(), "Publishing Counter: %d", msg.data);
         }
     }
 
@@ -61,7 +61,7 @@ private:
             str_msg.data = str_buf;
             this->string_publisher_->publish(str_msg);
             
-            Serial.printf("[%s] Publishing String: %s\n", this->z_get_name(), str_msg.data.c_str());
+            ZLOG_INFO(this->get_logger(), "Publishing String: %s", str_msg.data.c_str());
         }
     }
 };
@@ -73,22 +73,20 @@ void setup() {
     Serial.begin(115200);
     z_delay(2000); // USB CDC Serial delay for ESP32-S3
 
-    Serial.println("\n==========================================");
-    Serial.println("  ESP32-S3 Zenoh SoftAP Counter Testbench");
-    Serial.println("==========================================");
+    ZLOG_INFO(z_get_logger("system"), "==========================================");
+    ZLOG_INFO(z_get_logger("system"), "  ESP32-S3 Zenoh SoftAP Counter Testbench");
+    ZLOG_INFO(z_get_logger("system"), "==========================================");
 
     // 1. Initialize the global Zenoh client context (analogous to rclcpp::init)
-    Serial.println("[System] Initializing the Zenoh Client...");
+    ZLOG_INFO(z_get_logger("system"), "Initializing the Zenoh Client...");
     if (ZenohNode::init(cfg)) {
-        // 2. Spin up the Node instance (analogous to make_shared)
-        Serial.println("[System] Starting the Zenoh Node...");
+        // 2. Spin up the Node instance
+        ZLOG_INFO(z_get_logger("system"), "Starting the Zenoh Node...");
         node_instance = new Counter_publisher_node_class();
     } else {
-        Serial.println("[System] CRITICAL Error: Zenoh Client initialization failed!");
+        ZLOG_ERROR(z_get_logger("system"), "CRITICAL Error: Zenoh Client initialization failed!");
         while (1) { z_delay(1000); }
     }
-
-    Serial.println("==========================================\n");
 }
 
 void loop() {

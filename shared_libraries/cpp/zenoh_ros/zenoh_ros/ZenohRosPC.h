@@ -468,10 +468,10 @@ enum class ZenohBaudRate : uint32_t {
  * @brief Communication transport modes for the PC Zenoh node.
  */
 enum class ZenohCommunicationMode {
-    ZENOH_COMM_WIFI      = 0,  ///< Wi-Fi / TCP (default for PC nodes)
-    ZENOH_COMM_UART_DEFAULT  = 1,  ///< UART Serial (e.g. /dev/ttyUSB0)
-    ZENOH_COMM_UART_USB_CDC  = 2,  ///< USB CDC Serial (e.g. /dev/ttyACM0)
-    ZENOH_COMM_UART_HW       = 3,  ///< Hardware UART (e.g. /dev/ttyS0)
+    ZENOH_COMM_UART_DEFAULT = 0, ///< Default: UART0 Serial
+    ZENOH_COMM_UART_USB_CDC = 1, ///< Native USB CDC Serial
+    ZENOH_COMM_UART_HW      = 2, ///< Hardware UART
+    ZENOH_COMM_WIFI         = 3  ///< Wi-Fi / TCP
 };
 
 // Configuration structure for the Zenoh node on PC

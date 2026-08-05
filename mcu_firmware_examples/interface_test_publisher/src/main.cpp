@@ -263,7 +263,7 @@ private:
         msg_cmplx.cycle_count = count_;
         pub_cmplx_st_->publish(msg_cmplx);
 
-        Serial.printf("[Pub] All 34 dynamic topics published! Cycle: %u\n", count_);
+        ZLOG_INFO(this->get_logger(), "All 34 dynamic topics published! Cycle: %u", count_);
     }
 };
 
@@ -272,13 +272,13 @@ MasterTestNode* node_instance = nullptr;
 void setup() {
     Serial.begin(115200);
     z_delay(2000);
-    Serial.println("\n==========================================");
-    Serial.println("  DYNAMIC DATA MEMORY STRESS FIRMWARE");
-    Serial.println("==========================================");
+    ZLOG_INFO(z_get_logger("system"), "==========================================");
+    ZLOG_INFO(z_get_logger("system"), "  DYNAMIC DATA MEMORY STRESS FIRMWARE");
+    ZLOG_INFO(z_get_logger("system"), "==========================================");
     if (ZenohNode::init(cfg)) {
         node_instance = new MasterTestNode();
     } else {
-        Serial.println("[CRITICAL] Zenoh init failed!");
+        ZLOG_ERROR(z_get_logger("system"), "[CRITICAL] Zenoh init failed!");
         while(1) { z_delay(1000); }
     }
 }

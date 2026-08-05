@@ -146,6 +146,11 @@ private:
     }
 };
 
+/** Global helper to construct a ZLogger for a given name (e.g. z_get_logger("system")) */
+inline ZLogger z_get_logger(const char* name) {
+    return ZLogger(name);
+}
+
 // ─── Logging macros (matching RCLCPP naming convention) ───────────────────────
 
 // Plain — every call

@@ -3,8 +3,6 @@
 #include <zenoh_ros/std_msgs/z_Int32.h>
 #include <zenoh_ros/std_msgs/z_Float64.h>
 
-using namespace z_std_msgs;
-
 /**
  * Serial UART / USB CDC Zenoh Publisher Example
  * Demonstrates streaming ROS 2 topics over Native USB CDC with automatic baudrate presets.
@@ -62,20 +60,18 @@ void setup() {
     Serial.begin(12000000);
     z_delay(1000);
 
-    Serial.println("\n==========================================");
-    Serial.println("  ESP32-S3 Zenoh USB CDC Serial Publisher ");
-    Serial.println("==========================================");
+    ZLOG_INFO(z_get_logger("system"), "==========================================");
+    ZLOG_INFO(z_get_logger("system"), "  ESP32-S3 Zenoh USB CDC Serial Publisher ");
+    ZLOG_INFO(z_get_logger("system"), "==========================================");
 
-    Serial.println("[System] Initializing Zenoh Client...");
+    ZLOG_INFO(z_get_logger("system"), "Initializing Zenoh Client...");
     if (ZenohNode::init(cfg)) {
-        Serial.println("[System] Starting Zenoh Node...");
+        ZLOG_INFO(z_get_logger("system"), "Starting Zenoh Node...");
         node_instance = new SerialUARTPublisherNode();
     } else {
-        Serial.println("[System] CRITICAL Error: Zenoh Client initialization failed!");
+        ZLOG_ERROR(z_get_logger("system"), "CRITICAL Error: Zenoh Client initialization failed!");
         while (1) { z_delay(1000); }
     }
-
-    Serial.println("==========================================\n");
 }
 
 void loop() {

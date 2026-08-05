@@ -3,7 +3,6 @@
 #include <zenoh_ros/ZenohRos.h>
 #include <zenoh_ros/custom_msgs/z_SetLED.h>
 
-
 #define NUM_LEDS 16
 #define DATA_PIN 14
 
@@ -32,7 +31,7 @@ public:
     WS2812B_Subscriber_Node() : ZenohNode("ws2812b_subscriber") {
         ZLOG_INFO(this->get_logger(), "Node %s has been started.", this->z_get_name());
         
-        // Create subscriber for /ws2812b topic
+        // Create subscriber for ws2812b topic
         sub_ = this->z_create_subscription<z_SetLED>(
             "ws2812b", 
             [this](const z_SetLED& msg) -> void {
@@ -42,14 +41,14 @@ public:
         );
     }
 
-
 private:
     ZenohSubscription<z_SetLED>* sub_ = nullptr;
 
     void callback_set_led(const z_SetLED& msg) {
-        // Set the led color and show it
         setLed(msg.led_num, msg.r, msg.g, msg.b, msg.brightness);
         FastLED.show();
+        ZLOG_INFO(this->get_logger(), "[LED RECV] Set LED[%d] r=%d g=%d b=%d brightness=%d",
+                  msg.led_num, msg.r, msg.g, msg.b, msg.brightness);
     }
 };
 
@@ -59,24 +58,20 @@ void setup() {
     Serial.begin(115200);
     z_delay(2000); // USB CDC Serial delay for ESP32-S3
 
-    Serial.println("\n==========================================");
-    Serial.println("  ESP32-S3 Zenoh WS2812B Subscriber Test");
-    Serial.println("==========================================");
+    ZLOG_INFO(z_get_logger("system"), "==========================================");
+    ZLOG_INFO(z_get_logger("system"), "  ESP32-S3 Zenoh WS2812B Subscriber Test");
+    ZLOG_INFO(z_get_logger("system"), "==========================================");
 
-    // Initialize Zenoh Client SoftAP
-    Serial.println("[System] Initializing the Zenoh Client...");
+    ZLOG_INFO(z_get_logger("system"), "Initializing the Zenoh Client...");
     if (ZenohNode::init(cfg)) {
-        Serial.println("[System] Starting the Zenoh Subscriber Node...");
-        FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, NUM_LEDS);  // GRB ordering is assumed
-        // Clear leds
+        ZLOG_INFO(z_get_logger("system"), "Starting the Zenoh Subscriber Node...");
+        FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, NUM_LEDS);
         FastLED.clear(true);
         node_instance = new WS2812B_Subscriber_Node();
     } else {
-        Serial.println("[System] CRITICAL Error: Zenoh Client initialization failed!");
+        ZLOG_ERROR(z_get_logger("system"), "CRITICAL Error: Zenoh Client initialization failed!");
         while (1) { z_delay(1000); }
     }
-
-    Serial.println("==========================================\n");
 }
 
 void loop() {

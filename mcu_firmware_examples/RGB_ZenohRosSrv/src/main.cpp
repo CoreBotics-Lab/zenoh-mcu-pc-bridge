@@ -1,7 +1,6 @@
 #include <Arduino.h>
 #include <FastLED.h>
 #include <zenoh_ros/ZenohRos.h>
-#include <zenoh_ros/z_logger.h>
 #include <zenoh_ros/custom_srvs/z_SetLEDColor.h>
 
 #define NUM_LEDS 16
@@ -30,14 +29,10 @@ void setLed(size_t led, uint8_t r, uint8_t g, uint8_t b, uint8_t brightness) {
 class WS2812B_Service_Server_Node : public ZenohNode {
 public:
     WS2812B_Service_Server_Node()
-        : ZenohNode("ws2812b_service_server"),
-          logger_("ws2812b_service_server") {
-        
-        // Attach node so logger publishes messages live to Zenoh topic 'zenoh_ros/log'
-        logger_.z_attach(this);
+        : ZenohNode("ws2812b_service_server") {
 
-        ZLOG_INFO(logger_, "Node '%s' has been started.", this->z_get_name());
-        ZLOG_INFO_ONCE(logger_, "WS2812B FastLED initialized (NUM_LEDS=%d, DATA_PIN=%d)", NUM_LEDS, DATA_PIN);
+        ZLOG_INFO(this->get_logger(), "Node '%s' has been started.", this->z_get_name());
+        ZLOG_INFO_ONCE(this->get_logger(), "WS2812B FastLED initialized (NUM_LEDS=%d, DATA_PIN=%d)", NUM_LEDS, DATA_PIN);
 
         // Create ROS 2 Service Server for SetLEDColor custom service
         service_ = this->z_create_service<z_SetLEDColor>(
@@ -49,11 +44,10 @@ public:
     }
 
 private:
-    ZLogger logger_;
     ZenohService<z_SetLEDColor>* service_ = nullptr;
 
     void handle_set_led_color(const z_SetLEDColor::Request& req, z_SetLEDColor::Response& res) {
-        ZLOG_INFO(logger_, "[SERVICE RECV] LED: %u | RGB: (%u, %u, %u) | Brightness: %u%%",
+        ZLOG_INFO(this->get_logger(), "[SERVICE RECV] LED: %u | RGB: (%u, %u, %u) | Brightness: %u%%",
                   req.led_data.led_num, req.led_data.r, req.led_data.g, req.led_data.b, req.led_data.brightness);
 
         if (req.led_data.led_num < NUM_LEDS) {
@@ -61,11 +55,10 @@ private:
             FastLED.show();
             res.success = true;
             res.message = "LED color updated successfully!";
-            ZLOG_INFO(logger_, "LED %u updated successfully", req.led_data.led_num);
         } else {
             res.success = false;
-            res.message = "Index out of range!";
-            ZLOG_ERROR(logger_, "Failed to update LED %u: Index out of range (max: %d)", req.led_data.led_num, NUM_LEDS - 1);
+            res.message = "Invalid LED index!";
+            ZLOG_WARN(this->get_logger(), "[SERVICE ERROR] Invalid LED index: %u (max: %d)", req.led_data.led_num, NUM_LEDS - 1);
         }
     }
 };
@@ -76,23 +69,22 @@ void setup() {
     Serial.begin(115200);
     z_delay(2000); // USB CDC Serial delay for ESP32-S3
 
-    Serial.println("\n==========================================");
-    Serial.println("  ESP32-S3 Zenoh WS2812B Service Server Test");
-    Serial.println("==========================================");
+    FastLED.addLeds<WS2812B, DATA_PIN, GRB>(leds, NUM_LEDS);
+    FastLED.clear();
+    FastLED.show();
 
-    // Initialize Zenoh Client SoftAP
-    Serial.println("[System] Initializing the Zenoh Client...");
+    ZLOG_INFO(z_get_logger("system"), "==========================================");
+    ZLOG_INFO(z_get_logger("system"), "  ESP32-S3 Zenoh RGB Service Server Demo ");
+    ZLOG_INFO(z_get_logger("system"), "==========================================");
+
+    ZLOG_INFO(z_get_logger("system"), "Initializing Zenoh Client...");
     if (ZenohNode::init(cfg)) {
-        Serial.println("[System] Starting the Zenoh Service Server Node...");
-        FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, NUM_LEDS);
-        FastLED.clear(true);
+        ZLOG_INFO(z_get_logger("system"), "Starting WS2812B Service Server Node...");
         node_instance = new WS2812B_Service_Server_Node();
     } else {
-        Serial.println("[System] CRITICAL Error: Zenoh Client initialization failed!");
+        ZLOG_ERROR(z_get_logger("system"), "CRITICAL Error: Zenoh Client initialization failed!");
         while (1) { z_delay(1000); }
     }
-
-    Serial.println("==========================================\n");
 }
 
 void loop() {
