@@ -6,7 +6,7 @@ import random
 # Ensure the shared zenoh_ros package can be imported
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../shared_libraries/python')))
 
-from zenoh_ros import ZenohNode, ZenohConfig, get_logger
+from zenoh_ros import ZenohNode, ZenohConfig
 from zenoh_ros.custom_srvs import z_SetLEDColor
 
 class LEDServiceClientNode(ZenohNode):
@@ -77,19 +77,19 @@ def main() -> None:
     config = ZenohConfig(host=host_ip, port=7447)
     ZenohNode.init(config)
 
-    logger = get_logger("led_client_python")
     node_instance = None
     try:
         node_instance = LEDServiceClientNode()
         node_instance.z_spin()
     except KeyboardInterrupt:
-        logger.info("Stopping client node...")
+        if node_instance:
+            node_instance.get_logger().info("Stopping client node...")
     except Exception as e:
-        logger.error("Critical Error: %s", e)
+        print(f"Critical Error: {e}")
     finally:
         if node_instance:
             node_instance.z_destroy()
-            logger.info("Zenoh session cleanly closed.")
+            node_instance.get_logger().info("Zenoh session cleanly closed.")
 
 if __name__ == "__main__":
     main()
