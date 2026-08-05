@@ -52,8 +52,7 @@ class WS2812BPublisherNode(ZenohNode):
 
 def main() -> None:
     # Connect to ESP32 SoftAP (ESP32-S3 IP is 192.168.4.1 by default in AP mode)
-    config = ZenohConfig(host="192.168.4.1", port=7447)
-    ZenohNode.init(config)
+    ZenohNode.init(host="192.168.4.1", port=7447)
     node_instance = None
     try:
         node_instance = WS2812BPublisherNode()

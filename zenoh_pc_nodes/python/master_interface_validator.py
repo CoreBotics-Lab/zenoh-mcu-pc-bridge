@@ -74,8 +74,7 @@ class MasterPythonValidator(ZenohNode):
         self.cli_full_ctrl = self.z_create_client(z_FullSystemControl, "srv_custom/full_system_control")
 
 def main():
-    config = ZenohConfig(host="10.42.0.50", port=7447)
-    ZenohNode.init(config)
+    ZenohNode.init(host="10.42.0.50", port=7447)
     node = MasterPythonValidator()
 
     t = threading.Thread(target=node.z_spin, daemon=True)

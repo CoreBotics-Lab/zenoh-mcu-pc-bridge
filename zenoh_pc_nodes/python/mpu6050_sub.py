@@ -31,8 +31,7 @@ class MPU6050SubscriberNode(ZenohNode):
 
 def main() -> None:
     # Connect to ESP32-S3 SoftAP IP (192.168.4.1)
-    config = ZenohConfig(host="192.168.4.1", port=7447)
-    ZenohNode.init(config)
+    ZenohNode.init(host="192.168.4.1", port=7447)
     node_instance = None
     try:
         node_instance = MPU6050SubscriberNode()

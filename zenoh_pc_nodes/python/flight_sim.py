@@ -236,8 +236,7 @@ def draw_artificial_horizon(surface, rect, roll, pitch):
 
 def main():
     # Initialize Zenoh Node
-    config = ZenohConfig(host="192.168.4.1", port=7447)
-    ZenohNode.init(config)
+    ZenohNode.init(host="192.168.4.1", port=7447)
     
     node = MPUSubscriberNode()
     
