@@ -44,7 +44,7 @@ def main() -> None:
     config = ZenohConfig(
         transport="serial",
         uart_port="auto",
-        baudrate=BaudRate.UART_HIGH_SPEED
+        baudrate=BaudRate.USB_HIGH_SPEED
     )
     ZenohNode.init(config)
 

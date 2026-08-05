@@ -7,20 +7,20 @@ using namespace z_std_msgs;
 
 /**
  * Serial UART / USB CDC Zenoh Publisher Example
- * Demonstrates streaming ROS 2 topics over Serial UART with automatic baudrate presets.
+ * Demonstrates streaming ROS 2 topics over Native USB CDC with automatic baudrate presets.
  */
 
-// Configuration Struct for UART0 (Default USB flashing port at High Speed 921600 baud)
+// Configuration Struct for Native USB CDC (High-Speed USB OTG PHY at 12 Mbps)
 ZenohConfig cfg = {
-    .communication_mode = ZenohCommunicationMode::ZENOH_COMM_UART_DEFAULT,
-    .baudrate           = (uint32_t)ZenohBaudRate::UART_HIGH_SPEED
+    .communication_mode = ZenohCommunicationMode::ZENOH_COMM_UART_USB_CDC,
+    .baudrate           = (uint32_t)ZenohBaudRate::USB_HIGH_SPEED
 };
 
 class SerialUARTPublisherNode : public ZenohNode {
 public:
     SerialUARTPublisherNode() 
         : ZenohNode("serial_uart_mcu_node"), cnt_(0) {
-        ZLOG_INFO(this->get_logger(), "Node %s initialized on Serial UART!", this->z_get_name());
+        ZLOG_INFO(this->get_logger(), "Node %s initialized on Native USB CDC!", this->z_get_name());
         
         // 1. Create typed publishers
         pub_count_ = this->z_create_publisher<z_Int32>("serial/counter", 10);
@@ -59,11 +59,11 @@ private:
 SerialUARTPublisherNode* node_instance = nullptr;
 
 void setup() {
-    Serial.begin(921600);
+    Serial.begin(12000000);
     z_delay(1000);
 
     Serial.println("\n==========================================");
-    Serial.println("  ESP32-S3 Zenoh Serial UART Publisher    ");
+    Serial.println("  ESP32-S3 Zenoh USB CDC Serial Publisher ");
     Serial.println("==========================================");
 
     Serial.println("[System] Initializing Zenoh Client...");
