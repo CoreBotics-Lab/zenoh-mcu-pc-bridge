@@ -343,10 +343,7 @@ public:
     }
 
     bool call(const typename SrvType::Request& req, typename SrvType::Response& res, uint32_t timeout_ms = 5000) {
-        if (!session) {
-            std::cerr << "[ZenohClient PC] ERROR: Client session not initialized!\n";
-            return false;
-        }
+        if (shutdown_requested || !session) return false;
 
         std::vector<uint8_t> req_buf = serialize_msg<typename SrvType::Request>(req);
 
@@ -400,19 +397,24 @@ public:
         ZenohSessionMutexPC::unlock();
 
         if (get_res < 0) {
-            std::cerr << "[ZenohClient PC] ERROR: Failed to send service call to '" << service_name << "'\n";
+            if (!shutdown_requested) {
+                std::cerr << "[ZenohClient PC] ERROR: Failed to send service call to '" << service_name << "'\n";
+            }
             return false;
         }
 
         std::unique_lock<std::mutex> lock(ctx->mtx);
-        if (ctx->cv.wait_for(lock, std::chrono::milliseconds(timeout_ms), [&]() { return ctx->received; })) {
+        if (ctx->cv.wait_for(lock, std::chrono::milliseconds(timeout_ms), [&]() { return ctx->received || shutdown_requested; })) {
+            if (shutdown_requested) return false;
             if (!ctx->reply_data.empty()) {
                 deserialize_msg<typename SrvType::Response>(ctx->reply_data, res);
                 return true;
             }
         }
 
-        std::cerr << "[ZenohClient PC] ERROR: Service call to '" << service_name << "' timed out or returned empty!\n";
+        if (!shutdown_requested) {
+            std::cerr << "[ZenohClient PC] ERROR: Service call to '" << service_name << "' timed out or returned empty!\n";
+        }
         return false;
     }
 };
@@ -545,6 +547,14 @@ public:
         for (auto& cleanup : cleanup_callbacks) {
             cleanup();
         }
+    }
+
+    void z_delay(uint32_t ms) const {
+        std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+    }
+
+    void z_sleep_ms(uint32_t ms) const {
+        std::this_thread::sleep_for(std::chrono::milliseconds(ms));
     }
 
     const ZenohClock* get_clock() const {
