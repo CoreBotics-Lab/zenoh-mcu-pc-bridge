@@ -37,25 +37,23 @@ enum class ZenohTransportMode {
 };
 
 struct UARTPins {
-    int8_t rx = -1;
-    int8_t tx = -1;
+    int8_t rx;
+    int8_t tx;
 };
 
-// Configuration structure for the Zenoh node
+// Configuration structure for the Zenoh node (Pure aggregate type for C++ designated initializers)
 struct ZenohConfig {
-    // --- Transport Selection ---
-    ZenohTransportMode transport_mode = ZenohTransportMode::ZENOH_TRANSPORT_UART_DEFAULT;
-    uint32_t baudrate = (uint32_t)ZenohBaudRate::UART_STANDARD;
-    UARTPins uart_pins; // Custom RX/TX pins for ZENOH_TRANSPORT_UART_HW
+    const char* ssid;
+    const char* password;
+    uint16_t port;
+    const char* local_ip; // Optional: custom static IP for SoftAP/STA
+    const char* gateway;  // Optional: gateway IP
+    const char* subnet;   // Optional: subnet mask
+    WiFiMode_t wifi_mode; // Wi-Fi mode (WIFI_STA or WIFI_AP)
 
-    // --- Wi-Fi Parameters (used when transport_mode == ZENOH_TRANSPORT_WIFI) ---
-    const char* ssid = nullptr;
-    const char* password = nullptr;
-    uint16_t port = 7447;
-    const char* local_ip = nullptr; // Optional: custom static IP for SoftAP/STA
-    const char* gateway = nullptr;  // Optional: gateway IP
-    const char* subnet = nullptr;   // Optional: subnet mask
-    WiFiMode_t wifi_mode = WIFI_AP; // Wi-Fi mode (WIFI_STA or WIFI_AP)
+    ZenohTransportMode transport_mode;
+    uint32_t baudrate;
+    UARTPins uart_pins; // Custom RX/TX pins for ZENOH_TRANSPORT_UART_HW
 };
 
 // --- ROS2-style QoS settings ---
