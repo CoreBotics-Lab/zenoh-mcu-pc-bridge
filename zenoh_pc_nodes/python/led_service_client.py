@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 import sys
 import os
-import time
 import random
 
 # Ensure the shared zenoh_ros package can be imported
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../shared_libraries/python')))
 
-from zenoh_ros import ZenohNode, ZenohConfig, get_logger
+from zenoh_ros import ZenohNode, ZenohConfig, get_logger, z_delay
 from zenoh_ros.custom_srvs import z_SetLEDColor
 
 class LEDServiceClientNode(ZenohNode):
@@ -41,7 +40,7 @@ class LEDServiceClientNode(ZenohNode):
                     reset_req.led_data.brightness = 0
                     self.client.call_async(reset_req)
                 self._first_time = False
-                time.sleep(0.2)
+                z_delay(200)
 
             led_num = self.current_led
 
