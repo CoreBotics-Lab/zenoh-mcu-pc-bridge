@@ -127,9 +127,7 @@ def main():
         print(f"  {GRN}{BOLD}✓ ALL PRE-DEFINED & CUSTOM INTERFACES VERIFIED 100%!{RST}")
     else:
         print(f"  {RED}{BOLD}⚠  PARTIAL FAILURE (Topics: {len(passed_topics)}/34, Services: {len(services_tested)}/4){RST}")
-    print(f"{'═'*54}{RST}\n")
-
-    node.z_destroy()
+    ZenohNode.shutdown()
 
 if __name__ == "__main__":
     main()

@@ -73,6 +73,8 @@ void record(const std::string& top) {
 class MasterCppValidator : public ZenohNode {
 public:
     MasterCppValidator() : ZenohNode("master_cpp_validator") {
+        ZLOG_INFO(this->get_logger(), "Validator node initialized");
+
         z_create_subscription<z_Bool>("test/bool", [](const z_Bool&) { record("test/bool"); });
         z_create_subscription<z_Int8>("test/int8", [](const z_Int8&) { record("test/int8"); });
         z_create_subscription<z_UInt8>("test/uint8", [](const z_UInt8&) { record("test/uint8"); });
@@ -118,7 +120,7 @@ public:
     }
 
     void test_services() {
-        std::cout << "\n\033[33mTesting 4 Custom Services (C++)...\033[0m\n";
+        ZLOG_INFO(this->get_logger(), "Testing 4 Custom Services (C++)...");
 
         // 1. SetLEDColor
         z_SetLEDColor::Request req1; req1.led_data.r = 255; req1.led_data.brightness = 100;
@@ -167,6 +169,7 @@ int main(int argc, char** argv) {
     std::cout << "==========================================\n\n";
 
     ZenohConfig cfg;
+    cfg.communication_mode = ZenohCommunicationMode::ZENOH_COMM_WIFI;
     cfg.host = (argc > 1) ? argv[1] : "10.42.0.50";
     cfg.port = 7447;
 

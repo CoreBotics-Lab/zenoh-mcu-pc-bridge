@@ -63,10 +63,11 @@ def main() -> None:
         if node_instance:
             node_instance.get_logger().info("Stopping serial listener node...")
     except Exception as e:
-        print(f"Critical Error: {e}")
-    finally:
         if node_instance:
-            node_instance.z_destroy()
+            node_instance.get_logger().error(f"Critical Error: {e}")
+    finally:
+        ZenohNode.shutdown()
+        if node_instance:
             node_instance.get_logger().info("Zenoh session cleanly closed.")
 
 if __name__ == "__main__":
