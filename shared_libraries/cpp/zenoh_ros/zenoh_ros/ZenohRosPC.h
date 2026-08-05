@@ -482,6 +482,14 @@ private:
     std::vector<std::function<void()>> cleanup_callbacks;
     ZenohClock node_clock;
     std::vector<std::pair<std::string, std::string>> parameters;
+    std::shared_ptr<ZLoggerPC> logger_;
+
+public:
+    ZenohNode(const char* name) : node_name(name), logger_(z_get_logger(name)) {}
+
+    std::shared_ptr<ZLoggerPC> get_logger() {
+        return logger_;
+    }
 
     static bool init_session(const char* connect_endpoint) {
         if (session_opened) return true;

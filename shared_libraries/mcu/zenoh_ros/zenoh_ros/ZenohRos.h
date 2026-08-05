@@ -533,6 +533,10 @@ public:
         return logger_;
     }
 
+    const ZLogger& get_logger() const {
+        return logger_;
+    }
+
     ~ZenohNode() {
         for (auto& cleanup : cleanup_callbacks) {
             cleanup();
