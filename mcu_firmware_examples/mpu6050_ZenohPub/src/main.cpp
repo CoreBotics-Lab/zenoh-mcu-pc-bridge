@@ -28,9 +28,11 @@
 
 // --- Configuration Struct (AP Mode) ---
 ZenohConfig cfg = {
-    .ssid = "ESP32S3_Zenoh_AP",
-    .password = "zenoh1234",
-    .port = 7447
+    .communication_mode = ZenohCommunicationMode::ZENOH_COMM_WIFI,
+    .ssid               = "ESP32S3_Zenoh_AP",
+    .password           = "zenoh1234",
+    .port               = 7447,
+    .wifi_mode          = WIFI_AP
 };
 
 // Sensor Globals

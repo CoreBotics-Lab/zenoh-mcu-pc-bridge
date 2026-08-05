@@ -6,9 +6,11 @@
 
 // --- Configuration Struct ---
 ZenohConfig cfg = {
-    .ssid = "ESP32S3_Zenoh_AP",
-    .password = "zenoh1234",
-    .port = 7447
+    .communication_mode = ZenohCommunicationMode::ZENOH_COMM_WIFI,
+    .ssid               = "ESP32S3_Zenoh_AP",
+    .password           = "zenoh1234",
+    .port               = 7447,
+    .wifi_mode          = WIFI_AP
 };
 
 class Counter_publisher_node_class : public ZenohNode {
