@@ -10,43 +10,76 @@ using namespace z_std_msgs;
  * Demonstrates streaming ROS 2 topics over Serial UART with automatic baudrate presets.
  */
 
-ZenohNode* node = nullptr;
-ZenohPublisher<z_Int32>* pub_count = nullptr;
-ZenohPublisher<z_Float64>* pub_temp = nullptr;
+// Configuration Struct for UART0 (Default USB flashing port at High Speed 921600 baud)
+ZenohConfig cfg = {
+    .transport_mode = ZenohTransportMode::ZENOH_TRANSPORT_UART_DEFAULT,
+    .baudrate       = (uint32_t)ZenohBaudRate::UART_HIGH_SPEED
+};
 
-int counter = 0;
+class SerialUARTPublisherNode : public ZenohNode {
+public:
+    SerialUARTPublisherNode() 
+        : ZenohNode("serial_uart_mcu_node"), cnt_(0) {
+        Serial.printf("[Node] %s initialized on Serial UART!\n", this->z_get_name());
+        
+        // 1. Create typed publishers
+        pub_count_ = this->z_create_publisher<z_Int32>("serial/counter", 10);
+        pub_temp_  = this->z_create_publisher<z_Float64>("serial/temperature", 10);
 
-void setup() {
-    // Select Zenoh Transport Configuration (UART0 Default USB port)
-    ZenohConfig config;
-    config.transport_mode = ZenohTransportMode::ZENOH_TRANSPORT_UART_DEFAULT;
-    config.baudrate = (uint32_t)ZenohBaudRate::UART_HIGH_SPEED; // 921,600 baud for multi-topic throughput
-
-    if (!ZenohNode::init(config)) {
-        return;
+        // 2. Create ROS 2 timer (triggers callback every 1000ms)
+        timer_ = this->z_create_timer(1000, [this]() -> void {
+            this->timer_callback();
+        });
     }
 
-    node = new ZenohNode("serial_uart_mcu_node");
-    pub_count = node->z_create_publisher<z_Int32>("serial/counter", 10);
-    pub_temp  = node->z_create_publisher<z_Float64>("serial/temperature", 10);
+private:
+    int cnt_;
+    ZenohPublisher<z_Int32>* pub_count_;
+    ZenohPublisher<z_Float64>* pub_temp_;
+    ZenohTimer* timer_;
+    
+    z_Int32 count_msg_;
+    z_Float64 temp_msg_;
+
+    void timer_callback() {
+        if (pub_count_ && pub_temp_) {
+            count_msg_.data = cnt_++;
+            pub_count_->publish(count_msg_);
+
+            temp_msg_.data = 25.0 + (random(0, 100) / 10.0);
+            pub_temp_->publish(temp_msg_);
+
+            Serial.printf("[%s] Published Counter: %d | Temperature: %.2f °C\n",
+                          this->z_get_name(), count_msg_.data, temp_msg_.data);
+        }
+    }
+};
+
+// Global Pointer to Node Instance
+SerialUARTPublisherNode* node_instance = nullptr;
+
+void setup() {
+    Serial.begin(921600);
+    z_delay(1000);
+
+    Serial.println("\n==========================================");
+    Serial.println("  ESP32-S3 Zenoh Serial UART Publisher    ");
+    Serial.println("==========================================");
+
+    Serial.println("[System] Initializing Zenoh Client...");
+    if (ZenohNode::init(cfg)) {
+        Serial.println("[System] Starting Zenoh Node...");
+        node_instance = new SerialUARTPublisherNode();
+    } else {
+        Serial.println("[System] CRITICAL Error: Zenoh Client initialization failed!");
+        while (1) { z_delay(1000); }
+    }
+
+    Serial.println("==========================================\n");
 }
 
 void loop() {
-    if (node) {
-        node->z_spin();
-
-        static unsigned long last_pub = 0;
-        if (millis() - last_pub >= 1000) {
-            last_pub = millis();
-
-            z_Int32 count_msg;
-            count_msg.data = counter++;
-            pub_count->publish(count_msg);
-
-            z_Float64 temp_msg;
-            temp_msg.data = 25.0 + (random(0, 100) / 10.0);
-            pub_temp->publish(temp_msg);
-        }
+    if (node_instance) {
+        node_instance->z_spin();
     }
-    delay(10);
 }
