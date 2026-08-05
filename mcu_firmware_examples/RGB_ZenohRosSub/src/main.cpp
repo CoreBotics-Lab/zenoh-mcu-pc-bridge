@@ -30,7 +30,7 @@ void setLed(size_t led, uint8_t r, uint8_t g, uint8_t b, uint8_t brightness) {
 class WS2812B_Subscriber_Node : public ZenohNode {
 public:
     WS2812B_Subscriber_Node() : ZenohNode("ws2812b_subscriber") {
-        Serial.printf("[Node] %s has been started.\n", this->z_get_name());
+        ZLOG_INFO(this->get_logger(), "Node %s has been started.", this->z_get_name());
         
         // Create subscriber for /ws2812b topic
         sub_ = this->z_create_subscription<z_SetLED>(

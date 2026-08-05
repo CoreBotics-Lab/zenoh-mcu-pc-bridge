@@ -66,7 +66,7 @@ ZenohConfig cfg = {
 class MasterTestNode : public ZenohNode {
 public:
     MasterTestNode() : ZenohNode("master_test_node") {
-        Serial.printf("[Node] %s initialized!\n", z_get_name());
+        ZLOG_INFO(this->get_logger(), "Node %s initialized!", z_get_name());
 
         // Standard Publishers
         pub_bool_     = z_create_publisher<z_Bool>("test/bool", 10);
