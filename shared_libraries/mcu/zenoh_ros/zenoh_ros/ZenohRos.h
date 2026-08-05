@@ -53,6 +53,10 @@ struct UARTPins {
 
 // Configuration structure for the Zenoh node (Pure aggregate type for C++ designated initializers)
 struct ZenohConfig {
+    ZenohCommunicationMode communication_mode;
+    uint32_t baudrate;
+    UARTPins uart_pins; // Custom RX/TX pins for ZENOH_COMM_UART_HW
+
     const char* ssid;
     const char* password;
     uint16_t port;
@@ -60,10 +64,6 @@ struct ZenohConfig {
     const char* gateway;  // Optional: gateway IP
     const char* subnet;   // Optional: subnet mask
     WiFiMode_t wifi_mode; // Wi-Fi mode (WIFI_STA or WIFI_AP)
-
-    ZenohCommunicationMode communication_mode;
-    uint32_t baudrate;
-    UARTPins uart_pins; // Custom RX/TX pins for ZENOH_COMM_UART_HW
 };
 
 // --- ROS2-style QoS settings ---
