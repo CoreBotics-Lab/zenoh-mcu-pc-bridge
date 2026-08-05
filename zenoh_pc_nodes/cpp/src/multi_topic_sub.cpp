@@ -43,8 +43,9 @@ int main(int argc, char** argv) {
     (void)argc;
     (void)argv;
 
-    // Initialize with default AP network settings (IP: 192.168.4.1, Port: 7447)
+    // Initialize via Wi-Fi — connect to MCU SoftAP (IP: 192.168.4.1, Port: 7447)
     ZenohConfig config;
+    config.communication_mode = ZenohCommunicationMode::ZENOH_COMM_WIFI;
     config.host = "192.168.4.1";
     config.port = 7447;
 

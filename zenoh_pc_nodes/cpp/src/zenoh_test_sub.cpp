@@ -28,8 +28,9 @@ int main(int argc, char** argv) {
     (void)argc;
     (void)argv;
 
-    // Initialize Zenoh session with config object
+    // Initialize Zenoh session — connect to MCU SoftAP via Wi-Fi
     ZenohConfig config;
+    config.communication_mode = ZenohCommunicationMode::ZENOH_COMM_WIFI;
     config.host = "10.42.0.50";
     config.port = 7447;
 

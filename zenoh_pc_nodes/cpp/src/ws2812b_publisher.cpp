@@ -57,8 +57,9 @@ int main(int argc, char** argv) {
     (void)argc;
     (void)argv;
 
-    // Connect to ESP32 SoftAP (default IP is 192.168.4.1)
+    // Connect to ESP32 SoftAP via Wi-Fi (default IP is 192.168.4.1)
     ZenohConfig config;
+    config.communication_mode = ZenohCommunicationMode::ZENOH_COMM_WIFI;
     config.host = "192.168.4.1";
     config.port = 7447;
 

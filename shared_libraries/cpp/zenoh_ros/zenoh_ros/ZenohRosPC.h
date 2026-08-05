@@ -15,6 +15,8 @@
 #include <vector>
 #include <mutex>
 #include <condition_variable>
+#include "z_logger.h"
+
 
 // Global flag to handle clean shutdown via Ctrl+C
 inline volatile sig_atomic_t shutdown_requested = 0;
@@ -460,16 +462,27 @@ enum class ZenohBaudRate : uint32_t {
     USB_HIGH_SPEED  = 12000000   ///< Native USB CDC High speed (1.2 MB/s max throughput)
 };
 
+/**
+ * @brief Communication transport modes for the PC Zenoh node.
+ */
+enum class ZenohCommunicationMode {
+    ZENOH_COMM_WIFI      = 0,  ///< Wi-Fi / TCP (default for PC nodes)
+    ZENOH_COMM_UART_DEFAULT  = 1,  ///< UART Serial (e.g. /dev/ttyUSB0)
+    ZENOH_COMM_UART_USB_CDC  = 2,  ///< USB CDC Serial (e.g. /dev/ttyACM0)
+    ZENOH_COMM_UART_HW       = 3,  ///< Hardware UART (e.g. /dev/ttyS0)
+};
+
 // Configuration structure for the Zenoh node on PC
 struct ZenohConfig {
-    std::string transport = "serial";  ///< "serial" (Default) or "wifi"
-    std::string uart_port = "auto";    ///< "auto" (Auto-detect), "/dev/ttyACM0", "/dev/ttyUSB0", "COM3"
-    uint32_t baudrate = 115200;       ///< 115200, 921600, 3000000, 12000000
-    
-    // Wi-Fi Parameters
+    ZenohCommunicationMode communication_mode = ZenohCommunicationMode::ZENOH_COMM_WIFI; ///< Transport mode
+    std::string transport = "wifi";           ///< Legacy: "serial" or "wifi" (overridden by communication_mode)
+    std::string uart_port = "auto";           ///< "auto", "/dev/ttyACM0", "/dev/ttyUSB0", "COM3"
+    uint32_t    baudrate  = 115200;           ///< Baud rate (use ZenohBaudRate presets)
+
+    // Wi-Fi / TCP Parameters
     std::string host = "192.168.4.1";
-    uint16_t port = 7447;
-    std::string connect_endpoint = ""; // If specified, overrides host/port/serial
+    uint16_t    port = 7447;
+    std::string connect_endpoint = ""; ///< If non-empty, overrides all other transport settings
 };
 
 // Main Zenoh Node Class for PC
@@ -526,8 +539,7 @@ public:
         return true;
     }
 
-public:
-    ZenohNode(const char* name) : node_name(name) {}
+
 
     ~ZenohNode() {
         for (auto& cleanup : cleanup_callbacks) {
@@ -580,12 +592,17 @@ public:
         std::string endpoint;
         if (!config.connect_endpoint.empty()) {
             endpoint = config.connect_endpoint;
-        } else if (!config.host.empty()) {
-            endpoint = "tcp/" + config.host + ":" + std::to_string(config.port);
+        } else if (config.communication_mode == ZenohCommunicationMode::ZENOH_COMM_WIFI) {
+            if (!config.host.empty()) {
+                endpoint = "tcp/" + config.host + ":" + std::to_string(config.port);
+            }
         } else {
-            return init_session(nullptr); // Scouting
+            // Serial modes: rely on zenoh-bridge-serial or a bridge; connect via TCP bridge
+            if (!config.host.empty()) {
+                endpoint = "tcp/" + config.host + ":" + std::to_string(config.port);
+            }
         }
-        return init_session(endpoint.c_str());
+        return init_session(endpoint.empty() ? nullptr : endpoint.c_str());
     }
 
     static bool init(uint16_t port) {
