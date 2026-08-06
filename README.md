@@ -21,11 +21,11 @@ The entire library lives inside a single portable folder: **`shared_libraries/`*
 
 ```text
 shared_libraries/
-├── mcu/zenoh_ros/         ← Microcontroller C++ Library (ESP32 / Arduino)
-├── cpp/zenoh_ros/         ← PC C++ Library
-├── python/zenoh_ros/      ← PC Python Package
-├── tools/                 ← Standalone C++ Echo Debugger (tools/build/echo)
-└── msg_interface/         ← Message Generator (.msg, .srv & generate.py)
+├── mcu/zenoh_ros/         ← Microcontroller C++ Library (ESP32 / Arduino / ESP-IDF)
+├── cpp/zenoh_ros/         ← Host PC C++ Library (C++17)
+├── python/zenoh_ros/      ← Host PC Python Package (Python 3.x)
+├── tools/                 ← Standalone C++ CLI Echo Debugger (tools/build/echo)
+└── msg_interface/         ← Interface Generator (.msg, .srv & generate.py)
 ```
 
 ---
@@ -140,7 +140,7 @@ python3 generate.py -rm srv/custom_srvs/SetLEDColor.srv
 
 ---
 
-## 📡 API Reference & Core Methods
+## 📡 API Reference & Core Features
 
 All communication methods belong to `ZenohNode` and follow standard ROS 2 method signatures across C++ and Python.
 
@@ -148,21 +148,41 @@ All communication methods belong to `ZenohNode` and follow standard ROS 2 method
 
 ### 1. Initializing Zenoh Session (`ZenohNode::init`)
 
-- **MCU C++**:
+- **MCU C++ (Wi-Fi SoftAP / STA)**:
   ```cpp
-  ZenohConfig cfg = { .ssid = "ESP32_AP", .password = "12345678", .port = 7447 };
+  ZenohConfig cfg = {
+      .communication_mode = ZenohCommunicationMode::ZENOH_COMM_WIFI,
+      .ssid               = "ESP32_AP",
+      .password           = "12345678",
+      .port               = 7447,
+      .wifi_mode          = WIFI_AP
+  };
+  ZenohNode::init(cfg);
+  ```
+- **MCU C++ (USB CDC / High-Speed Serial)**:
+  ```cpp
+  ZenohConfig cfg = {
+      .communication_mode = ZenohCommunicationMode::ZENOH_COMM_UART_USB_CDC,
+      .baudrate           = (uint32_t)ZenohBaudRate::USB_HIGH_SPEED
+  };
   ZenohNode::init(cfg);
   ```
 - **PC C++**:
   ```cpp
   ZenohConfig config;
-  config.host = "192.168.4.1"; // ESP32 IP
-  config.port = 7447;          // Zenoh default port
+  config.communication_mode = ZenohCommunicationMode::ZENOH_COMM_WIFI;
+  config.host = "192.168.4.1"; // ESP32 SoftAP IP
+  config.port = 7447;
   ZenohNode::init(config);
   ```
 - **PC Python**:
   ```python
-  ZenohNode.init(ZenohConfig(host="192.168.4.1", port=7447))
+  config = ZenohConfig(
+      communication_mode=ZenohCommunicationMode.ZENOH_COMM_WIFI,
+      host="192.168.4.1",
+      port=7447
+  )
+  ZenohNode.init(config)
   ```
 
 ---
@@ -194,8 +214,8 @@ All communication methods belong to `ZenohNode` and follow standard ROS 2 method
   ```cpp
   auto sub = node->z_create_subscription<z_Int32>(
       "topic_name",
-      [](const z_Int32& msg) {
-          // Process message
+      [this](const z_Int32& msg) {
+          ZLOG_INFO(this->get_logger(), "Received: %d", msg.data);
       },
       10
   );
@@ -203,7 +223,7 @@ All communication methods belong to `ZenohNode` and follow standard ROS 2 method
 - **Python**:
   ```python
   def callback(msg: z_Int32):
-      print(msg.data)
+      node.get_logger().info(f"Received: {msg.data}")
 
   sub = node.z_create_subscription(z_Int32, "topic_name", callback, 10)
   ```
@@ -212,15 +232,15 @@ All communication methods belong to `ZenohNode` and follow standard ROS 2 method
 
 ### 4. Creating a Timer (`z_create_timer`)
 
-- **MCU C++**:
+- **C++ (MCU & PC)**:
   ```cpp
-  ZenohTimer* timer = node->z_create_timer(1000, []() {
+  ZenohTimer* timer = node->z_create_timer(1000, [this]() {
       // Triggered every 1000ms (1 second)
   });
   ```
 - **Python**:
   ```python
-  timer = node.z_create_timer(1.0, timer_callback) # Triggered every 1.0 second
+  timer = node.z_create_timer(1000, timer_callback) # Triggered every 1000ms (1 second)
   ```
 
 ---
@@ -250,7 +270,7 @@ All communication methods belong to `ZenohNode` and follow standard ROS 2 method
 
 ### 6. Creating a Service Client (`z_create_client`)
 
-- **Python Client (Async)**:
+- **Python Client (Async / Future Pattern)**:
   ```python
   client = node.z_create_client(z_SetLEDColor, "set_led_color")
 
@@ -259,10 +279,10 @@ All communication methods belong to `ZenohNode` and follow standard ROS 2 method
       req.led_data.led_num = 0
       
       future = client.call_async(req)
-      res = future.result(timeout_sec=3.0) # Blocking wait with timeout
+      res = future.result(timeout_sec=3.0) # Non-blocking Future with timeout
       print(res.success, res.message)
   ```
-- **MCU C++ Client**:
+- **MCU C++ & PC C++ Client**:
   ```cpp
   auto client = node->z_create_client<z_SetLEDColor>("set_led_color");
 
@@ -276,6 +296,67 @@ All communication methods belong to `ZenohNode` and follow standard ROS 2 method
   ```
 
 ---
+
+### 7. ROS 2 Logging Subsystem & Live Zenoh Log Streaming
+
+`zenoh_ros` features a full ROS 2-style logging framework matching `rclcpp` / `rclpy` logger APIs.
+
+- **Standardized Log Format**: Outputs `[INFO] [node_name]: message` with ANSI severity colors.
+- **Automatic Node Log Streaming**: `ZenohNode` automatically attaches its built-in logger (`this->get_logger()`) to the Zenoh session. Calling `ZLOG_INFO(this->get_logger(), ...)` or `self.get_logger().info(...)` prints to terminal AND publishes live logs to `{node_name}/log` over Zenoh!
+
+#### **Creating & Attaching Custom Component Loggers (`z_attach`)**:
+You can create separate, dedicated loggers for specific hardware components or subsystems (e.g. `hardware`, `bms`, `navigation`) and attach them to your `ZenohNode` using `.z_attach(node)`:
+
+```cpp
+class MyRobotNode : public ZenohNode {
+public:
+    MyRobotNode() : ZenohNode("my_robot_node"), bms_logger_("battery_system") {
+        // Attach the separate logger to this node's Zenoh session
+        bms_logger_.z_attach(this);
+
+        // Logs to terminal AND streams live over Zenoh to topic 'battery_system/log'
+        ZLOG_INFO(bms_logger_, "BMS Subsystem Initialized. Voltage: 24.2V");
+    }
+
+private:
+    ZLogger bms_logger_;
+};
+```
+
+> [!NOTE]
+> Unattached loggers (such as `z_get_logger("system")` called before `ZenohNode` instantiation) print cleanly to hardware `Serial`, but do not stream over Zenoh until `.z_attach(node)` is called.
+
+#### **Available C++ Logging Macros (`z_logger.h`)**:
+```cpp
+ZLOG_DEBUG(node.get_logger(), "Sensor val: %d", val);
+ZLOG_INFO(node.get_logger(),  "Node initialized");
+ZLOG_WARN(node.get_logger(),  "Voltage low: %.2fV", v);
+ZLOG_ERROR(node.get_logger(), "Sensor failed: %s", name);
+ZLOG_FATAL(node.get_logger(), "System halted");
+
+// Print once per call site
+ZLOG_INFO_ONCE(node.get_logger(), "Initialized");
+
+// Throttle log printing (e.g. at most once every 1000ms)
+ZLOG_INFO_THROTTLE(node.get_logger(), 1000, "Loop tick: %d", cnt);
+```
+
+#### **Python Logging (`self.get_logger()`)**:
+```python
+self.get_logger().info("Node started")
+self.get_logger().warn(f"Battery at {level}%")
+self.get_logger().error(f"Failed to connect: {e}")
+```
+
+#### **Echoing Live Node & Component Logs over Zenoh**:
+Listen to any node or custom component's live log output over Zenoh without writing subscriber code:
+```bash
+# Node logs:
+shared_libraries/tools/build/echo counter_publisher/log
+
+# Separate attached component logs:
+shared_libraries/tools/build/echo battery_system/log
+```
 
 ---
 
@@ -317,6 +398,24 @@ Set and query configuration parameters dynamically without re-compiling firmware
 
 ---
 
+## 🔌 Serial UART & USB CDC Transport Support
+
+In addition to Wi-Fi (SoftAP & STA modes), `zenoh_ros` natively supports direct Serial UART and Native USB CDC communications.
+
+### Transport Modes (`ZenohCommunicationMode`) & Preset Speeds (`ZenohBaudRate`)
+
+| Communication Mode Enum | Description | Preset Baud Rate Enum | Throughput / Bandwidth |
+| :--- | :--- | :--- | :--- |
+| `ZENOH_COMM_UART_DEFAULT` **(Default)** | Standard UART0 over built-in USB/UART flashing port (`Serial`) | `ZenohBaudRate::UART_STANDARD` (`115200`) | `~11.5 KB/s` (Low-frequency single-topic nodes) |
+| `ZENOH_COMM_UART_USB_CDC` | Native USB CDC Serial (`USBSerial` / USB OTG PHY) | `ZenohBaudRate::USB_HIGH_SPEED` (`12000000`) | `~300 KB/s - 1.2 MB/s` (High-rate binary streaming) |
+| `ZENOH_COMM_UART_HW` | Hardware UART on custom RX/TX pins (`Serial1`) | `ZenohBaudRate::UART_HIGH_SPEED` (`921600`) | `~92 KB/s` (Multi-topic telemetry) |
+| `ZENOH_COMM_WIFI` | Wireless TCP/UDP connection | N/A | `~2.5 MB/s - 5.0 MB/s` |
+
+> [!WARNING]
+> **Serial Bandwidth Note**: Streaming 30+ dynamic topics simultaneously at high rates over standard `115,200 baud` UART can saturate the serial bus buffer. For multi-topic nodes, use `UART_HIGH_SPEED` (`921,600 baud`) or `USB_HIGH_SPEED` (`12,000,000 baud`).
+
+---
+
 ## ⚡ Performance, Low-Latency & Thread Safety Architecture
 
 1. **Ultra-Low Latency Wi-Fi Mode (`WIFI_PS_NONE`)**:
@@ -336,62 +435,28 @@ Set and query configuration parameters dynamically without re-compiling firmware
 Inspect any topic or live log stream in real time:
 
 ```bash
-# Build tool once:
-cd shared_libraries/tools && mkdir -p build && cd build && cmake .. && make echo
+# 1. Setup C++ dependencies & build echo tool:
+./shared_libraries/cpp/zenoh_install.sh
 
-# Echo topic:
-shared_libraries/tools/build/echo ws2812b_service_server/log
+# 2. Echo topic over Wi-Fi:
+shared_libraries/tools/build/echo robot/hello_string 192.168.4.1
+
+# 3. Echo live node logs:
+shared_libraries/tools/build/echo counter_publisher/log
+
+# 4. Echo topic over Serial UART:
+shared_libraries/tools/build/echo serial/counter /dev/ttyACM0
 ```
 
 ---
 
-## 💡 Code Examples
+## 💡 Reference Example Projects
 
-- MCU Server Example: [`mcu_firmware_examples/RGB_ZenohRosSrv/src/main.cpp`](file:///home/syed-abdul-hayi/Corebotics%20Lab/zenoh_ws/mcu_firmware_examples/RGB_ZenohRosSrv/src/main.cpp)
-- PC Python Client Example: [`zenoh_pc_nodes/python/led_service_client.py`](file:///home/syed-abdul-hayi/Corebotics%20Lab/zenoh_ws/zenoh_pc_nodes/python/led_service_client.py)
+Check out the complete reference node examples in `mcu_firmware_examples/` and `pc_nodes_examples/`:
 
-
----
-
-## 🔌 Serial UART & USB CDC Transport Support
-
-In addition to Wi-Fi (SoftAP & STA modes), `zenoh_ros` natively supports direct Serial UART and Native USB CDC communications.
-
-### Transport Modes & Preset Speeds
-
-| Transport Mode Enum | Description | Preset Baud Rate Enum | Throughput / Bandwidth |
-| :--- | :--- | :--- | :--- |
-| `ZENOH_TRANSPORT_UART_DEFAULT` **(Default)** | Standard UART0 over built-in USB/UART flashing port (`Serial`) | `ZenohBaudRate::UART_STANDARD` (`115200`) | `~11.5 KB/s` (Low-frequency single-topic nodes) |
-| `ZENOH_TRANSPORT_UART_USB_CDC` | Native USB CDC Serial (`USBSerial` / USB OTG PHY) | `ZenohBaudRate::USB_STANDARD` (`3000000`) | `~300 KB/s - 1.2 MB/s` (High-rate binary streaming) |
-| `ZENOH_TRANSPORT_UART_HW` | Hardware UART on custom RX/TX pins (`Serial1`) | `ZenohBaudRate::UART_HIGH_SPEED` (`921600`) | `~92 KB/s` (Multi-topic telemetry) |
-| `ZENOH_TRANSPORT_WIFI` | Wireless TCP/UDP connection | N/A | `~2.5 MB/s - 5.0 MB/s` |
-
-> [!WARNING]
-> **Serial Bandwidth Note**: Streaming 30+ dynamic topics simultaneously at high rates over standard `115,200 baud` UART can saturate the serial bus buffer. For multi-topic nodes, use `UART_HIGH_SPEED` (`921,600 baud`) or `USB_STANDARD` (`3,000,000 baud`).
-
-### Usage Examples
-
-- **MCU (C++)**:
-  ```cpp
-  // Default UART0 over USB flashing port
-  ZenohConfig cfg;
-  cfg.transport_mode = ZenohTransportMode::ZENOH_TRANSPORT_UART_DEFAULT;
-  cfg.baudrate = (uint32_t)ZenohBaudRate::UART_HIGH_SPEED;
-  ZenohNode::init(cfg);
-  
-  // Custom Hardware UART pins (RX=12, TX=13)
-  ZenohConfig hw_cfg;
-  hw_cfg.transport_mode = ZenohTransportMode::ZENOH_TRANSPORT_UART_HW;
-  hw_cfg.uart_pins = { .rx = 12, .tx = 13 };
-  hw_cfg.baudrate = (uint32_t)ZenohBaudRate::UART_HIGH_SPEED;
-  ZenohNode::init(hw_cfg);
-  ```
-
-- **PC (Python)**:
-  ```python
-  from zenoh_ros import ZenohNode, ZenohConfig, BaudRate
-
-  # Auto-detect MCU serial port (/dev/ttyACM0 or /dev/ttyUSB0 on Linux / COM3 on Windows)
-  config = ZenohConfig(transport="serial", uart_port="auto", baudrate=BaudRate.UART_HIGH_SPEED)
-  ZenohNode.init(config)
-  ```
+- **MCU Server Example**: [`mcu_firmware_examples/RGB_ZenohRosSrv/src/main.cpp`](file:///home/syed-abdul-hayi/Corebotics%20Lab/zenoh_ws/mcu_firmware_examples/RGB_ZenohRosSrv/src/main.cpp)
+- **MCU Multi-Topic Publisher**: [`mcu_firmware_examples/publishMultipleTopics/src/main.cpp`](file:///home/syed-abdul-hayi/Corebotics%20Lab/zenoh_ws/mcu_firmware_examples/publishMultipleTopics/src/main.cpp)
+- **MCU IMU Publisher**: [`mcu_firmware_examples/mpu6050_ZenohPub/src/main.cpp`](file:///home/syed-abdul-hayi/Corebotics%20Lab/zenoh_ws/mcu_firmware_examples/mpu6050_ZenohPub/src/main.cpp)
+- **PC Python Client Example**: [`pc_nodes_examples/python/led_service_client.py`](file:///home/syed-abdul-hayi/Corebotics%20Lab/zenoh_ws/pc_nodes_examples/python/led_service_client.py)
+- **PC C++ Client Example**: [`pc_nodes_examples/cpp/src/led_service_client.cpp`](file:///home/syed-abdul-hayi/Corebotics%20Lab/zenoh_ws/pc_nodes_examples/cpp/src/led_service_client.cpp)
+- **PC 3D Flight Simulator (Python)**: [`pc_nodes_examples/python/flight_sim.py`](file:///home/syed-abdul-hayi/Corebotics%20Lab/zenoh_ws/pc_nodes_examples/python/flight_sim.py)
