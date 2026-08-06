@@ -59,8 +59,8 @@ else
     echo "${THIRDPARTY_DIR}/zenoh-c directory already exists."
 fi
 
-# 3. Build C++ PC nodes if zenoh_pc_nodes/cpp directory exists
-PC_CPP_NODES_DIR="$(cd "${SCRIPT_DIR}/../../zenoh_pc_nodes/cpp" 2>/dev/null && pwd || true)"
+# 3. Build C++ PC nodes if pc_nodes_examples/cpp directory exists
+PC_CPP_NODES_DIR="$(cd "${SCRIPT_DIR}/../../pc_nodes_examples/cpp" 2>/dev/null && pwd || true)"
 if [ -n "$PC_CPP_NODES_DIR" ] && [ -f "${PC_CPP_NODES_DIR}/CMakeLists.txt" ]; then
     echo "=== Building C++ PC nodes ==="
     mkdir -p "${PC_CPP_NODES_DIR}/build"
