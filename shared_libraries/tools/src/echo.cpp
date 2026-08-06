@@ -3,6 +3,8 @@
  *
  * Subscribes to any topic (e.g. 'test/temperature', 'test/pose')
  * and prints live structured payloads with color formatting.
+ * This file is under development.
+ * 
  */
 
 #include <iostream>
