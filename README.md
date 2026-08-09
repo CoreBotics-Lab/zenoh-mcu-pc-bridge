@@ -439,22 +439,24 @@ In addition to Wi-Fi (SoftAP & STA modes), `zenoh_ros` natively supports direct 
 
 ---
 
-## 🔍 CLI Echo Debugger (`echo`)
+## 🔍 CLI Echo Debugger (`echo` & `zenohEcho` Alias)
 
-Inspect any topic or live log stream in real time:
+Inspect any topic or live log stream in real time across Wi-Fi, Serial UART, or custom ports:
 
 ```bash
-# 1. Setup C++ dependencies & build echo tool:
-./shared_libraries/cpp/zenoh_install.sh
+# 1. Install echo tool and automatically register 'zenohEcho' alias in ~/.bashrc:
+./shared_libraries/tools/echo_install.sh
+source ~/.bashrc
 
-# 2. Echo topic over Wi-Fi:
-shared_libraries/tools/build/echo robot/hello_string 192.168.4.1
+# 2. Echo topic using global alias:
+zenohEcho robot/hello_string 192.168.4.1
+zenohEcho robot/sim_counter 10.42.0.50 2547
 
 # 3. Echo live node logs:
-shared_libraries/tools/build/echo counter_publisher/log
+zenohEcho counter_publisher/log
 
 # 4. Echo topic over Serial UART:
-shared_libraries/tools/build/echo serial/counter /dev/ttyACM0
+zenohEcho serial/counter /dev/ttyACM0
 ```
 
 ---
