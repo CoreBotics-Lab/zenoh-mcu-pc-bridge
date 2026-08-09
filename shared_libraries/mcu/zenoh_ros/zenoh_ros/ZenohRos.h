@@ -54,17 +54,47 @@ struct UARTPins {
 
 // Configuration structure for the Zenoh node (Pure aggregate type for C++ designated initializers)
 struct ZenohConfig {
-    ZenohCommunicationMode communication_mode;
-    uint32_t baudrate;
-    UARTPins uart_pins; // Custom RX/TX pins for ZENOH_COMM_UART_HW
+    ZenohCommunicationMode communication_mode = ZenohCommunicationMode::ZENOH_COMM_UART_DEFAULT;
+    uint32_t baudrate = 115200;
+    UARTPins uart_pins = {0, 0}; // Custom RX/TX pins for ZENOH_COMM_UART_HW
 
-    const char* ssid;
-    const char* password;
-    uint16_t port;
-    const char* local_ip; // Optional: custom static IP for SoftAP/STA
-    const char* gateway;  // Optional: gateway IP
-    const char* subnet;   // Optional: subnet mask
-    WiFiMode_t wifi_mode; // Wi-Fi mode (WIFI_STA or WIFI_AP)
+    const char* ssid = nullptr;
+    const char* password = nullptr;
+    uint16_t port = 7447;
+    WiFiMode_t wifi_mode = WIFI_STA; // Wi-Fi mode (WIFI_STA or WIFI_AP)
+    const char* local_ip = nullptr; // Optional: custom static IP for SoftAP/STA
+    const char* gateway = nullptr;  // Optional: gateway IP
+    const char* subnet = nullptr;   // Optional: subnet mask
+    const uint8_t* mac_addr = nullptr; // Optional: target router MAC address / BSSID (6-byte uint8_t array)
+
+    // Default Constructor
+    ZenohConfig() = default;
+
+    // Fluent helper methods (Set parameters in ANY order without compiler restrictions!)
+    ZenohConfig& set_wifi(const char* wifi_ssid, const char* wifi_pass, WiFiMode_t mode = WIFI_STA) {
+        communication_mode = ZenohCommunicationMode::ZENOH_COMM_WIFI;
+        ssid = wifi_ssid;
+        password = wifi_pass;
+        wifi_mode = mode;
+        return *this;
+    }
+
+    ZenohConfig& set_mac(const uint8_t* mac) {
+        mac_addr = mac;
+        return *this;
+    }
+
+    ZenohConfig& set_port(uint16_t p) {
+        port = p;
+        return *this;
+    }
+
+    ZenohConfig& set_static_ip(const char* ip, const char* gw = nullptr, const char* net = nullptr) {
+        local_ip = ip;
+        gateway = gw;
+        subnet = net;
+        return *this;
+    }
 };
 
 // --- ROS2-style QoS settings ---
@@ -620,8 +650,16 @@ public:
                     Serial.println("[Wi-Fi] ERROR: Invalid local_ip format!");
                 }
             }
-            WiFi.begin(cfg.ssid ? cfg.ssid : "", cfg.password ? cfg.password : "");
-            Serial.printf("[Wi-Fi] Connecting to SSID: %s ", cfg.ssid ? cfg.ssid : "");
+            if (cfg.mac_addr != nullptr) {
+                Serial.printf("[Wi-Fi] Connecting to SSID: %s (Target MAC: %02X:%02X:%02X:%02X:%02X:%02X) ",
+                              cfg.ssid ? cfg.ssid : "",
+                              cfg.mac_addr[0], cfg.mac_addr[1], cfg.mac_addr[2],
+                              cfg.mac_addr[3], cfg.mac_addr[4], cfg.mac_addr[5]);
+                WiFi.begin(cfg.ssid ? cfg.ssid : "", cfg.password ? cfg.password : "", 0, cfg.mac_addr);
+            } else {
+                Serial.printf("[Wi-Fi] Connecting to SSID: %s ", cfg.ssid ? cfg.ssid : "");
+                WiFi.begin(cfg.ssid ? cfg.ssid : "", cfg.password ? cfg.password : "");
+            }
             unsigned long start_time = millis();
             while (WiFi.status() != WL_CONNECTED && millis() - start_time < 10000) {
                 delay(500);

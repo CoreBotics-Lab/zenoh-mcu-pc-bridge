@@ -148,15 +148,24 @@ All communication methods belong to `ZenohNode` and follow standard ROS 2 method
 
 ### 1. Initializing Zenoh Session (`ZenohNode::init`)
 
-- **MCU C++ (Wi-Fi SoftAP / STA)**:
+- **MCU C++ (Wi-Fi STA via Fluent Builder or Member Assignment — Set fields in ANY order)**:
   ```cpp
-  ZenohConfig cfg = {
-      .communication_mode = ZenohCommunicationMode::ZENOH_COMM_WIFI,
-      .ssid               = "ESP32_AP",
-      .password           = "12345678",
-      .port               = 7447,
-      .wifi_mode          = WIFI_AP
-  };
+  const uint8_t router_mac[6] = {0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF};
+
+  // Option A: Fluent Builder Syntax (Set parameters in ANY order)
+  ZenohConfig cfg = ZenohConfig()
+      .set_wifi("MyRobotRouter", "12345678", WIFI_STA)
+      .set_mac(router_mac)
+      .set_port(7447);
+
+  // Option B: Direct Member Assignment (Set parameters in ANY order)
+  ZenohConfig cfg;
+  cfg.communication_mode = ZenohCommunicationMode::ZENOH_COMM_WIFI;
+  cfg.ssid = "MyRobotRouter";
+  cfg.password = "12345678";
+  cfg.wifi_mode = WIFI_STA;
+  cfg.mac_addr = router_mac;
+
   ZenohNode::init(cfg);
   ```
 - **MCU C++ (USB CDC / High-Speed Serial)**:
