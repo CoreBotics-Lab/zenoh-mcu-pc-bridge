@@ -377,16 +377,17 @@ static std::string auto_detect_serial_port() {
 
 int main(int argc, char** argv) {
     if (argc < 2) {
-        std::cout << COLOR_BOLD << "Usage: " << COLOR_RESET << "echo <topic_name> [host_ip_or_endpoint]\n";
+        std::cout << COLOR_BOLD << "Usage: " << COLOR_RESET << "echo <topic_name> [host_ip_or_endpoint] [port]\n";
         std::cout << COLOR_GRAY << "Examples:\n";
         std::cout << "  echo robot/hello_string 192.168.4.1\n";
-        std::cout << "  echo serial/counter /dev/ttyACM0\n";
-        std::cout << "  echo test/temperature 10.42.0.50" << COLOR_RESET << "\n";
+        std::cout << "  echo robot/hello_string 10.42.0.50 2547\n";
+        std::cout << "  echo serial/counter /dev/ttyACM0" << COLOR_RESET << "\n";
         return 1;
     }
 
     std::string topic = argv[1];
     std::string endpoint_arg = (argc > 2) ? argv[2] : "auto";
+    std::string custom_port  = (argc > 3) ? argv[3] : "7447";
 
     signal(SIGINT,  echo_signal_handler);
     signal(SIGTERM, echo_signal_handler);
@@ -402,21 +403,21 @@ int main(int argc, char** argv) {
     std::string connect_url;
 
     if (endpoint_arg == "auto") {
-        // Default to Wi-Fi SoftAP 192.168.4.1, with fallback
-        connect_url = "[\"tcp/192.168.4.1:7447\"]";
-        std::cout << COLOR_GRAY << "[echo] Connecting to endpoint: 192.168.4.1:7447..." << COLOR_RESET << "\n";
+        // Default to Wi-Fi SoftAP 192.168.4.1:7447
+        connect_url = "[\"tcp/192.168.4.1:" + custom_port + "\"]";
+        std::cout << COLOR_GRAY << "[echo] Connecting to endpoint: 192.168.4.1:" << custom_port << "..." << COLOR_RESET << "\n";
     } else if (endpoint_arg.find('/') != std::string::npos && endpoint_arg.find("dev") != std::string::npos) {
         // Serial Port (e.g. /dev/ttyACM0 or /dev/ttyUSB0)
         connect_url = "[\"serial/" + endpoint_arg + "\"]";
         std::cout << COLOR_GRAY << "[echo] Connecting to serial port: " << endpoint_arg << "..." << COLOR_RESET << "\n";
-    } else if (endpoint_arg.find(':') != std::string::npos || endpoint_arg.find('/') != std::string::npos) {
-        // Custom endpoint locator string
-        connect_url = "[\"" + endpoint_arg + "\"]";
-        std::cout << COLOR_GRAY << "[echo] Connecting to locator: " << endpoint_arg << "..." << COLOR_RESET << "\n";
+    } else if (endpoint_arg.find(':') != std::string::npos) {
+        // Locator or IP with port (e.g. 10.42.0.50:2547)
+        connect_url = "[\"tcp/" + endpoint_arg + "\"]";
+        std::cout << COLOR_GRAY << "[echo] Connecting to endpoint: " << endpoint_arg << "..." << COLOR_RESET << "\n";
     } else {
-        // IP Address
-        connect_url = "[\"tcp/" + endpoint_arg + ":7447\"]";
-        std::cout << COLOR_GRAY << "[echo] Connecting to endpoint: " << endpoint_arg << ":7447..." << COLOR_RESET << "\n";
+        // IP Address with custom or default port
+        connect_url = "[\"tcp/" + endpoint_arg + ":" + custom_port + "\"]";
+        std::cout << COLOR_GRAY << "[echo] Connecting to endpoint: " << endpoint_arg << ":" << custom_port << "..." << COLOR_RESET << "\n";
     }
 
     zc_config_insert_json5(z_config_loan_mut(&config), Z_CONFIG_CONNECT_KEY, connect_url.c_str());
