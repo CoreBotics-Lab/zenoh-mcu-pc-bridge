@@ -54,14 +54,10 @@
 
 #include "credential.h"
 
-ZenohConfig cfg = {
-    .communication_mode = ZenohCommunicationMode::ZENOH_COMM_WIFI,
-    .ssid               = WIFI_SSID,
-    .password           = WIFI_PASSWORD,
-    .port               = 7447,
-    .local_ip           = "10.42.0.50",
-    .wifi_mode          = WIFI_STA
-};
+ZenohConfig cfg = ZenohConfig()
+    .set_wifi(WIFI_SSID, WIFI_PASSWORD, WIFI_STA)
+    .set_static_ip("10.42.0.50")
+    .set_port(7447);
 
 class MasterTestNode : public ZenohNode {
 public:

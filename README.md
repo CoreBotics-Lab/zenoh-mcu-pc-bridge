@@ -170,10 +170,10 @@ All communication methods belong to `ZenohNode` and follow standard ROS 2 method
   ```
 - **MCU C++ (USB CDC / High-Speed Serial)**:
   ```cpp
-  ZenohConfig cfg = {
-      .communication_mode = ZenohCommunicationMode::ZENOH_COMM_UART_USB_CDC,
-      .baudrate           = (uint32_t)ZenohBaudRate::USB_HIGH_SPEED
-  };
+  ZenohConfig cfg = ZenohConfig()
+      .set_communication_mode(ZenohCommunicationMode::ZENOH_COMM_UART_USB_CDC)
+      .set_baudrate((uint32_t)ZenohBaudRate::USB_HIGH_SPEED);
+
   ZenohNode::init(cfg);
   ```
 - **PC C++**:

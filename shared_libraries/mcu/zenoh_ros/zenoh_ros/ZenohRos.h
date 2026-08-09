@@ -70,7 +70,27 @@ struct ZenohConfig {
     // Default Constructor
     ZenohConfig() = default;
 
-    // Fluent helper methods (Set parameters in ANY order without compiler restrictions!)
+    ZenohConfig& set_communication_mode(ZenohCommunicationMode mode) {
+        communication_mode = mode;
+        return *this;
+    }
+
+    ZenohConfig& set_baudrate(uint32_t baud) {
+        baudrate = baud;
+        return *this;
+    }
+
+    ZenohConfig& set_baudrate(ZenohBaudRate baud) {
+        baudrate = static_cast<uint32_t>(baud);
+        return *this;
+    }
+
+    ZenohConfig& set_uart_pins(int8_t rx_pin, int8_t tx_pin) {
+        communication_mode = ZenohCommunicationMode::ZENOH_COMM_UART_HW;
+        uart_pins = { rx_pin, tx_pin };
+        return *this;
+    }
+
     ZenohConfig& set_wifi(const char* wifi_ssid, const char* wifi_pass, WiFiMode_t mode = WIFI_STA) {
         communication_mode = ZenohCommunicationMode::ZENOH_COMM_WIFI;
         ssid = wifi_ssid;

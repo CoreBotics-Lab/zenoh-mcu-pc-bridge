@@ -9,10 +9,9 @@
  */
 
 // Configuration Struct for Native USB CDC (High-Speed USB OTG PHY at 12 Mbps)
-ZenohConfig cfg = {
-    .communication_mode = ZenohCommunicationMode::ZENOH_COMM_UART_USB_CDC,
-    .baudrate           = (uint32_t)ZenohBaudRate::USB_HIGH_SPEED
-};
+ZenohConfig cfg = ZenohConfig()
+    .set_communication_mode(ZenohCommunicationMode::ZENOH_COMM_UART_USB_CDC)
+    .set_baudrate(ZenohBaudRate::USB_HIGH_SPEED);
 
 class SerialUARTPublisherNode : public ZenohNode {
 public:
