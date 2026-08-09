@@ -63,10 +63,30 @@ fi
 PC_CPP_NODES_DIR="$(cd "${SCRIPT_DIR}/../../pc_nodes_examples/cpp" 2>/dev/null && pwd || true)"
 if [ -n "$PC_CPP_NODES_DIR" ] && [ -f "${PC_CPP_NODES_DIR}/CMakeLists.txt" ]; then
     echo "=== Building C++ PC nodes ==="
-    mkdir -p "${PC_CPP_NODES_DIR}/build"
-    cd "${PC_CPP_NODES_DIR}/build"
-    cmake ..
-    make
+    BUILD_DIR="${PC_CPP_NODES_DIR}/build"
+    
+    # Auto-clean stale CMake cache if workspace/folder path moved
+    if [ -f "${BUILD_DIR}/CMakeCache.txt" ]; then
+        CACHE_SRC=$(grep "CMAKE_HOME_DIRECTORY:INTERNAL" "${BUILD_DIR}/CMakeCache.txt" 2>/dev/null | cut -d'=' -f2 || true)
+        if [ "${CACHE_SRC}" != "${PC_CPP_NODES_DIR}" ]; then
+            echo "Cleaning stale CMake cache from previous workspace path..."
+            rm -rf "${BUILD_DIR}"
+        fi
+    fi
+
+    mkdir -p "${BUILD_DIR}"
+    cd "${BUILD_DIR}"
+    
+    if ! cmake "${PC_CPP_NODES_DIR}"; then
+        echo "CMake failed with existing cache. Re-building cleanly..."
+        cd "${PC_CPP_NODES_DIR}"
+        rm -rf "${BUILD_DIR}"
+        mkdir -p "${BUILD_DIR}"
+        cd "${BUILD_DIR}"
+        cmake "${PC_CPP_NODES_DIR}"
+    fi
+
+    make -j$(nproc 2>/dev/null || echo 2)
 fi
 
 echo "=== Setup complete! ==="

@@ -25,11 +25,29 @@ if [ -f "${CPP_INSTALL_SCRIPT}" ]; then
     bash "${CPP_INSTALL_SCRIPT}"
 fi
 
-# 2. Build echo binary using CMake & Make
-echo -e "${CYAN}[2/3] Building echo CLI binary...${NC}"
+# 2. Check & Clean Stale CMake Cache (if copied from another workspace/path)
+echo -e "${CYAN}[2/3] Preparing build environment & building echo CLI...${NC}"
+
+if [ -f "${BUILD_DIR}/CMakeCache.txt" ]; then
+    CACHE_SRC=$(grep "CMAKE_HOME_DIRECTORY:INTERNAL" "${BUILD_DIR}/CMakeCache.txt" 2>/dev/null | cut -d'=' -f2 || true)
+    if [ "${CACHE_SRC}" != "${SCRIPT_DIR}" ]; then
+        echo -e "${YELLOW}[NOTE] Cleaning stale CMake cache from previous directory path...${NC}"
+        rm -rf "${BUILD_DIR}"
+    fi
+fi
+
 mkdir -p "${BUILD_DIR}"
 cd "${BUILD_DIR}"
-cmake "${SCRIPT_DIR}"
+
+if ! cmake "${SCRIPT_DIR}"; then
+    echo -e "${YELLOW}[NOTE] CMake failed with existing cache. Re-building cleanly...${NC}"
+    cd "${SCRIPT_DIR}"
+    rm -rf "${BUILD_DIR}"
+    mkdir -p "${BUILD_DIR}"
+    cd "${BUILD_DIR}"
+    cmake "${SCRIPT_DIR}"
+fi
+
 make echo -j$(nproc 2>/dev/null || echo 2)
 
 if [ ! -f "${ECHO_BIN}" ]; then
@@ -38,13 +56,22 @@ if [ ! -f "${ECHO_BIN}" ]; then
 fi
 echo -e "${GREEN}[SUCCESS] Built '${ECHO_BIN}' binary.${NC}"
 
-# 3. Alias Check & Setup in ~/.bashrc
-echo -e "${CYAN}[3/3] Checking alias '${ALIAS_NAME}' in ~/.bashrc...${NC}"
+# 3. Dynamic Alias Check & Update in ~/.bashrc
+echo -e "${CYAN}[3/3] Syncing alias '${ALIAS_NAME}' in ~/.bashrc...${NC}"
 
 ALIAS_LINE="alias ${ALIAS_NAME}='\"${ECHO_BIN}\"'"
 
 if grep -q "alias ${ALIAS_NAME}=" "${BASHRC_FILE}" 2>/dev/null; then
-    echo -e "${YELLOW}[NOTE] Alias '${ALIAS_NAME}' already exists in ~/.bashrc.${NC}"
+    # Check if existing alias points to the current ECHO_BIN path
+    EXISTING_ALIAS=$(grep "alias ${ALIAS_NAME}=" "${BASHRC_FILE}" 2>/dev/null || true)
+    if [[ "${EXISTING_ALIAS}" == *"${ECHO_BIN}"* ]]; then
+        echo -e "${YELLOW}[NOTE] Alias '${ALIAS_NAME}' already points to current path in ~/.bashrc.${NC}"
+    else
+        echo -e "${YELLOW}[NOTE] Updating existing '${ALIAS_NAME}' alias to current binary path...${NC}"
+        # Replace existing alias line using sed safely
+        sed -i "/alias ${ALIAS_NAME}=/c\\${ALIAS_LINE}" "${BASHRC_FILE}"
+        echo -e "${GREEN}[SUCCESS] Updated alias '${ALIAS_NAME}' in ~/.bashrc!${NC}"
+    fi
 else
     echo "" >> "${BASHRC_FILE}"
     echo "# zenoh_ros CLI Echo Tool Alias" >> "${BASHRC_FILE}"
