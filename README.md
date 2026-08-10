@@ -6,6 +6,16 @@ The entire library lives inside a single portable folder: **`shared_libraries/`*
 
 ---
 
+## 🚀 One-Command Master Setup
+
+To set up C++ dependencies (`zenoh-c` v1.9.0), Python packages (`eclipse-zenoh`, `msgpack`), PC executables, and automatically activate the `zenohEcho` CLI debugger tool alias in your current terminal:
+
+```bash
+source shared_libraries/install.sh
+```
+
+---
+
 > [!NOTE]
 > **Disclaimer & Upstream Acknowledgements**
 > This library (`zenoh_ros`) is a wrapper interface built directly on top of the following open-source projects:
@@ -21,6 +31,7 @@ The entire library lives inside a single portable folder: **`shared_libraries/`*
 
 ```text
 shared_libraries/
+├── install.sh             ← One-Command Master Installer
 ├── mcu/zenoh_ros/         ← Microcontroller C++ Library (ESP32 / Arduino / ESP-IDF)
 ├── cpp/zenoh_ros/         ← Host PC C++ Library (C++17)
 ├── python/zenoh_ros/      ← Host PC Python Package (Python 3.x)
