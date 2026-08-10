@@ -238,7 +238,7 @@ def draw_artificial_horizon(surface, rect, roll, pitch):
 
 def main():
     # Initialize Zenoh Node
-    cfg = ZenohConfig(host="192.168.4.1", port=7447)
+    cfg = ZenohConfig(communication_mode=ZenohConfig.ZENOH_COMM_WIFI, host="192.168.4.1", port=7447)
     if not ZenohNode.init(cfg):
         return
     

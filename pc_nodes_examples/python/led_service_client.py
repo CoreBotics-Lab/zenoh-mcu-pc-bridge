@@ -74,7 +74,7 @@ class LEDServiceClientNode(ZenohNode):
 
 def main() -> None:
     host_ip = sys.argv[1] if len(sys.argv) > 1 else "192.168.4.1"
-    cfg = ZenohConfig(host=host_ip, port=7447)
+    cfg = ZenohConfig(communication_mode=ZenohConfig.ZENOH_COMM_WIFI, host=host_ip, port=7447)
     if not ZenohNode.init(cfg):
         return
 

@@ -6,6 +6,7 @@
 
 // --- Configuration Struct ---
 ZenohConfig cfg = ZenohConfig()
+    .set_communication_mode(ZenohConfig::ZENOH_COMM_WIFI)
     .set_wifi("ESP32S3_Zenoh_AP", "zenoh1234", WIFI_AP)
     .set_port(7447);
 

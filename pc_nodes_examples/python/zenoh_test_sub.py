@@ -26,7 +26,7 @@ class CounterSubscriberNode(ZenohNode):
 
 
 def main() -> None:
-    cfg = ZenohConfig(host="10.42.0.50", port=7447)
+    cfg = ZenohConfig(communication_mode=ZenohConfig.ZENOH_COMM_WIFI, host="10.42.0.50", port=7447)
     if not ZenohNode.init(cfg):
         return
 

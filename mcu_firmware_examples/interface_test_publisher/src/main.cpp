@@ -55,6 +55,7 @@
 #include "credential.h"
 
 ZenohConfig cfg = ZenohConfig()
+    .set_communication_mode(ZenohConfig::ZENOH_COMM_WIFI)
     .set_wifi(WIFI_SSID, WIFI_PASSWORD, WIFI_STA)
     .set_static_ip("10.42.0.50")
     .set_port(7447);

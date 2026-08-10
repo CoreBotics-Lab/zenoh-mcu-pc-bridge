@@ -169,7 +169,7 @@ int main(int argc, char** argv) {
     std::cout << "==========================================\n\n";
 
     ZenohConfig cfg;
-    cfg.communication_mode = ZenohCommunicationMode::ZENOH_COMM_WIFI;
+    cfg.communication_mode = ZenohConfig::ZENOH_COMM_WIFI;
     cfg.host = (argc > 1) ? argv[1] : "10.42.0.50";
     cfg.port = 7447;
 

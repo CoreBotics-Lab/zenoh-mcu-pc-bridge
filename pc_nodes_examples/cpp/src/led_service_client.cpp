@@ -96,11 +96,11 @@ private:
 int main(int argc, char** argv) {
     ZenohConfig config;
     if (argc > 1) {
-        config.communication_mode = ZenohCommunicationMode::ZENOH_COMM_WIFI;
+        config.communication_mode = ZenohConfig::ZENOH_COMM_WIFI;
         config.host = argv[1];
         config.port = 7447;
     } else {
-        config.communication_mode = ZenohCommunicationMode::ZENOH_COMM_WIFI;
+        config.communication_mode = ZenohConfig::ZENOH_COMM_WIFI;
         config.host = "192.168.4.1";
         config.port = 7447;
     }

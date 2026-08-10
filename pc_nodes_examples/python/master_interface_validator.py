@@ -73,19 +73,19 @@ class MasterPythonValidator(ZenohNode):
         self.cli_cfg_robot = self.z_create_client(z_ConfigureRobot, "srv_custom/configure_robot")
         self.cli_full_ctrl = self.z_create_client(z_FullSystemControl, "srv_custom/full_system_control")
 
-from zenoh_ros import ZenohNode, ZenohConfig, ZenohCommunicationMode
+from zenoh_ros import ZenohNode, ZenohConfig
 
 def main():
     if len(sys.argv) > 1:
         host_ip = sys.argv[1]
         cfg = ZenohConfig(
-            communication_mode=ZenohCommunicationMode.ZENOH_COMM_WIFI,
+            communication_mode=ZenohConfig.ZENOH_COMM_WIFI,
             host=host_ip,
             port=7447
         )
     else:
         cfg = ZenohConfig(
-            communication_mode=ZenohCommunicationMode.ZENOH_COMM_UART_USB_CDC,
+            communication_mode=ZenohConfig.ZENOH_COMM_UART_USB_CDC,
             uart_port="auto"
         )
 

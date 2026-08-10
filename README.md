@@ -165,13 +165,14 @@ All communication methods belong to `ZenohNode` and follow standard ROS 2 method
 
   // Option A: Fluent Builder Syntax (Set parameters in ANY order)
   ZenohConfig cfg = ZenohConfig()
+      .set_communication_mode(ZenohConfig::ZENOH_COMM_WIFI)
       .set_wifi("MyRobotRouter", "12345678", WIFI_STA)
       .set_mac(router_mac)
       .set_port(7447);
 
   // Option B: Direct Member Assignment (Set parameters in ANY order)
   ZenohConfig cfg;
-  cfg.communication_mode = ZenohCommunicationMode::ZENOH_COMM_WIFI;
+  cfg.communication_mode = ZenohConfig::ZENOH_COMM_WIFI;
   cfg.ssid = "MyRobotRouter";
   cfg.password = "12345678";
   cfg.wifi_mode = WIFI_STA;
@@ -182,23 +183,25 @@ All communication methods belong to `ZenohNode` and follow standard ROS 2 method
 - **MCU C++ (USB CDC / High-Speed Serial)**:
   ```cpp
   ZenohConfig cfg = ZenohConfig()
-      .set_communication_mode(ZenohCommunicationMode::ZENOH_COMM_UART_USB_CDC)
-      .set_baudrate((uint32_t)ZenohBaudRate::USB_HIGH_SPEED);
+      .set_communication_mode(ZenohConfig::ZENOH_COMM_UART_USB_CDC)
+      .set_baudrate(ZenohConfig::USB_HIGH_SPEED);
 
   ZenohNode::init(cfg);
   ```
 - **PC C++**:
   ```cpp
   ZenohConfig config;
-  config.communication_mode = ZenohCommunicationMode::ZENOH_COMM_WIFI;
+  config.communication_mode = ZenohConfig::ZENOH_COMM_WIFI;
   config.host = "192.168.4.1"; // ESP32 SoftAP IP
   config.port = 7447;
   ZenohNode::init(config);
   ```
 - **PC Python**:
   ```python
+  from zenoh_ros import ZenohNode, ZenohConfig
+
   config = ZenohConfig(
-      communication_mode=ZenohCommunicationMode.ZENOH_COMM_WIFI,
+      communication_mode=ZenohConfig.ZENOH_COMM_WIFI,
       host="192.168.4.1",
       port=7447
   )
@@ -422,14 +425,14 @@ Set and query configuration parameters dynamically without re-compiling firmware
 
 In addition to Wi-Fi (SoftAP & STA modes), `zenoh_ros` natively supports direct Serial UART and Native USB CDC communications.
 
-### Transport Modes (`ZenohCommunicationMode`) & Preset Speeds (`ZenohBaudRate`)
+### Transport Modes & Preset Speeds (`ZenohConfig`)
 
 | Communication Mode Enum | Description | Preset Baud Rate Enum | Throughput / Bandwidth |
 | :--- | :--- | :--- | :--- |
-| `ZENOH_COMM_UART_DEFAULT` **(Default)** | Standard UART0 over built-in USB/UART flashing port (`Serial`) | `ZenohBaudRate::UART_STANDARD` (`115200`) | `~11.5 KB/s` (Low-frequency single-topic nodes) |
-| `ZENOH_COMM_UART_USB_CDC` | Native USB CDC Serial (`USBSerial` / USB OTG PHY) | `ZenohBaudRate::USB_HIGH_SPEED` (`12000000`) | `~300 KB/s - 1.2 MB/s` (High-rate binary streaming) |
-| `ZENOH_COMM_UART_HW` | Hardware UART on custom RX/TX pins (`Serial1`) | `ZenohBaudRate::UART_HIGH_SPEED` (`921600`) | `~92 KB/s` (Multi-topic telemetry) |
-| `ZENOH_COMM_WIFI` | Wireless TCP/UDP connection | N/A | `~2.5 MB/s - 5.0 MB/s` |
+| `ZenohConfig::ZENOH_COMM_UART_DEFAULT` **(Default)** | Standard UART0 over built-in USB/UART flashing port (`Serial`) | `ZenohConfig::UART_STANDARD` (`115200`) | `~11.5 KB/s` (Low-frequency single-topic nodes) |
+| `ZenohConfig::ZENOH_COMM_UART_USB_CDC` | Native USB CDC Serial (`USBSerial` / USB OTG PHY) | `ZenohConfig::USB_HIGH_SPEED` (`12000000`) | `~300 KB/s - 1.2 MB/s` (High-rate binary streaming) |
+| `ZenohConfig::ZENOH_COMM_UART_HW` | Hardware UART on custom RX/TX pins (`Serial1`) | `ZenohConfig::UART_HIGH_SPEED` (`921600`) | `~92 KB/s` (Multi-topic telemetry) |
+| `ZenohConfig::ZENOH_COMM_WIFI` | Wireless TCP/UDP connection | N/A | `~2.5 MB/s - 5.0 MB/s` |
 
 > [!WARNING]
 > **Serial Bandwidth Note**: Streaming 30+ dynamic topics simultaneously at high rates over standard `115,200 baud` UART can saturate the serial bus buffer. For multi-topic nodes, use `UART_HIGH_SPEED` (`921,600 baud`) or `USB_HIGH_SPEED` (`12,000,000 baud`).

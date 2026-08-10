@@ -47,7 +47,7 @@ class WS2812BPublisherNode(ZenohNode):
 
 
 def main() -> None:
-    cfg = ZenohConfig(host="192.168.4.1", port=7447)
+    cfg = ZenohConfig(communication_mode=ZenohConfig.ZENOH_COMM_WIFI, host="192.168.4.1", port=7447)
     if not ZenohNode.init(cfg):
         return
 
